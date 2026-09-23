@@ -1,4 +1,4 @@
-from app.metrics import window_metrics, enrich_sample
+from app.core.metrics import window_metrics, enrich_sample
 
 
 def make_window(

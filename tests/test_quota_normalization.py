@@ -1,4 +1,4 @@
-from app.main import normalize
+from app.core.quota import normalize_rate_limits
 
 
 def sample_response():
@@ -32,21 +32,21 @@ def sample_response():
 
 
 def test_normalize_identifies_five_hour_window():
-    result = normalize(sample_response())
+    result = normalize_rate_limits(sample_response())
 
     assert result["five_hour_used"] == 42
     assert result["five_hour_reset_at"] == 1788999919
 
 
 def test_normalize_identifies_weekly_window():
-    result = normalize(sample_response())
+    result = normalize_rate_limits(sample_response())
 
     assert result["weekly_used"] == 25
     assert result["weekly_reset_at"] == 1789494339
 
 
 def test_normalize_account_metadata():
-    result = normalize(sample_response())
+    result = normalize_rate_limits(sample_response())
 
     assert result["plan_type"] == "plus"
     assert result["reset_credits_available"] == 3
@@ -63,7 +63,7 @@ def test_normalize_does_not_depend_on_primary_secondary_order():
         raw["limits"]["primary"],
     )
 
-    result = normalize(raw)
+    result = normalize_rate_limits(raw)
 
     assert result["five_hour_used"] == 42
     assert result["weekly_used"] == 25
@@ -73,7 +73,7 @@ def test_normalize_handles_missing_five_hour_window():
     raw = sample_response()
     raw["limits"]["primary"] = None
 
-    result = normalize(raw)
+    result = normalize_rate_limits(raw)
 
     assert result["five_hour_used"] is None
     assert result["five_hour_reset_at"] is None
@@ -84,6 +84,6 @@ def test_normalize_handles_missing_reset_credits():
     raw = sample_response()
     raw["reset_credits"] = {}
 
-    result = normalize(raw)
+    result = normalize_rate_limits(raw)
 
     assert result["reset_credits_available"] == 0

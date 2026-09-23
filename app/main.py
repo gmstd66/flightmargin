@@ -1,29 +1,75 @@
 import asyncio
+import os
 import time
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import (
+    FastAPI,
+    HTTPException,
+    Request,
+)
+
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from fastapi import Request
 
-from app.codex_client import CodexClient
-from app.database import (
-    initialize_database,
-    insert_sample,
-    get_latest_sample,
-    get_history,
+from app.adapters.codex_stdio import (
+    CodexAppServer,
 )
-from app.metrics import enrich_sample
+
+from app.core.metrics import (
+    enrich_sample,
+)
+
+from app.core.quota import (
+    normalize_rate_limits,
+)
+
+from app.storage.sqlite_store import (
+    SQLiteQuotaStore,
+)
 
 
-BASE_DIR = Path("/opt/codex-quota")
+APP_ROOT = (
+    Path(__file__)
+    .resolve()
+    .parents[1]
+)
 
-client = CodexClient()
+DATA_DIR = Path(
+    os.environ.get(
+        "CODEX_QUOTA_DATA_DIR",
+        str(APP_ROOT / "data"),
+    )
+)
+
+DATABASE_PATH = Path(
+    os.environ.get(
+        "CODEX_QUOTA_DB",
+        str(DATA_DIR / "quota.db"),
+    )
+)
+
+SAMPLE_INTERVAL = max(
+    10,
+    int(
+        os.environ.get(
+            "CODEX_QUOTA_SAMPLE_SECONDS",
+            "60",
+        )
+    ),
+)
+
+
+codex = CodexAppServer()
+
+store = SQLiteQuotaStore(
+    DATABASE_PATH
+)
 
 collector_task = None
+
 collector_status = {
     "running": False,
     "last_success": None,
@@ -31,149 +77,149 @@ collector_status = {
 }
 
 
-def identify_windows(limits):
-    five_hour = None
-    weekly = None
-
-    for bucket in (
-        limits.get("primary"),
-        limits.get("secondary"),
-    ):
-        if not bucket:
-            continue
-
-        duration = bucket.get("windowDurationMins")
-
-        if duration == 300:
-            five_hour = bucket
-
-        elif duration == 10080:
-            weekly = bucket
-
-    return five_hour, weekly
-
-
-def normalize(raw):
-    limits = raw["limits"]
-
-    five_hour, weekly = identify_windows(limits)
-
-    credits = limits.get("credits") or {}
-    reset_credits = raw.get("reset_credits") or {}
-
-    return {
-        "five_hour_used":
-            five_hour.get("usedPercent")
-            if five_hour else None,
-
-        "five_hour_reset_at":
-            five_hour.get("resetsAt")
-            if five_hour else None,
-
-        "weekly_used":
-            weekly.get("usedPercent")
-            if weekly else None,
-
-        "weekly_reset_at":
-            weekly.get("resetsAt")
-            if weekly else None,
-
-        "plan_type":
-            limits.get("planType"),
-
-        "reset_credits_available":
-            reset_credits.get("availableCount", 0),
-
-        "credits_balance":
-            credits.get("balance"),
-
-        "spend_control_reached":
-            limits.get("spendControlReached", False),
-
-        "rate_limit_reached_type":
-            limits.get("rateLimitReachedType"),
-    }
-
-
 def collect_sync():
     try:
-        if not client.process or client.process.poll() is not None:
-            client.start()
+        if (
+            not codex.process
+            or codex.process.poll()
+            is not None
+        ):
+            codex.start()
 
-        raw = client.get_rate_limits()
-        normalized = normalize(raw)
+        response = (
+            codex.get_rate_limits()
+        )
 
-        sample = insert_sample(normalized)
+        normalized = (
+            normalize_rate_limits(
+                response
+            )
+        )
 
-        collector_status["last_success"] = int(time.time())
-        collector_status["last_error"] = None
+        sample = (
+            store.insert_sample(
+                normalized
+            )
+        )
+
+        collector_status[
+            "last_success"
+        ] = int(time.time())
+
+        collector_status[
+            "last_error"
+        ] = None
 
         return sample
 
     except Exception as exc:
-        collector_status["last_error"] = str(exc)
+        collector_status[
+            "last_error"
+        ] = str(exc)
 
-        client.stop()
+        codex.stop()
 
         raise
 
 
 async def collect():
-    return await asyncio.to_thread(collect_sync)
+    return await asyncio.to_thread(
+        collect_sync
+    )
 
 
 async def collector_loop():
-    collector_status["running"] = True
+    collector_status[
+        "running"
+    ] = True
 
     try:
         while True:
             started = time.monotonic()
 
             try:
-                sample = await collect()
+                sample = (
+                    await collect()
+                )
+
+                five = sample.get(
+                    "five_hour_used"
+                )
+
+                weekly = sample.get(
+                    "weekly_used"
+                )
+
+                five_remaining = (
+                    100 - five
+                    if five is not None
+                    else None
+                )
+
+                weekly_remaining = (
+                    100 - weekly
+                    if weekly is not None
+                    else None
+                )
 
                 print(
-                    f"Quota sample: "
-                    f"5h={100 - sample['five_hour_used']}% "
-                    f"weekly={100 - sample['weekly_used']}%",
+                    "Quota sample: "
+                    f"5h={five_remaining}% "
+                    f"weekly={weekly_remaining}%",
                     flush=True,
                 )
 
             except Exception as exc:
                 print(
-                    f"Quota collection error: {exc}",
+                    "Quota collection error: "
+                    f"{exc}",
                     flush=True,
                 )
 
-            elapsed = time.monotonic() - started
+            elapsed = (
+                time.monotonic()
+                - started
+            )
 
             await asyncio.sleep(
-                max(1, 60 - elapsed)
+                max(
+                    1,
+                    SAMPLE_INTERVAL
+                    - elapsed,
+                )
             )
 
     except asyncio.CancelledError:
         pass
 
     finally:
-        collector_status["running"] = False
+        collector_status[
+            "running"
+        ] = False
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(
+    app: FastAPI,
+):
     global collector_task
 
-    initialize_database()
+    store.initialize()
 
     try:
         await collect()
+
     except Exception as exc:
         print(
-            f"Initial quota collection failed: {exc}",
+            "Initial quota collection failed: "
+            f"{exc}",
             flush=True,
         )
 
-    collector_task = asyncio.create_task(
-        collector_loop()
+    collector_task = (
+        asyncio.create_task(
+            collector_loop()
+        )
     )
 
     yield
@@ -183,33 +229,51 @@ async def lifespan(app: FastAPI):
 
         try:
             await collector_task
+
         except asyncio.CancelledError:
             pass
 
-    client.stop()
+    codex.stop()
 
 
 app = FastAPI(
     title="Codex Quota Monitor",
+    version="0.2.0",
     lifespan=lifespan,
 )
 
 
 templates = Jinja2Templates(
-    directory=str(BASE_DIR / "app/templates")
+    directory=str(
+        APP_ROOT
+        / "app"
+        / "templates"
+    )
 )
+
 
 app.mount(
     "/static",
+
     StaticFiles(
-        directory=str(BASE_DIR / "app/static")
+        directory=str(
+            APP_ROOT
+            / "app"
+            / "static"
+        )
     ),
+
     name="static",
 )
 
 
-@app.get("/", response_class=HTMLResponse)
-async def dashboard(request: Request):
+@app.get(
+    "/",
+    response_class=HTMLResponse,
+)
+async def dashboard(
+    request: Request,
+):
     return templates.TemplateResponse(
         request=request,
         name="index.html",
@@ -218,16 +282,25 @@ async def dashboard(request: Request):
 
 @app.get("/api/quota")
 async def quota():
-    sample = get_latest_sample()
+    sample = (
+        store.get_latest_sample()
+    )
 
     if not sample:
         raise HTTPException(
             status_code=503,
-            detail="No quota sample available",
+            detail=(
+                "No quota sample available"
+            ),
         )
 
-    result = enrich_sample(sample)
-    result["collector"] = collector_status
+    result = enrich_sample(
+        sample
+    )
+
+    result["collector"] = (
+        collector_status
+    )
 
     return result
 
@@ -236,7 +309,10 @@ async def quota():
 async def refresh():
     try:
         sample = await collect()
-        return enrich_sample(sample)
+
+        return enrich_sample(
+            sample
+        )
 
     except Exception as exc:
         raise HTTPException(
@@ -246,10 +322,22 @@ async def refresh():
 
 
 @app.get("/api/history")
-async def history(hours: int = 168):
-    hours = max(1, min(hours, 720))
+async def history(
+    hours: int = 168,
+):
+    hours = max(
+        1,
+        min(
+            hours,
+            720,
+        ),
+    )
 
-    samples = get_history(hours)
+    samples = (
+        store.get_history(
+            hours
+        )
+    )
 
     return {
         "hours": hours,
@@ -261,5 +349,11 @@ async def history(hours: int = 168):
 async def health():
     return {
         "status": "ok",
+        "version": "0.2.0",
         "collector": collector_status,
+        "database": str(
+            DATABASE_PATH
+        ),
+        "sample_interval_seconds":
+            SAMPLE_INTERVAL,
     }

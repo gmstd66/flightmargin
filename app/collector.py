@@ -1,163 +1,97 @@
-import argparse
-import signal
-import time
-from datetime import datetime
+import os
+from pathlib import Path
 
-from app.codex_client import CodexClient
-from app.database import initialize_database, insert_sample
+from app.adapters.codex_stdio import (
+    CodexAppServer,
+)
 
+from app.core.quota import (
+    normalize_rate_limits,
+)
 
-RUNNING = True
-
-
-def stop_handler(signum, frame):
-    global RUNNING
-    RUNNING = False
-
-
-def identify_windows(limits):
-    five_hour = None
-    weekly = None
-
-    for bucket in (
-        limits.get("primary"),
-        limits.get("secondary"),
-    ):
-        if not bucket:
-            continue
-
-        duration = bucket.get("windowDurationMins")
-
-        if duration == 300:
-            five_hour = bucket
-        elif duration == 10080:
-            weekly = bucket
-
-    return five_hour, weekly
+from app.storage.sqlite_store import (
+    SQLiteQuotaStore,
+)
 
 
-def normalize(raw):
-    limits = raw["limits"]
-    five_hour, weekly = identify_windows(limits)
+APP_ROOT = (
+    Path(__file__)
+    .resolve()
+    .parents[1]
+)
 
-    credits = limits.get("credits") or {}
-    reset_credits = raw.get("reset_credits") or {}
-
-    return {
-        "five_hour_used":
-            five_hour.get("usedPercent")
-            if five_hour else None,
-
-        "five_hour_reset_at":
-            five_hour.get("resetsAt")
-            if five_hour else None,
-
-        "weekly_used":
-            weekly.get("usedPercent")
-            if weekly else None,
-
-        "weekly_reset_at":
-            weekly.get("resetsAt")
-            if weekly else None,
-
-        "plan_type":
-            limits.get("planType"),
-
-        "reset_credits_available":
-            reset_credits.get("availableCount", 0),
-
-        "credits_balance":
-            credits.get("balance"),
-
-        "spend_control_reached":
-            limits.get("spendControlReached", False),
-
-        "rate_limit_reached_type":
-            limits.get("rateLimitReachedType"),
-    }
-
-
-def print_sample(sample):
-    five_remaining = (
-        100 - sample["five_hour_used"]
-        if sample["five_hour_used"] is not None
-        else None
+DATA_DIR = Path(
+    os.environ.get(
+        "CODEX_QUOTA_DATA_DIR",
+        str(APP_ROOT / "data"),
     )
+)
 
-    weekly_remaining = (
-        100 - sample["weekly_used"]
-        if sample["weekly_used"] is not None
-        else None
+DATABASE_PATH = Path(
+    os.environ.get(
+        "CODEX_QUOTA_DB",
+        str(DATA_DIR / "quota.db"),
     )
-
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-    print(
-        f"[{now}] "
-        f"5h: {five_remaining}% remaining | "
-        f"weekly: {weekly_remaining}% remaining | "
-        f"resets available: "
-        f"{sample['reset_credits_available']}",
-        flush=True,
-    )
-
-
-def collect_once(client):
-    raw = client.get_rate_limits()
-    sample = normalize(raw)
-
-    insert_sample(sample)
-    print_sample(sample)
+)
 
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--once",
-        action="store_true",
-        help="Collect one sample and exit",
+    codex = CodexAppServer()
+
+    store = SQLiteQuotaStore(
+        DATABASE_PATH
     )
-    args = parser.parse_args()
 
-    initialize_database()
-
-    client = CodexClient()
-
-    signal.signal(signal.SIGINT, stop_handler)
-    signal.signal(signal.SIGTERM, stop_handler)
+    store.initialize()
 
     try:
-        client.start()
+        codex.start()
 
-        if args.once:
-            collect_once(client)
-            return
+        response = (
+            codex.get_rate_limits()
+        )
 
-        while RUNNING:
-            started = time.monotonic()
+        normalized = (
+            normalize_rate_limits(
+                response
+            )
+        )
 
-            try:
-                collect_once(client)
-            except Exception as exc:
-                print(
-                    f"Collection error: {exc}",
-                    flush=True,
-                )
+        sample = (
+            store.insert_sample(
+                normalized
+            )
+        )
 
-                client.stop()
+        five = sample.get(
+            "five_hour_used"
+        )
 
-            elapsed = time.monotonic() - started
-            sleep_for = max(0, 60 - elapsed)
+        weekly = sample.get(
+            "weekly_used"
+        )
 
-            end = time.monotonic() + sleep_for
+        five_remaining = (
+            100 - five
+            if five is not None
+            else None
+        )
 
-            while RUNNING and time.monotonic() < end:
-                time.sleep(
-                    min(1, end - time.monotonic())
-                )
+        weekly_remaining = (
+            100 - weekly
+            if weekly is not None
+            else None
+        )
+
+        print(
+            f"5h: {five_remaining}% remaining | "
+            f"weekly: {weekly_remaining}% remaining | "
+            f"resets available: "
+            f"{sample.get('reset_credits_available')}"
+        )
 
     finally:
-        client.stop()
+        codex.stop()
 
 
 if __name__ == "__main__":
