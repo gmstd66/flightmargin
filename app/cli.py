@@ -1,12 +1,29 @@
 import argparse
+import getpass
 import sys
+from pathlib import Path
 
 import uvicorn
 
-from app.adapters.codex_stdio import CodexAppServer
-from app.core.config import load_config
-from app.core.quota import normalize_rate_limits
-from app.doctor import main as doctor_main
+from app.adapters.codex_stdio import (
+    CodexAppServer,
+)
+
+from app.core.config import (
+    load_config,
+)
+
+from app.core.quota import (
+    normalize_rate_limits,
+)
+
+from app.doctor import (
+    main as doctor_main,
+)
+
+from app.systemd import (
+    render_systemd_unit,
+)
 
 
 def format_percent_used(value):
@@ -34,10 +51,14 @@ def status_command():
     try:
         client.start()
 
-        response = client.get_rate_limits()
+        response = (
+            client.get_rate_limits()
+        )
 
-        quota = normalize_rate_limits(
-            response
+        quota = (
+            normalize_rate_limits(
+                response
+            )
         )
 
         print("Codex Quota Monitor")
@@ -86,7 +107,8 @@ def status_command():
 
     except Exception as exc:
         print(
-            f"Unable to read Codex quota: {exc}",
+            "Unable to read Codex quota: "
+            f"{exc}",
             file=sys.stderr,
         )
 
@@ -107,6 +129,30 @@ def serve_command(args):
     return 0
 
 
+def service_unit_command(args):
+    config = load_config()
+
+    unit = render_systemd_unit(
+        config,
+        user=args.user,
+        group=args.group,
+        home=args.home,
+        python_executable=(
+            args.python_executable
+        ),
+        codex_executable=(
+            args.codex_executable
+        ),
+    )
+
+    print(
+        unit,
+        end="",
+    )
+
+    return 0
+
+
 def build_parser():
     config = load_config()
 
@@ -121,12 +167,17 @@ def build_parser():
     parser.add_argument(
         "--version",
         action="version",
-        version="codex-quota-monitor 0.2.0",
+        version=(
+            "codex-quota-monitor "
+            "0.2.0"
+        ),
     )
 
-    subparsers = parser.add_subparsers(
-        dest="command",
-        required=True,
+    subparsers = (
+        parser.add_subparsers(
+            dest="command",
+            required=True,
+        )
     )
 
     subparsers.add_parser(
@@ -186,6 +237,63 @@ def build_parser():
         default="info",
     )
 
+    service_parser = (
+        subparsers.add_parser(
+            "service-unit",
+            help=(
+                "Generate a systemd "
+                "service unit."
+            ),
+        )
+    )
+
+    service_parser.add_argument(
+        "--user",
+        default=getpass.getuser(),
+        help=(
+            "System user that will run "
+            "the service."
+        ),
+    )
+
+    service_parser.add_argument(
+        "--group",
+        default=None,
+        help=(
+            "System group. Defaults "
+            "to the service user."
+        ),
+    )
+
+    service_parser.add_argument(
+        "--home",
+        default=str(
+            Path.home()
+        ),
+        help=(
+            "HOME directory exposed "
+            "to Codex."
+        ),
+    )
+
+    service_parser.add_argument(
+        "--python-executable",
+        default=sys.executable,
+        help=(
+            "Python executable used "
+            "by systemd."
+        ),
+    )
+
+    service_parser.add_argument(
+        "--codex-executable",
+        default=None,
+        help=(
+            "Explicit Codex CLI "
+            "executable."
+        ),
+    )
+
     return parser
 
 
@@ -203,7 +311,17 @@ def main(argv=None):
         return status_command()
 
     if args.command == "serve":
-        return serve_command(args)
+        return serve_command(
+            args
+        )
+
+    if (
+        args.command
+        == "service-unit"
+    ):
+        return service_unit_command(
+            args
+        )
 
     parser.error(
         "Unknown command"
