@@ -1,6 +1,7 @@
 import asyncio
 import time
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import (
     FastAPI,
@@ -35,7 +36,20 @@ from app.storage.sqlite_store import (
 
 config = load_config()
 
-APP_ROOT = config.app_root
+PACKAGE_ROOT = Path(
+    __file__
+).resolve().parent
+
+TEMPLATES_DIR = (
+    PACKAGE_ROOT
+    / "templates"
+)
+
+STATIC_DIR = (
+    PACKAGE_ROOT
+    / "static"
+)
+
 DATABASE_PATH = config.database_path
 SAMPLE_INTERVAL = config.sample_seconds
 
@@ -225,9 +239,7 @@ app = FastAPI(
 
 templates = Jinja2Templates(
     directory=str(
-        APP_ROOT
-        / "app"
-        / "templates"
+        TEMPLATES_DIR
     )
 )
 
@@ -237,9 +249,7 @@ app.mount(
 
     StaticFiles(
         directory=str(
-            APP_ROOT
-            / "app"
-            / "static"
+            STATIC_DIR
         )
     ),
 
