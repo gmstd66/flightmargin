@@ -1,0 +1,37 @@
+[build-system]
+requires = [
+    "setuptools>=69",
+    "wheel",
+]
+build-backend = "setuptools.build_meta"
+
+
+[project]
+name = "codex-quota-monitor"
+version = "0.2.0"
+description = "Local-first OpenAI Codex usage and quota monitor"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "jinja2",
+]
+
+
+[project.scripts]
+codex-quota = "app.cli:main"
+
+
+[tool.setuptools.packages.find]
+include = [
+    "app",
+    "app.*",
+]
+
+
+[tool.setuptools.package-data]
+app = [
+    "templates/*.html",
+    "static/*",
+]

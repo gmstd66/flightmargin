@@ -8,6 +8,11 @@ __pycache__/
 venv/
 .venv/
 
+# Python packaging
+build/
+dist/
+*.egg-info/
+
 # Runtime data
 data/*.db
 data/*.db-*
