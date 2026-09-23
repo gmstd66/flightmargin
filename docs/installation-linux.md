@@ -633,3 +633,34 @@ The Linux installer currently assumes:
 - systemd is available
 
 Automatic Codex CLI installation is intentionally not part of the installer at this stage.
+
+---
+
+## Installation path requirements
+
+Do not install Codex Quota Monitor under `/tmp`.
+
+The generated systemd service uses:
+
+```text
+PrivateTmp=true
+```
+
+for isolation. Services using `PrivateTmp` do not see the host's normal `/tmp` filesystem namespace.
+
+As a result, an installation located under `/tmp` may fail with a systemd error such as:
+
+```text
+status=203/EXEC
+```
+
+because the service cannot access the Python executable inside that checkout.
+
+Use a persistent location such as:
+
+```text
+/opt/codex-quota
+/home/<user>/codex-quota-monitor
+```
+
+or another non-temporary directory.

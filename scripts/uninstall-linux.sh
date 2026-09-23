@@ -3,8 +3,11 @@
 set -euo pipefail
 
 
-SERVICE_NAME="codex-quota"
+DEFAULT_SERVICE_NAME="codex-quota"
+SERVICE_NAME="${DEFAULT_SERVICE_NAME}"
+
 SERVICE_PATH="/etc/systemd/system/${SERVICE_NAME}.service"
+SERVICE_PATH_EXPLICIT=0
 
 SCRIPT_DIR="$(
     cd -- "$(dirname -- "${BASH_SOURCE[0]}")"
@@ -32,6 +35,12 @@ Usage:
   scripts/uninstall-linux.sh [options]
 
 Options:
+  --service-name NAME
+      Systemd service name.
+
+      Default:
+        ${SERVICE_NAME}
+
   --apply
       Perform the uninstall.
 
@@ -54,13 +63,13 @@ Options:
       Systemd service unit to remove.
 
       Default:
-        ${SERVICE_PATH}
+        /etc/systemd/system/<service-name>.service
 
   -h, --help
       Show this help.
 
-By default the script removes only the systemd
-service. The repository, virtual environment,
+By default the script removes only the selected
+systemd service. The repository, virtual environment,
 runtime data, Codex CLI, and Codex authentication
 are preserved.
 EOF
@@ -85,6 +94,19 @@ ok() {
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
+        --service-name)
+            [[ $# -ge 2 ]] \
+                || fail "--service-name requires a value"
+
+            SERVICE_NAME="$2"
+
+            if (( SERVICE_PATH_EXPLICIT == 0 )); then
+                SERVICE_PATH="/etc/systemd/system/${SERVICE_NAME}.service"
+            fi
+
+            shift 2
+            ;;
+
         --apply)
             APPLY=1
             shift
@@ -110,6 +132,7 @@ while [[ $# -gt 0 ]]; do
                 || fail "--service-path requires a value"
 
             SERVICE_PATH="$2"
+            SERVICE_PATH_EXPLICIT=1
             shift 2
             ;;
 
@@ -130,8 +153,17 @@ if [[ "$(uname -s)" != "Linux" ]]; then
 fi
 
 
+if ! [[ "${SERVICE_NAME}" =~ ^[A-Za-z0-9_.@-]+$ ]]; then
+    fail "Service name contains invalid characters."
+fi
+
+
 if (( APPLY == 0 )); then
     echo "Codex Quota Monitor uninstall dry run"
+    echo
+    echo "Service:"
+    echo "  ${SERVICE_NAME}"
+
     echo
     echo "Would remove systemd service:"
     echo "  ${SERVICE_PATH}"
@@ -242,6 +274,9 @@ fi
 
 echo
 echo "Codex Quota Monitor service removed."
+echo
+echo "Service:"
+echo "  ${SERVICE_NAME}"
 
 if (( REMOVE_VENV == 0 )); then
     echo

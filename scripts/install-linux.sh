@@ -3,8 +3,9 @@
 set -euo pipefail
 
 
-SERVICE_NAME="codex-quota"
-DEFAULT_SERVICE_PATH="/etc/systemd/system/${SERVICE_NAME}.service"
+DEFAULT_SERVICE_NAME="codex-quota"
+SERVICE_NAME="${DEFAULT_SERVICE_NAME}"
+SERVICE_PATH_EXPLICIT=0
 
 SCRIPT_DIR="$(
     cd -- "$(dirname -- "${BASH_SOURCE[0]}")"
@@ -38,7 +39,7 @@ CODEX_EXECUTABLE="$(
     command -v codex || true
 )"
 
-SERVICE_PATH="${DEFAULT_SERVICE_PATH}"
+SERVICE_PATH="/etc/systemd/system/${SERVICE_NAME}.service"
 
 APPLY=0
 INSTALL_DEV=0
@@ -52,6 +53,12 @@ Usage:
   scripts/install-linux.sh [options]
 
 Options:
+  --service-name NAME
+      Systemd service name.
+
+      Default:
+        ${SERVICE_NAME}
+
   --host ADDRESS
       Dashboard bind address.
       Default: ${HOST}
@@ -107,8 +114,9 @@ Options:
 
   --service-path PATH
       Destination systemd unit.
+
       Default:
-        ${SERVICE_PATH}
+        /etc/systemd/system/<service-name>.service
 
   --dev
       Install development dependencies
@@ -132,13 +140,20 @@ Examples:
   Fresh-machine dry run:
     scripts/install-linux.sh
 
-  Fresh-machine local install:
+  Local-only service:
     scripts/install-linux.sh --apply
 
-  LAN-accessible install:
+  LAN-accessible service:
     scripts/install-linux.sh \
       --host 192.168.1.50 \
       --port 8093 \
+      --apply
+
+  Side-by-side test service:
+    scripts/install-linux.sh \
+      --service-name codex-quota-test \
+      --host 127.0.0.1 \
+      --port 18097 \
       --apply
 
   Existing Python environment:
@@ -167,6 +182,19 @@ ok() {
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
+        --service-name)
+            [[ $# -ge 2 ]] \
+                || fail "--service-name requires a value"
+
+            SERVICE_NAME="$2"
+
+            if (( SERVICE_PATH_EXPLICIT == 0 )); then
+                SERVICE_PATH="/etc/systemd/system/${SERVICE_NAME}.service"
+            fi
+
+            shift 2
+            ;;
+
         --host)
             [[ $# -ge 2 ]] \
                 || fail "--host requires a value"
@@ -258,6 +286,7 @@ while [[ $# -gt 0 ]]; do
                 || fail "--service-path requires a value"
 
             SERVICE_PATH="$2"
+            SERVICE_PATH_EXPLICIT=1
             shift 2
             ;;
 
@@ -290,6 +319,11 @@ done
 
 if [[ "$(uname -s)" != "Linux" ]]; then
     fail "This installer currently supports Linux only."
+fi
+
+
+if ! [[ "${SERVICE_NAME}" =~ ^[A-Za-z0-9_.@-]+$ ]]; then
+    fail "Service name contains invalid characters."
 fi
 
 
@@ -596,6 +630,7 @@ if (( APPLY == 0 )); then
     echo "  ${SERVICE_PATH}"
     echo
     echo "Configuration:"
+    echo "  Service:   ${SERVICE_NAME}"
     echo "  Project:   ${PROJECT_DIR}"
     echo "  User:      ${SERVICE_USER}"
     echo "  Group:     ${SERVICE_GROUP}"
