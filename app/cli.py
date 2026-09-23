@@ -4,6 +4,7 @@ import sys
 import uvicorn
 
 from app.adapters.codex_stdio import CodexAppServer
+from app.core.config import load_config
 from app.core.quota import normalize_rate_limits
 from app.doctor import main as doctor_main
 
@@ -12,7 +13,10 @@ def format_percent_used(value):
     if value is None:
         return "unavailable"
 
-    remaining = max(0, 100 - value)
+    remaining = max(
+        0,
+        100 - value,
+    )
 
     return (
         f"{value:g}% used / "
@@ -21,7 +25,11 @@ def format_percent_used(value):
 
 
 def status_command():
-    client = CodexAppServer()
+    config = load_config()
+
+    client = CodexAppServer(
+        executable=config.codex_bin
+    )
 
     try:
         client.start()
@@ -100,6 +108,8 @@ def serve_command(args):
 
 
 def build_parser():
+    config = load_config()
+
     parser = argparse.ArgumentParser(
         prog="codex-quota",
         description=(
@@ -146,20 +156,20 @@ def build_parser():
 
     serve_parser.add_argument(
         "--host",
-        default="127.0.0.1",
+        default=config.host,
         help=(
             "Address to bind to "
-            "(default: 127.0.0.1)."
+            f"(default: {config.host})."
         ),
     )
 
     serve_parser.add_argument(
         "--port",
         type=int,
-        default=8093,
+        default=config.port,
         help=(
             "TCP port to listen on "
-            "(default: 8093)."
+            f"(default: {config.port})."
         ),
     )
 

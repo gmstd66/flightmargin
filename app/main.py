@@ -1,8 +1,6 @@
 import asyncio
-import os
 import time
 from contextlib import asynccontextmanager
-from pathlib import Path
 
 from fastapi import (
     FastAPI,
@@ -18,6 +16,10 @@ from app.adapters.codex_stdio import (
     CodexAppServer,
 )
 
+from app.core.config import (
+    load_config,
+)
+
 from app.core.metrics import (
     enrich_sample,
 )
@@ -31,38 +33,16 @@ from app.storage.sqlite_store import (
 )
 
 
-APP_ROOT = (
-    Path(__file__)
-    .resolve()
-    .parents[1]
+config = load_config()
+
+APP_ROOT = config.app_root
+DATABASE_PATH = config.database_path
+SAMPLE_INTERVAL = config.sample_seconds
+
+
+codex = CodexAppServer(
+    executable=config.codex_bin
 )
-
-DATA_DIR = Path(
-    os.environ.get(
-        "CODEX_QUOTA_DATA_DIR",
-        str(APP_ROOT / "data"),
-    )
-)
-
-DATABASE_PATH = Path(
-    os.environ.get(
-        "CODEX_QUOTA_DB",
-        str(DATA_DIR / "quota.db"),
-    )
-)
-
-SAMPLE_INTERVAL = max(
-    10,
-    int(
-        os.environ.get(
-            "CODEX_QUOTA_SAMPLE_SECONDS",
-            "60",
-        )
-    ),
-)
-
-
-codex = CodexAppServer()
 
 store = SQLiteQuotaStore(
     DATABASE_PATH

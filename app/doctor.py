@@ -1,24 +1,22 @@
-import os
 import sys
-from pathlib import Path
 
-from app.adapters.codex_stdio import CodexAppServer
+from app.adapters.codex_stdio import (
+    CodexAppServer,
+)
+
+from app.core.config import (
+    load_config,
+)
+
 from app.core.environment import (
     check_directory_writable,
     detect_platform,
     find_codex,
     get_codex_version,
 )
-from app.core.quota import normalize_rate_limits
 
-
-APP_ROOT = Path(__file__).resolve().parents[1]
-
-DATA_DIR = Path(
-    os.environ.get(
-        "CODEX_QUOTA_DATA_DIR",
-        str(APP_ROOT / "data"),
-    )
+from app.core.quota import (
+    normalize_rate_limits,
 )
 
 
@@ -29,7 +27,11 @@ def mark(ok):
 def main():
     failures = 0
 
-    print("Codex Quota Monitor — Doctor")
+    config = load_config()
+
+    print(
+        "Codex Quota Monitor — Doctor"
+    )
     print()
 
     platform_info = detect_platform()
@@ -46,7 +48,10 @@ def main():
         f"{platform_info['python']}"
     )
 
-    codex_bin = find_codex()
+    codex_bin = (
+        config.codex_bin
+        or find_codex()
+    )
 
     if codex_bin:
         print(
@@ -55,34 +60,41 @@ def main():
         )
     else:
         print(
-            f"{mark(False)} Codex CLI not found"
+            f"{mark(False)} "
+            "Codex CLI not found"
         )
         failures += 1
 
     version = (
-        get_codex_version(codex_bin)
+        get_codex_version(
+            codex_bin
+        )
         if codex_bin
         else None
     )
 
     if version:
         print(
-            f"{mark(True)} Codex version: "
-            f"{version}"
+            f"{mark(True)} "
+            f"Codex version: {version}"
         )
     else:
         print(
-            f"{mark(False)} Unable to read Codex version"
+            f"{mark(False)} "
+            "Unable to read Codex version"
         )
         failures += 1
 
-    writable = check_directory_writable(
-        DATA_DIR
+    writable = (
+        check_directory_writable(
+            config.data_dir
+        )
     )
 
     print(
-        f"{mark(writable)} Data directory writable: "
-        f"{DATA_DIR}"
+        f"{mark(writable)} "
+        "Data directory writable: "
+        f"{config.data_dir}"
     )
 
     if not writable:
@@ -107,20 +119,25 @@ def main():
             )
 
             print(
-                f"{mark(True)} Codex app-server reachable"
+                f"{mark(True)} "
+                "Codex app-server reachable"
             )
 
             print(
-                f"{mark(True)} Rate-limit API working"
+                f"{mark(True)} "
+                "Rate-limit API working"
             )
 
             plan = (
-                normalized.get("plan_type")
+                normalized.get(
+                    "plan_type"
+                )
                 or "unknown"
             )
 
             print(
-                f"{mark(True)} Account plan detected: "
+                f"{mark(True)} "
+                "Account plan detected: "
                 f"{plan}"
             )
 
@@ -134,27 +151,32 @@ def main():
 
             if five is not None:
                 print(
-                    f"{mark(True)} 5-hour quota detected"
+                    f"{mark(True)} "
+                    "5-hour quota detected"
                 )
             else:
                 print(
-                    f"{mark(False)} 5-hour quota not detected"
+                    f"{mark(False)} "
+                    "5-hour quota not detected"
                 )
                 failures += 1
 
             if weekly is not None:
                 print(
-                    f"{mark(True)} Weekly quota detected"
+                    f"{mark(True)} "
+                    "Weekly quota detected"
                 )
             else:
                 print(
-                    f"{mark(False)} Weekly quota not detected"
+                    f"{mark(False)} "
+                    "Weekly quota not detected"
                 )
                 failures += 1
 
         except Exception as exc:
             print(
-                f"{mark(False)} Codex app-server test failed: "
+                f"{mark(False)} "
+                "Codex app-server test failed: "
                 f"{exc}"
             )
             failures += 1
@@ -166,7 +188,8 @@ def main():
 
     if failures:
         print(
-            f"Doctor found {failures} problem(s)."
+            f"Doctor found "
+            f"{failures} problem(s)."
         )
         return 1
 

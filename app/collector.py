@@ -1,8 +1,9 @@
-import os
-from pathlib import Path
-
 from app.adapters.codex_stdio import (
     CodexAppServer,
+)
+
+from app.core.config import (
+    load_config,
 )
 
 from app.core.quota import (
@@ -14,32 +15,15 @@ from app.storage.sqlite_store import (
 )
 
 
-APP_ROOT = (
-    Path(__file__)
-    .resolve()
-    .parents[1]
-)
-
-DATA_DIR = Path(
-    os.environ.get(
-        "CODEX_QUOTA_DATA_DIR",
-        str(APP_ROOT / "data"),
-    )
-)
-
-DATABASE_PATH = Path(
-    os.environ.get(
-        "CODEX_QUOTA_DB",
-        str(DATA_DIR / "quota.db"),
-    )
-)
-
-
 def main():
-    codex = CodexAppServer()
+    config = load_config()
+
+    codex = CodexAppServer(
+        executable=config.codex_bin
+    )
 
     store = SQLiteQuotaStore(
-        DATABASE_PATH
+        config.database_path
     )
 
     store.initialize()
@@ -84,8 +68,10 @@ def main():
         )
 
         print(
-            f"5h: {five_remaining}% remaining | "
-            f"weekly: {weekly_remaining}% remaining | "
+            f"5h: "
+            f"{five_remaining}% remaining | "
+            f"weekly: "
+            f"{weekly_remaining}% remaining | "
             f"resets available: "
             f"{sample.get('reset_credits_available')}"
         )
