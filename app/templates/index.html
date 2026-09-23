@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Codex Quota</title>
+
+    <link
+        rel="stylesheet"
+        href="/static/app.css"
+    >
+</head>
+
+<body>
+
+<div class="container">
+
+    <header>
+        <div>
+            <h1>Codex Quota</h1>
+            <p id="status">
+                Connecting…
+            </p>
+        </div>
+
+        <button id="refresh">
+            Refresh
+        </button>
+    </header>
+
+
+    <main>
+
+        <section class="quota-grid">
+
+            <article class="card">
+
+                <div class="card-heading">
+                    <span>5-HOUR WINDOW</span>
+                    <strong id="fiveRemaining">
+                        --
+                    </strong>
+                </div>
+
+                <div class="progress">
+                    <div
+                        id="fiveBar"
+                        class="progress-bar"
+                    ></div>
+                </div>
+
+                <div class="stats">
+                    <span id="fiveUsed">
+                        -- used
+                    </span>
+
+                    <span id="fiveReset">
+                        --
+                    </span>
+                </div>
+
+            </article>
+
+
+            <article class="card">
+
+                <div class="card-heading">
+                    <span>WEEKLY WINDOW</span>
+
+                    <strong id="weeklyRemaining">
+                        --
+                    </strong>
+                </div>
+
+                <div class="progress">
+                    <div
+                        id="weeklyBar"
+                        class="progress-bar"
+                    ></div>
+                </div>
+
+                <div class="stats">
+                    <span id="weeklyUsed">
+                        -- used
+                    </span>
+
+                    <span id="weeklyReset">
+                        --
+                    </span>
+                </div>
+
+            </article>
+
+        </section>
+
+
+        <section class="lower-grid">
+
+            <article class="card pace-card">
+
+                <span class="label">
+                    WEEKLY PACE
+                </span>
+
+                <div id="paceStatus" class="pace">
+                    --
+                </div>
+
+                <div id="paceRatio" class="pace-ratio">
+                    --
+                </div>
+
+                <p id="paceDescription">
+                    Waiting for data.
+                </p>
+
+                <p id="exhaustion">
+                </p>
+
+            </article>
+
+
+            <article class="card">
+
+                <span class="label">
+                    FULL RESETS
+                </span>
+
+                <div
+                    id="resetCredits"
+                    class="large-value"
+                >
+                    --
+                </div>
+
+                <p>
+                    Available rate-limit resets
+                </p>
+
+            </article>
+
+
+            <article class="card">
+
+                <span class="label">
+                    ACCOUNT
+                </span>
+
+                <div
+                    id="plan"
+                    class="large-value"
+                >
+                    --
+                </div>
+
+                <p id="credits">
+                    Credits: --
+                </p>
+
+            </article>
+
+        </section>
+
+
+        <section class="card history-card">
+
+            <div class="history-heading">
+                <div>
+                    <span class="label">
+                        WEEKLY HISTORY
+                    </span>
+
+                    <h2>
+                        Last 7 days
+                    </h2>
+                </div>
+            </div>
+
+            <canvas
+                id="historyCanvas"
+                height="260"
+            ></canvas>
+
+        </section>
+
+    </main>
+
+</div>
+
+<script src="/static/app.js"></script>
+
+</body>
+</html>
