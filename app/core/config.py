@@ -6,6 +6,9 @@ from pathlib import Path
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8093
 DEFAULT_SAMPLE_SECONDS = 60
+DEFAULT_APP_DATA_NAME = (
+    "codex-quota-monitor"
+)
 
 
 @dataclass(frozen=True)
@@ -56,6 +59,45 @@ def _env_int(
     return value
 
 
+def default_user_data_dir():
+    xdg_data_home = os.environ.get(
+        "XDG_DATA_HOME"
+    )
+
+    if xdg_data_home:
+        return (
+            Path(xdg_data_home)
+            .expanduser()
+            / DEFAULT_APP_DATA_NAME
+        )
+
+    return (
+        Path.home()
+        / ".local"
+        / "share"
+        / DEFAULT_APP_DATA_NAME
+    )
+
+
+def default_data_dir(
+    app_root,
+):
+    app_root = Path(
+        app_root
+    )
+
+    if (
+        app_root
+        / "pyproject.toml"
+    ).is_file():
+        return (
+            app_root
+            / "data"
+        )
+
+    return default_user_data_dir()
+
+
 def load_config():
     app_root = (
         Path(__file__)
@@ -66,14 +108,21 @@ def load_config():
     data_dir = Path(
         os.environ.get(
             "CODEX_QUOTA_DATA_DIR",
-            str(app_root / "data"),
+            str(
+                default_data_dir(
+                    app_root
+                )
+            ),
         )
     ).expanduser()
 
     database_path = Path(
         os.environ.get(
             "CODEX_QUOTA_DB",
-            str(data_dir / "quota.db"),
+            str(
+                data_dir
+                / "quota.db"
+            ),
         )
     ).expanduser()
 
@@ -96,7 +145,9 @@ def load_config():
     )
 
     codex_bin = (
-        os.environ.get("CODEX_BIN")
+        os.environ.get(
+            "CODEX_BIN"
+        )
         or None
     )
 
