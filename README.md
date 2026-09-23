@@ -1,47 +1,254 @@
 # Codex Quota Monitor
 
-A local-first browser dashboard for monitoring OpenAI Codex usage limits.
+Codex Quota Monitor is a local-first browser dashboard for monitoring OpenAI Codex usage limits.
 
-Current features:
+It reads structured quota information from the locally authenticated Codex CLI and stores historical usage locally in SQLite.
 
-- 5-hour quota monitoring
+## Features
+
+- 5-hour Codex quota monitoring
 - Weekly quota monitoring
-- 1-minute sampling
-- SQLite history
-- 7-day usage graph
+- Exact reset times
 - Sustainable usage pace calculation
 - Projected quota exhaustion
-- Available full-reset credit display
+- Full-reset credit display
+- 60-second backend sampling
 - Manual refresh
-- FastAPI web interface
-
-## Current deployment
-
-The initial working deployment runs on Linux using:
-
-- Python
-- FastAPI
-- Uvicorn
-- SQLite
-- `codex app-server --stdio`
-
-The application reads structured Codex rate-limit data from:
-
-`account/rateLimits/read`
-
-## Development status
-
-The current codebase represents the original working Linux/server prototype.
-
-Future development will focus on:
-
-- portable core architecture
-- automated diagnostics
+- SQLite history
+- Rolling 7-day graph
+- Daily chart divisions
+- 4-hour chart gridlines
+- Local browser dashboard
+- Environment diagnostics
+- Command-line status view
+- Portable systemd service generation
 - Linux installer
+- Fresh-machine Python virtual environment bootstrap
+
+## How it works
+
+Codex Quota Monitor uses the locally authenticated Codex CLI:
+
+```text
+codex app-server --stdio
+```
+
+It requests:
+
+```text
+account/rateLimits/read
+```
+
+Quota windows are identified by duration:
+
+```text
+300 minutes   = 5-hour window
+10080 minutes = weekly window
+```
+
+The application does not require a separately managed OpenAI API key.
+
+## Requirements
+
+Current Linux support requires:
+
+- Linux with systemd
+- Python 3
+- Python `venv` support
+- OpenAI Codex CLI installed
+- Codex CLI already authenticated
+- `sudo` access for systemd installation
+
+The installer creates the application virtual environment and installs Python dependencies when needed.
+
+## Quick start
+
+Clone the repository:
+
+```bash
+git clone https://github.com/<owner>/<repository>.git
+cd codex-quota-monitor
+```
+
+Because the repository is currently private, GitHub authentication is required.
+
+Confirm Codex works:
+
+```bash
+codex --version
+codex
+```
+
+If necessary, complete the normal Codex authentication flow before installing Codex Quota Monitor.
+
+Run an installation dry run:
+
+```bash
+scripts/install-linux.sh --dry-run
+```
+
+Install a local-only dashboard:
+
+```bash
+scripts/install-linux.sh --apply
+```
+
+The default dashboard address is:
+
+```text
+http://127.0.0.1:8093
+```
+
+For LAN access, bind to an appropriate address on the machine:
+
+```bash
+scripts/install-linux.sh \
+  --host 192.168.1.50 \
+  --port 8093 \
+  --apply
+```
+
+Do not expose the dashboard directly to the public internet. It currently has no application-level authentication.
+
+## Diagnostics
+
+Run:
+
+```bash
+venv/bin/python -m app.cli doctor
+```
+
+or:
+
+```bash
+venv/bin/python -m app.doctor
+```
+
+A healthy installation should finish with:
+
+```text
+Ready.
+```
+
+## Current quota
+
+```bash
+venv/bin/python -m app.cli status
+```
+
+## Service management
+
+Check status:
+
+```bash
+systemctl status codex-quota
+```
+
+Restart:
+
+```bash
+sudo systemctl restart codex-quota
+```
+
+Follow logs:
+
+```bash
+journalctl -u codex-quota -f
+```
+
+## Upgrade
+
+From the repository:
+
+```bash
+git pull
+scripts/install-linux.sh --apply
+```
+
+The installer updates Python dependencies, creates a timestamped backup of the existing systemd unit, regenerates the service definition, restarts the service, and verifies the health endpoint.
+
+## Uninstall
+
+Run:
+
+```bash
+scripts/uninstall-linux.sh
+```
+
+The uninstall script defaults to a dry run.
+
+To remove the systemd service:
+
+```bash
+scripts/uninstall-linux.sh --apply
+```
+
+Runtime data and the repository are preserved by default.
+
+See:
+
+```text
+docs/installation-linux.md
+```
+
+for the complete installation, upgrade, uninstall, and troubleshooting guide.
+
+## Data and privacy
+
+Quota history is stored locally in:
+
+```text
+data/quota.db
+```
+
+The database is excluded from Git.
+
+Codex Quota Monitor does not store ChatGPT passwords or require a separately configured API credential. It relies on the authentication already used by the Codex CLI.
+
+## Security
+
+The dashboard currently has no built-in authentication.
+
+Recommended deployment:
+
+- localhost, or
+- a trusted private LAN, or
+- a private VPN
+
+Do not directly port-forward the dashboard to the public internet.
+
+## Development
+
+Run tests:
+
+```bash
+source venv/bin/activate
+pytest -v
+```
+
+Current architecture documentation:
+
+```text
+docs/architecture.md
+```
+
+<private-host> deployment documentation:
+
+```text
+docs/private-deployment-record.md
+```
+
+## Roadmap
+
+Planned work includes:
+
 - Docker deployment
+- packaged command-line installation
 - desktop application
-- Windows/macOS/Linux support
+- tray/menu-bar quota display
+- Windows support
+- macOS support
 
 ## License
 
-License to be selected before public release.
+A license will be selected before public release.
