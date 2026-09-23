@@ -24,12 +24,24 @@ SERVICE_USER="$(id -un)"
 SERVICE_GROUP="$(id -gn)"
 SERVICE_HOME="${HOME}"
 
-PYTHON_EXECUTABLE="${PROJECT_DIR}/venv/bin/python"
-CODEX_EXECUTABLE="$(command -v codex || true)"
+VENV_DIR="${PROJECT_DIR}/venv"
+DEFAULT_RUNTIME_PYTHON="${VENV_DIR}/bin/python"
+
+PYTHON_EXECUTABLE="${DEFAULT_RUNTIME_PYTHON}"
+PYTHON_EXPLICIT=0
+
+BOOTSTRAP_PYTHON="$(
+    command -v python3 || true
+)"
+
+CODEX_EXECUTABLE="$(
+    command -v codex || true
+)"
 
 SERVICE_PATH="${DEFAULT_SERVICE_PATH}"
 
 APPLY=0
+INSTALL_DEV=0
 
 
 usage() {
@@ -66,8 +78,28 @@ Options:
       Default: ${SERVICE_HOME}
 
   --python PATH
-      Python executable.
-      Default: ${PYTHON_EXECUTABLE}
+      Existing Python executable to use
+      for the installed application.
+
+      If omitted, the installer uses:
+        ${DEFAULT_RUNTIME_PYTHON}
+
+      If that default virtual environment
+      does not exist, --apply creates it.
+
+  --bootstrap-python PATH
+      Python used to create the virtual
+      environment when needed.
+
+      Default:
+        ${BOOTSTRAP_PYTHON:-not detected}
+
+  --venv PATH
+      Virtual environment directory used
+      when --python is not supplied.
+
+      Default:
+        ${VENV_DIR}
 
   --codex PATH
       Codex CLI executable.
@@ -75,13 +107,20 @@ Options:
 
   --service-path PATH
       Destination systemd unit.
-      Default: ${SERVICE_PATH}
+      Default:
+        ${SERVICE_PATH}
+
+  --dev
+      Install development dependencies
+      from requirements-dev.txt instead
+      of requirements.txt.
 
   --apply
-      Actually install/reinstall the service.
+      Create/install dependencies as needed
+      and install/reinstall the service.
 
   --dry-run
-      Validate and print the generated unit
+      Validate the proposed installation
       without changing the system.
       This is the default.
 
@@ -90,16 +129,21 @@ Options:
 
 Examples:
 
-  Dry run:
+  Fresh-machine dry run:
     scripts/install-linux.sh
 
-  Local-only service:
+  Fresh-machine local install:
     scripts/install-linux.sh --apply
 
-  LAN-accessible service:
-    scripts/install-linux.sh \\
-      --host 192.168.1.50 \\
-      --port 8093 \\
+  LAN-accessible install:
+    scripts/install-linux.sh \
+      --host 192.168.1.50 \
+      --port 8093 \
+      --apply
+
+  Existing Python environment:
+    scripts/install-linux.sh \
+      --python /path/to/venv/bin/python \
       --apply
 EOF
 }
@@ -124,57 +168,102 @@ ok() {
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --host)
-            [[ $# -ge 2 ]] || fail "--host requires a value"
+            [[ $# -ge 2 ]] \
+                || fail "--host requires a value"
+
             HOST="$2"
             shift 2
             ;;
 
         --port)
-            [[ $# -ge 2 ]] || fail "--port requires a value"
+            [[ $# -ge 2 ]] \
+                || fail "--port requires a value"
+
             PORT="$2"
             shift 2
             ;;
 
         --sample-seconds)
-            [[ $# -ge 2 ]] || fail "--sample-seconds requires a value"
+            [[ $# -ge 2 ]] \
+                || fail "--sample-seconds requires a value"
+
             SAMPLE_SECONDS="$2"
             shift 2
             ;;
 
         --user)
-            [[ $# -ge 2 ]] || fail "--user requires a value"
+            [[ $# -ge 2 ]] \
+                || fail "--user requires a value"
+
             SERVICE_USER="$2"
             shift 2
             ;;
 
         --group)
-            [[ $# -ge 2 ]] || fail "--group requires a value"
+            [[ $# -ge 2 ]] \
+                || fail "--group requires a value"
+
             SERVICE_GROUP="$2"
             shift 2
             ;;
 
         --home)
-            [[ $# -ge 2 ]] || fail "--home requires a value"
+            [[ $# -ge 2 ]] \
+                || fail "--home requires a value"
+
             SERVICE_HOME="$2"
             shift 2
             ;;
 
         --python)
-            [[ $# -ge 2 ]] || fail "--python requires a value"
+            [[ $# -ge 2 ]] \
+                || fail "--python requires a value"
+
             PYTHON_EXECUTABLE="$2"
+            PYTHON_EXPLICIT=1
+            shift 2
+            ;;
+
+        --bootstrap-python)
+            [[ $# -ge 2 ]] \
+                || fail "--bootstrap-python requires a value"
+
+            BOOTSTRAP_PYTHON="$2"
+            shift 2
+            ;;
+
+        --venv)
+            [[ $# -ge 2 ]] \
+                || fail "--venv requires a value"
+
+            VENV_DIR="$2"
+
+            if (( PYTHON_EXPLICIT == 0 )); then
+                PYTHON_EXECUTABLE="${VENV_DIR}/bin/python"
+            fi
+
             shift 2
             ;;
 
         --codex)
-            [[ $# -ge 2 ]] || fail "--codex requires a value"
+            [[ $# -ge 2 ]] \
+                || fail "--codex requires a value"
+
             CODEX_EXECUTABLE="$2"
             shift 2
             ;;
 
         --service-path)
-            [[ $# -ge 2 ]] || fail "--service-path requires a value"
+            [[ $# -ge 2 ]] \
+                || fail "--service-path requires a value"
+
             SERVICE_PATH="$2"
             shift 2
+            ;;
+
+        --dev)
+            INSTALL_DEV=1
+            shift
             ;;
 
         --apply)
@@ -210,14 +299,13 @@ fi
 [[ -f "${PROJECT_DIR}/app/cli.py" ]] \
     || fail "CLI not found: ${PROJECT_DIR}/app/cli.py"
 
-[[ -x "${PYTHON_EXECUTABLE}" ]] \
-    || fail "Python executable not found: ${PYTHON_EXECUTABLE}"
+[[ -f "${PROJECT_DIR}/requirements.txt" ]] \
+    || fail "requirements.txt was not found."
 
-[[ -n "${CODEX_EXECUTABLE}" ]] \
-    || fail "Codex CLI was not found."
-
-[[ -x "${CODEX_EXECUTABLE}" ]] \
-    || fail "Codex executable is not executable: ${CODEX_EXECUTABLE}"
+if (( INSTALL_DEV == 1 )); then
+    [[ -f "${PROJECT_DIR}/requirements-dev.txt" ]] \
+        || fail "requirements-dev.txt was not found."
+fi
 
 
 if ! [[ "${PORT}" =~ ^[0-9]+$ ]]; then
@@ -238,6 +326,13 @@ if (( SAMPLE_SECONDS < 10 )); then
 fi
 
 
+[[ -n "${CODEX_EXECUTABLE}" ]] \
+    || fail "Codex CLI was not found."
+
+[[ -x "${CODEX_EXECUTABLE}" ]] \
+    || fail "Codex executable is not executable: ${CODEX_EXECUTABLE}"
+
+
 command -v systemd-analyze >/dev/null 2>&1 \
     || fail "systemd-analyze was not found."
 
@@ -250,13 +345,125 @@ if (( APPLY == 1 )); then
 fi
 
 
+NEEDS_BOOTSTRAP=0
+
+if [[ ! -x "${PYTHON_EXECUTABLE}" ]]; then
+    if (( PYTHON_EXPLICIT == 1 )); then
+        fail "Python executable not found: ${PYTHON_EXECUTABLE}"
+    fi
+
+    NEEDS_BOOTSTRAP=1
+
+    [[ -n "${BOOTSTRAP_PYTHON}" ]] \
+        || fail "python3 was not found."
+
+    [[ -x "${BOOTSTRAP_PYTHON}" ]] \
+        || fail "Bootstrap Python is not executable: ${BOOTSTRAP_PYTHON}"
+fi
+
+
 cd "${PROJECT_DIR}"
+
+
+if (( NEEDS_BOOTSTRAP == 1 )); then
+    if (( APPLY == 0 )); then
+        info "Virtual environment is not present"
+
+        echo
+        echo "Dry run will not create:"
+        echo "  ${VENV_DIR}"
+        echo
+        echo "On --apply the installer would:"
+        echo "  1. Create the virtual environment"
+        echo "  2. Upgrade pip"
+        echo "  3. Install application dependencies"
+        echo
+    else
+        info "Creating virtual environment"
+
+        if ! "${BOOTSTRAP_PYTHON}" \
+            -m venv \
+            "${VENV_DIR}"
+        then
+            echo >&2
+            echo "Unable to create the Python virtual environment." >&2
+            echo >&2
+            echo "On Debian/Ubuntu, install the venv package if needed:" >&2
+            echo "  sudo apt install python3-venv" >&2
+            echo >&2
+            exit 1
+        fi
+
+        ok "Virtual environment created: ${VENV_DIR}"
+
+        PYTHON_EXECUTABLE="${VENV_DIR}/bin/python"
+    fi
+fi
+
+
+if (( APPLY == 1 )); then
+    [[ -x "${PYTHON_EXECUTABLE}" ]] \
+        || fail "Python executable not found after bootstrap: ${PYTHON_EXECUTABLE}"
+
+    info "Checking pip"
+
+    if ! "${PYTHON_EXECUTABLE}" \
+        -m pip \
+        --version \
+        >/dev/null 2>&1
+    then
+        fail "pip is unavailable in ${PYTHON_EXECUTABLE}"
+    fi
+
+    ok "pip is available"
+
+
+    info "Upgrading pip"
+
+    "${PYTHON_EXECUTABLE}" \
+        -m pip \
+        install \
+        --upgrade \
+        pip
+
+    ok "pip upgraded"
+
+
+    if (( INSTALL_DEV == 1 )); then
+        REQUIREMENTS_FILE="${PROJECT_DIR}/requirements-dev.txt"
+    else
+        REQUIREMENTS_FILE="${PROJECT_DIR}/requirements.txt"
+    fi
+
+    info "Installing Python dependencies"
+
+    "${PYTHON_EXECUTABLE}" \
+        -m pip \
+        install \
+        -r "${REQUIREMENTS_FILE}"
+
+    ok "Python dependencies installed"
+fi
+
+
+DOCTOR_PYTHON="${PYTHON_EXECUTABLE}"
+
+if [[ ! -x "${DOCTOR_PYTHON}" ]]; then
+    DOCTOR_PYTHON="${BOOTSTRAP_PYTHON}"
+fi
+
+
+[[ -n "${DOCTOR_PYTHON}" ]] \
+    || fail "No usable Python executable was found."
+
+[[ -x "${DOCTOR_PYTHON}" ]] \
+    || fail "Doctor Python is not executable: ${DOCTOR_PYTHON}"
 
 
 info "Running environment diagnostics"
 
 CODEX_BIN="${CODEX_EXECUTABLE}" \
-"${PYTHON_EXECUTABLE}" \
+"${DOCTOR_PYTHON}" \
     -m app.doctor
 
 ok "Environment diagnostics passed"
@@ -267,11 +474,27 @@ UNIT_FILE="$(
         "/tmp/${SERVICE_NAME}.XXXXXX.service"
 )"
 
+VERIFY_UNIT_FILE="$(
+    mktemp \
+        "/tmp/${SERVICE_NAME}.verify.XXXXXX.service"
+)"
+
+
 cleanup() {
-    rm -f "${UNIT_FILE}"
+    rm -f \
+        "${UNIT_FILE}" \
+        "${VERIFY_UNIT_FILE}"
 }
 
+
 trap cleanup EXIT
+
+
+if [[ -x "${PYTHON_EXECUTABLE}" ]]; then
+    UNIT_PYTHON="${PYTHON_EXECUTABLE}"
+else
+    UNIT_PYTHON="${VENV_DIR}/bin/python"
+fi
 
 
 info "Generating systemd unit"
@@ -280,20 +503,80 @@ CODEX_QUOTA_HOST="${HOST}" \
 CODEX_QUOTA_PORT="${PORT}" \
 CODEX_QUOTA_SAMPLE_SECONDS="${SAMPLE_SECONDS}" \
 CODEX_BIN="${CODEX_EXECUTABLE}" \
-"${PYTHON_EXECUTABLE}" \
-    -m app.cli service-unit \
-    --user "${SERVICE_USER}" \
-    --group "${SERVICE_GROUP}" \
-    --home "${SERVICE_HOME}" \
-    --python-executable "${PYTHON_EXECUTABLE}" \
-    --codex-executable "${CODEX_EXECUTABLE}" \
+"${DOCTOR_PYTHON}" \
+    -c '
+import sys
+
+from app.core.config import load_config
+from app.systemd import render_systemd_unit
+
+config = load_config()
+
+print(
+    render_systemd_unit(
+        config,
+        user=sys.argv[1],
+        group=sys.argv[2],
+        home=sys.argv[3],
+        python_executable=sys.argv[4],
+        codex_executable=sys.argv[5],
+    ),
+    end="",
+)
+' \
+    "${SERVICE_USER}" \
+    "${SERVICE_GROUP}" \
+    "${SERVICE_HOME}" \
+    "${UNIT_PYTHON}" \
+    "${CODEX_EXECUTABLE}" \
     > "${UNIT_FILE}"
 
 
 info "Validating systemd unit"
 
+if [[ -x "${UNIT_PYTHON}" ]]; then
+    cp \
+        "${UNIT_FILE}" \
+        "${VERIFY_UNIT_FILE}"
+else
+    CODEX_QUOTA_HOST="${HOST}" \
+    CODEX_QUOTA_PORT="${PORT}" \
+    CODEX_QUOTA_SAMPLE_SECONDS="${SAMPLE_SECONDS}" \
+    CODEX_BIN="${CODEX_EXECUTABLE}" \
+    "${DOCTOR_PYTHON}" \
+        -c '
+import sys
+
+from app.core.config import load_config
+from app.systemd import render_systemd_unit
+
+config = load_config()
+
+print(
+    render_systemd_unit(
+        config,
+        user=sys.argv[1],
+        group=sys.argv[2],
+        home=sys.argv[3],
+        python_executable=sys.argv[4],
+        codex_executable=sys.argv[5],
+    ),
+    end="",
+)
+' \
+        "${SERVICE_USER}" \
+        "${SERVICE_GROUP}" \
+        "${SERVICE_HOME}" \
+        "${DOCTOR_PYTHON}" \
+        "${CODEX_EXECUTABLE}" \
+        > "${VERIFY_UNIT_FILE}"
+
+    info "Using bootstrap Python for dry-run unit verification"
+fi
+
+
 systemd-analyze verify \
-    "${UNIT_FILE}"
+    "${VERIFY_UNIT_FILE}"
 
 ok "Generated systemd unit is valid"
 
@@ -313,15 +596,23 @@ if (( APPLY == 0 )); then
     echo "  ${SERVICE_PATH}"
     echo
     echo "Configuration:"
-    echo "  Project:  ${PROJECT_DIR}"
-    echo "  User:     ${SERVICE_USER}"
-    echo "  Group:    ${SERVICE_GROUP}"
-    echo "  HOME:     ${SERVICE_HOME}"
-    echo "  Python:   ${PYTHON_EXECUTABLE}"
-    echo "  Codex:    ${CODEX_EXECUTABLE}"
-    echo "  Host:     ${HOST}"
-    echo "  Port:     ${PORT}"
-    echo "  Sample:   ${SAMPLE_SECONDS}s"
+    echo "  Project:   ${PROJECT_DIR}"
+    echo "  User:      ${SERVICE_USER}"
+    echo "  Group:     ${SERVICE_GROUP}"
+    echo "  HOME:      ${SERVICE_HOME}"
+    echo "  Venv:      ${VENV_DIR}"
+    echo "  Python:    ${UNIT_PYTHON}"
+    echo "  Bootstrap: ${BOOTSTRAP_PYTHON:-not required}"
+    echo "  Codex:     ${CODEX_EXECUTABLE}"
+    echo "  Host:      ${HOST}"
+    echo "  Port:      ${PORT}"
+    echo "  Sample:    ${SAMPLE_SECONDS}s"
+
+    if (( INSTALL_DEV == 1 )); then
+        echo "  Packages:  development"
+    else
+        echo "  Packages:  runtime"
+    fi
 
     exit 0
 fi
@@ -330,6 +621,7 @@ fi
 TIMESTAMP="$(
     date '+%Y%m%d-%H%M%S'
 )"
+
 
 if sudo test -f "${SERVICE_PATH}"; then
     BACKUP_PATH="${SERVICE_PATH}.backup.${TIMESTAMP}"
@@ -428,7 +720,6 @@ if (( HEALTH_OK == 0 )); then
     echo
     echo "Inspect with:"
     echo "  systemctl status ${SERVICE_NAME} --no-pager -l"
-    echo
     echo "  journalctl -u ${SERVICE_NAME} -n 100 --no-pager"
     exit 1
 fi
@@ -445,6 +736,9 @@ echo "  http://${HEALTH_HOST}:${PORT}"
 echo
 echo "Service:"
 echo "  ${SERVICE_NAME}"
+echo
+echo "Python:"
+echo "  ${PYTHON_EXECUTABLE}"
 echo
 echo "Useful commands:"
 echo "  systemctl status ${SERVICE_NAME}"
