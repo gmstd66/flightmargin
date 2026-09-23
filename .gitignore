@@ -30,3 +30,6 @@ data/*.sqlite3
 Thumbs.db
 .vscode/
 .idea/
+
+# Pytest
+.pytest_cache/
