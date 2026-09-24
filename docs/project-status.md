@@ -97,6 +97,14 @@ Git history records these completed capabilities:
 
 Routine work belongs on `dev/productization`, not `main`. Before editing, fetch `origin`, ensure the local branch is synchronized with `origin/dev/productization`, and inspect the working tree. Complete milestones with tests, relevant documentation, a meaningful commit, a push to `origin/dev/productization`, and remote verification. Stop for a protected gate: merging to `main`, tagging or releasing, publication, production changes, destructive Git actions, or other decisions identified in `AGENTS.md`.
 
+## Product and distribution direction
+
+Codex Quota Monitor is intended to remain free to use and become open source. The planned sustainability model is voluntary donations and sponsorship only, initially through GitHub Sponsors; there will be no paywall or paid feature tier. Public installers and downloads are expected to be distributed through GitHub Releases when the project is ready for public release.
+
+The exact open-source license is intentionally unresolved. GPL, AGPL, or a related option are the current likely direction, but no license file or final license choice has been made. Before public distribution, pursue a free open-source Windows signing path such as SignPath Foundation if the project qualifies. Paid code-signing should be considered only if free signing is unavailable and the project justifies the expense.
+
+The remaining product/distribution decisions are: the exact license; the first public release version; final GUI and product review; whether and when to enable Tauri auto-update; and the final code-signing implementation once repository and public-license status are ready. Tauri auto-update remains optional and deferred until after GUI/product review. These decisions do not authorize making the repository public, creating a release, publishing installers, or changing runtime behavior.
+
 Known caveats:
 
 - Linux/systemd is the currently supported deployment model. The Windows-first desktop application is internal/beta ready but not a supported public distribution; signing, auto-update, public release packaging, and broad Windows compatibility validation remain pending. Docker feasibility was investigated in milestone 6.15 and self-contained Docker remains deferred; see `docs/docker-feasibility.md`.

@@ -16,6 +16,7 @@ Notable changes to Codex Quota Monitor are documented here. This file summarizes
 
 ### Changed
 
+- Recorded the planned free, open-source distribution model: voluntary GitHub Sponsors support, GitHub Releases for future public installers, and a preference for qualifying free open-source code signing.
 - Fixed Windows sidecar startup by passing the pre-bound loopback socket directly to Uvicorn.
 - Added Windows Tauri icon configuration, current shell-plugin compatibility, clear sidecar-startup and collector diagnostics, and process-tree shutdown for PyInstaller one-file sidecars.
 - Selected a current-user NSIS installer as the internal beta path and preserved per-user SQLite data on normal uninstall and upgrade.
