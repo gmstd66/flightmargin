@@ -10,6 +10,7 @@ not public-release artifacts and do not provide auto-update.
 - The log is rotated at 1 MB and retains one previous file. Do not add tokens,
   auth-file content, or quota payloads to these logs.
 - Normal uninstalls preserve this directory. An upgrade must preserve it too.
+- `desktop-preferences.json` stores dashboard layout and tray-indicator choice.
 
 ## Repeatable beta validation
 

@@ -30,6 +30,7 @@ const LOG_ROTATE_BYTES: u64 = 1_000_000;
 struct BackendChild(Mutex<Option<CommandChild>>);
 struct QuitState(AtomicBool);
 struct DesktopLog(Mutex<Option<File>>);
+struct TrayState(Mutex<Option<tauri::tray::TrayIcon>>);
 
 fn desktop_data_dir() -> PathBuf {
     #[cfg(windows)]
@@ -100,6 +101,25 @@ fn show_main_window(app: &tauri::AppHandle) {
     }
 }
 
+fn tray_indicator_enabled() -> bool {
+    let path = desktop_data_dir().join("desktop-preferences.json");
+    fs::read_to_string(path).ok()
+        .and_then(|text| serde_json::from_str::<serde_json::Value>(&text).ok())
+        .and_then(|value| value.get("tray_indicator").and_then(|enabled| enabled.as_bool()))
+        .unwrap_or(true)
+}
+
+fn update_tray_quota(app: &tauri::AppHandle, five: &str, weekly: &str) {
+    let tooltip = if tray_indicator_enabled() {
+        format!("Codex Quota Monitor\nWeekly remaining: {weekly}\n5-hour remaining: {five}")
+    } else {
+        "Codex Quota Monitor - monitoring".to_string()
+    };
+    if let Ok(state) = app.state::<TrayState>().0.lock() {
+        if let Some(tray) = state.as_ref() { let _ = tray.set_tooltip(Some(&tooltip)); }
+    }
+}
+
 fn wait_for_health(port: u16) -> Result<(), String> {
     let address = SocketAddr::from(([127, 0, 0, 1], port));
     let deadline = Instant::now() + Duration::from_secs(15);
@@ -165,6 +185,13 @@ fn start_backend(app: tauri::AppHandle) -> Result<(), String> {
                                 Err(error) => show_startup_error(&error_app, &error),
                             },
                             _ => show_startup_error(&error_app, "Desktop backend reported an invalid port"),
+                        }
+                    } else if let Some(values) = line.trim().strip_prefix("Quota sample: ") {
+                        let parts: Vec<_> = values.split_whitespace().collect();
+                        if parts.len() >= 2 {
+                            let five = parts[0].strip_prefix("5h=").unwrap_or("--");
+                            let weekly = parts[1].strip_prefix("weekly=").unwrap_or("--");
+                            update_tray_quota(&error_app, five, weekly);
                         }
                     }
                 }
@@ -259,6 +286,7 @@ fn setup_tray(app: &tauri::AppHandle) -> tauri::Result<()> {
             }
         })
         .build(app)?;
+    if let Some(tray) = app.tray_by_id("main-tray") { *app.state::<TrayState>().0.lock().expect("tray state lock") = Some(tray); }
     Ok(())
 }
 
@@ -275,6 +303,7 @@ fn main() {
         .manage(BackendChild(Mutex::new(None)))
         .manage(QuitState(AtomicBool::new(false)))
         .manage(DesktopLog::open())
+        .manage(TrayState(Mutex::new(None)))
         .setup(|app| {
             setup_tray(app.handle())?;
             if let Err(error) = start_backend(app.handle().clone()) {

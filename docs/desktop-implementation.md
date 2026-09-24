@@ -13,6 +13,11 @@ drag-swap placement, bounded card widths, visibility controls, and reset.
 Preferences are stored in `%LOCALAPPDATA%\Codex Quota Monitor\desktop-preferences.json`.
 Remaining quota is neutral above 25%, warning at 25% or less, and critical red
 at 10% or less. The PyInstaller sidecar is built with `--noconsole` on Windows.
+The single Windows tray icon is retained. After each existing collector sample,
+its tooltip shows `Weekly remaining: xx%` and `5-hour remaining: xx%`; the
+Settings tray preference returns the tooltip to the neutral monitoring label.
+Windows notification-area icons are too small for two readable percentage
+strings, so no text is rendered into the icon itself.
 
 ## Project layout
 
