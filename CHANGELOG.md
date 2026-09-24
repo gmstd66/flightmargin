@@ -9,6 +9,7 @@ Notable changes to Codex Quota Monitor are documented here. This file summarizes
 - Project continuity and milestone-handoff documentation.
 - Reproducible local wheel build, artifact verification, and isolated installed-wheel release check scripts.
 - Docker deployment feasibility findings and authentication-model investigation.
+- Native desktop architecture feasibility findings and a Windows-first implementation proposal.
 
 ### Changed
 

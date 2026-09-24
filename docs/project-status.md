@@ -89,6 +89,8 @@ Git history records these completed capabilities:
 - Systemd execution through the packaged `codex-quota` CLI.
 - Bounded-autonomy development policy.
 - Milestone 6.14: single-source versioning and a reproducible local wheel build, artifact verification, and isolated installed-artifact validation workflow.
+- Milestone 6.15: Docker feasibility and approved deferral of self-contained Docker distribution.
+- Milestone 6.16: native desktop feasibility; Tauri plus a packaged Python/FastAPI sidecar is recommended pending architecture approval and Windows-native validation.
 
 ## Branch workflow, caveats, and next work
 
@@ -101,7 +103,9 @@ Known caveats:
 - The dashboard has no built-in authentication and should remain local, trusted-LAN, or private-VPN only.
 - The service `WorkingDirectory` is the project root even though its executable is packaged; repository-based installation remains the documented workflow.
 
-Milestone 6.15 completed Docker deployment feasibility validation. Its primary conclusion is that direct containerized Codex app-server execution is blocked by Docker's default bubblewrap namespace restrictions, and several materially different deployment/authentication options remain. Human approval is required to select the next Docker architecture; see `docs/docker-feasibility.md`. The README roadmap also identifies desktop application, tray/menu-bar display, Windows, and macOS support; selecting a release or package-publication plan likewise requires the appropriate human decision gate first.
+Docker decision: self-contained Docker distribution is deferred because the current Codex app-server sandbox is not container-friendly under the tested Docker security profile. A host-bridge architecture is not currently justified. Native systemd remains the Linux/headless deployment model. Revisit Docker only if Codex gains a supported container-friendly execution model. See `docs/docker-feasibility.md` for the evidence.
+
+Desktop decision status: milestone 6.16 recommends a Windows-first Tauri 2 shell with a PyInstaller-packaged Python sidecar and loopback FastAPI, preserving the current dashboard and Codex integration. This remains subject to explicit architecture approval and real Windows validation before implementation. See `docs/desktop-feasibility.md`. The README roadmap also identifies tray/menu-bar enhancements, macOS, and other future support; selecting a release or package-publication plan likewise requires the appropriate human decision gate first.
 
 ## Instructions for future Codex sessions
 

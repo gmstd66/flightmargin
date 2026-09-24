@@ -282,6 +282,12 @@ Docker deployment feasibility, including Codex authentication and sandbox constr
 docs/docker-feasibility.md
 ```
 
+Native desktop feasibility, including the proposed Windows-first architecture, is documented in:
+
+```text
+docs/desktop-feasibility.md
+```
+
 ## License
 
 A license will be selected before public release.
