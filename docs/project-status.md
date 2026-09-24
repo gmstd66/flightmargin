@@ -90,7 +90,7 @@ Git history records these completed capabilities:
 - Bounded-autonomy development policy.
 - Milestone 6.14: single-source versioning and a reproducible local wheel build, artifact verification, and isolated installed-artifact validation workflow.
 - Milestone 6.15: Docker feasibility and approved deferral of self-contained Docker distribution.
-- Milestone 6.16: native desktop feasibility, approved Windows-first Tauri/PyInstaller/FastAPI-sidecar prototype, platform-specific data paths, Codex discovery fallbacks, dynamic loopback readiness, and Linux sidecar validation. See `docs/desktop-implementation.md`; Windows-native Tauri/installer validation remains required.
+- Milestone 6.16: native desktop feasibility, approved Windows-first Tauri/PyInstaller/FastAPI-sidecar prototype, platform-specific data paths, Codex discovery fallbacks, dynamic loopback readiness, Linux sidecar validation, and first Windows-native validation. On Windows 11, the built and installed unsigned Tauri artifact started the PyInstaller sidecar on an ephemeral loopback port, discovered authenticated host Codex through the npm wrapper, served quota/dashboard resources, persisted `%LOCALAPPDATA%\Codex Quota Monitor\quota.db`, and exited without sidecar residue. See `docs/desktop-implementation.md`.
 
 ## Branch workflow, caveats, and next work
 
@@ -98,14 +98,14 @@ Routine work belongs on `dev/productization`, not `main`. Before editing, fetch 
 
 Known caveats:
 
-- Linux/systemd is the currently supported deployment model. A Windows-first desktop prototype exists but is not yet a Windows-validated or supported distribution; tray/menu-bar, installer, signing, and auto-update work remain pending. Docker feasibility was investigated in milestone 6.15 and self-contained Docker remains deferred; see `docs/docker-feasibility.md`.
+- Linux/systemd is the currently supported deployment model. The Windows-first desktop prototype has passed native internal validation but is not a supported public distribution; tray/menu-bar, signing, auto-update, release packaging, and broad Windows compatibility validation remain pending. Docker feasibility was investigated in milestone 6.15 and self-contained Docker remains deferred; see `docs/docker-feasibility.md`.
 - Codex CLI availability, its authenticated user context, and the app-server rate-limit response are external dependencies.
 - The dashboard has no built-in authentication and should remain local, trusted-LAN, or private-VPN only.
 - The service `WorkingDirectory` is the project root even though its executable is packaged; repository-based installation remains the documented workflow.
 
 Docker decision: self-contained Docker distribution is deferred because the current Codex app-server sandbox is not container-friendly under the tested Docker security profile. A host-bridge architecture is not currently justified. Native systemd remains the Linux/headless deployment model. Revisit Docker only if Codex gains a supported container-friendly execution model. See `docs/docker-feasibility.md` for the evidence.
 
-Desktop decision status: milestone 6.16 approved and implemented a Windows-first Tauri 2 shell with a PyInstaller-packaged Python sidecar and loopback FastAPI, preserving the current dashboard and Codex integration. Linux validates the sidecar only; real Windows Tauri/installer/Codex validation remains required. See `docs/desktop-feasibility.md` and `docs/desktop-implementation.md`. The README roadmap also identifies tray/menu-bar enhancements, macOS, and other future support; selecting a release or package-publication plan likewise requires the appropriate human decision gate first.
+Desktop decision status: milestone 6.16 approved and implemented a Windows-first Tauri 2 shell with a PyInstaller-packaged Python sidecar and loopback FastAPI, preserving the current dashboard and Codex integration. Native Windows validation now covers the sidecar, Tauri compilation, unsigned MSI/NSIS artifacts, installed-app launch, authenticated Codex quota reads, app-data persistence, failure diagnostics, and sidecar-tree shutdown. See `docs/desktop-feasibility.md` and `docs/desktop-implementation.md`. The README roadmap also identifies tray/menu-bar enhancements, macOS, and other future support; selecting a release or package-publication plan likewise requires the appropriate human decision gate first.
 
 ## Instructions for future Codex sessions
 

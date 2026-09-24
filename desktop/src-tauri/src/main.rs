@@ -7,12 +7,25 @@ use std::{
 };
 
 use tauri::{Manager, RunEvent};
-use tauri_plugin_shell::{process::{Child, CommandEvent}, ShellExt};
+use tauri_plugin_shell::{process::{CommandChild, CommandEvent}, ShellExt};
 use url::Url;
 
 const READY_PREFIX: &str = "CODEX_QUOTA_DESKTOP_PORT=";
 
-struct BackendChild(Mutex<Option<Child>>);
+struct BackendChild(Mutex<Option<CommandChild>>);
+
+fn show_startup_error(app: &tauri::AppHandle, error: &str) {
+    eprintln!("{error}");
+
+    if let Some(window) = app.get_webview_window("main") {
+        let message = format!("{error:?}");
+        let script = format!(
+            "document.querySelector('h1').textContent = 'Codex Quota Monitor could not start'; \
+             document.getElementById('error').textContent = {message};"
+        );
+        let _ = window.eval(script);
+    }
+}
 
 fn wait_for_health(port: u16) -> Result<(), String> {
     let address = SocketAddr::from(([127, 0, 0, 1], port));
@@ -43,7 +56,7 @@ fn start_backend(app: tauri::AppHandle) -> Result<(), String> {
     let command = app
         .shell()
         .sidecar("codex-quota-backend")
-        .map_err(|error| format!("Unable to resolve desktop backend: {error}"))
+        .map_err(|error| format!("Unable to resolve desktop backend: {error}"))?
         .args(["--port", "0"]);
 
     let (mut events, child) = command
@@ -59,6 +72,7 @@ fn start_backend(app: tauri::AppHandle) -> Result<(), String> {
     let window = app
         .get_webview_window("main")
         .ok_or_else(|| "Main desktop window was not created".to_string())?;
+    let error_app = app.clone();
 
     tauri::async_runtime::spawn(async move {
         while let Some(event) = events.recv().await {
@@ -69,20 +83,29 @@ fn start_backend(app: tauri::AppHandle) -> Result<(), String> {
                         match port_text.parse::<u16>() {
                             Ok(port) if port != 0 => {
                                 if let Err(error) = wait_for_health(port) {
-                                    eprintln!("{error}");
+                                    show_startup_error(&error_app, &error);
                                     continue;
                                 }
                                 let dashboard_url = format!("http://127.0.0.1:{port}/");
                                 match Url::parse(&dashboard_url) {
                                     Ok(url) => {
                                         if let Err(error) = window.navigate(url) {
-                                            eprintln!("Unable to load dashboard: {error}");
+                                            show_startup_error(
+                                                &error_app,
+                                                &format!("Unable to load dashboard: {error}"),
+                                            );
                                         }
                                     }
-                                    Err(error) => eprintln!("Invalid backend URL: {error}"),
+                                    Err(error) => show_startup_error(
+                                        &error_app,
+                                        &format!("Invalid backend URL: {error}"),
+                                    ),
                                 }
                             }
-                            _ => eprintln!("Desktop backend reported an invalid port"),
+                            _ => show_startup_error(
+                                &error_app,
+                                "Desktop backend reported an invalid port",
+                            ),
                         }
                     } else {
                         println!("desktop backend: {}", line.trim_end());
@@ -112,6 +135,18 @@ fn stop_backend(app: &tauri::AppHandle) {
         .and_then(|mut state| state.take());
 
     if let Some(child) = child {
+        #[cfg(windows)]
+        {
+            let result = std::process::Command::new("taskkill")
+                .args(["/PID", &child.pid().to_string(), "/T", "/F"])
+                .status();
+
+            if let Err(error) = result {
+                eprintln!("Unable to stop desktop backend: {error}");
+            }
+        }
+
+        #[cfg(not(windows))]
         if let Err(error) = child.kill() {
             eprintln!("Unable to stop desktop backend: {error}");
         }
@@ -122,7 +157,12 @@ fn main() {
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .manage(BackendChild(Mutex::new(None)))
-        .setup(|app| start_backend(app.handle().clone()).map_err(Into::into))
+        .setup(|app| {
+            if let Err(error) = start_backend(app.handle().clone()) {
+                show_startup_error(app.handle(), &error);
+            }
+            Ok(())
+        })
         .build(tauri::generate_context!())
         .expect("error while building Codex Quota Monitor desktop shell");
 

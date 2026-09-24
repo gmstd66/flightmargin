@@ -1,6 +1,6 @@
 # Native Desktop Prototype Implementation
 
-Status: the first desktop prototype is implemented in the development branch. The Python sidecar and its loopback dashboard were validated on Linux. The Tauri project is configured but has not been compiled on this host because Rust/Cargo and Linux WebKit development prerequisites are absent. Windows remains the first intended desktop target and requires native validation before any supported distribution.
+Status: the first desktop prototype is implemented and has completed its first native Windows validation. The Python sidecar and loopback dashboard remain Linux-validated; the Tauri shell, unsigned internal installers, installed application, Codex integration, and Windows lifecycle were validated on Windows 11. This remains an internal prototype, not a public or signed distribution.
 
 ## Project layout
 
@@ -69,6 +69,18 @@ npm run tauri:dev
 
 Perform this checklist on a real Windows machine; do not treat Linux validation as evidence for any item below.
 
+## Windows-native validation record
+
+Milestone 6.16C was validated on Windows 11 Pro 10.0.26200 x64 with Python 3.14.3, PyInstaller 6.22.3, Node 24.19.0, npm 11.17.0, Rust/Cargo 1.98.1, Visual Studio Build Tools 2022 (MSVC 19.44.35229), Windows SDK 10.0.26100.0, and WebView2 Runtime 153.0.4234.48.
+
+- The native PyInstaller build produced `codex-quota-backend-x86_64-pc-windows-msvc.exe`. It started independently, announced an OS-selected `127.0.0.1` port, served the dashboard, CSS, JavaScript, health endpoint, and authenticated quota endpoint, and placed SQLite under `%LOCALAPPDATA%\Codex Quota Monitor` rather than beside the executable.
+- The native Tauri build produced unsigned MSI and NSIS artifacts at version 0.2.0. The NSIS artifact installed per-user and its installed application passed the same sidecar, dashboard, quota, persistence, restart, and shutdown checks.
+- On Windows, Uvicorn must receive the already-bound loopback socket through `Server.run(sockets=[listener])`; configuring it with `fd=` causes Uvicorn to attempt an unsupported `AF_UNIX` path. The socket-list form preserves the dynamic-port race protection.
+- The Tauri shell resolves the user-installed Codex CLI through PATH; the validated installation used the npm `codex.cmd` wrapper. `CODEX_BIN` override also worked. Isolated missing-Codex and missing-auth tests kept the sidecar running, exposed a collector error through `/api/health`, and returned a controlled 503 until a sample became available.
+- A one-file PyInstaller sidecar has a launcher and payload process on Windows. Desktop shutdown uses `taskkill /T /F` for the sidecar tree so normal window close terminates both levels without an orphan. There is no tray/background mode yet: closing the window exits the application.
+- If the sidecar cannot start, the Tauri loading page remains open and displays a startup error instead of panicking. The application can then be closed normally.
+- The artifacts are unsigned internal-test builds. Microsoft Defender real-time protection remained enabled and no detection was observed. The NSIS install was silent, so interactive SmartScreen behavior was not observed.
+
 1. Install Rust stable, Microsoft C++ Build Tools, Node.js LTS, and the Tauri prerequisites/WebView2 runtime.
 2. Install Python and PyInstaller in a dedicated build environment; run `python desktop/scripts/build-sidecar.py` and confirm `codex-quota-backend-x86_64-pc-windows-msvc.exe` is created.
 3. Run `npm install`, `npm run prepare`, and `npm run tauri:build` from `desktop/`; inspect the unsigned internal installer only, without publishing it.
@@ -83,6 +95,6 @@ Perform this checklist on a real Windows machine; do not treat Linux validation 
 ## Current limits
 
 - Tray, single-instance, autostart, auto-update, native notifications, and restart/backoff policy are intentionally not implemented in this prototype.
-- The Tauri project has not been Rust-compiled on Linux or Windows yet.
-- The Windows executable discovery path is tested as path-selection logic only, not against Windows Codex.
-- No desktop installer or release artifact is committed, published, signed, or installed.
+- Linux desktop shell compilation remains unverified.
+- Signing and release distribution remain unapproved.
+- No desktop installer or release artifact is committed, published, or signed. Local unsigned validation artifacts are development-only and must not be published.

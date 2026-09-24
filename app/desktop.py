@@ -74,13 +74,12 @@ def main(argv=None):
     server = uvicorn.Server(
         uvicorn.Config(
             app,
-            fd=listener.fileno(),
             log_level=args.log_level,
         )
     )
 
     try:
-        server.run()
+        server.run(sockets=[listener])
     finally:
         listener.close()
 

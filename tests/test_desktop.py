@@ -1,6 +1,10 @@
 import importlib.util
 import socket
+import sys
+import types
 from pathlib import Path
+
+import app.desktop as desktop_module
 
 from app.desktop import (
     LOOPBACK_HOST,
@@ -62,6 +66,41 @@ def test_desktop_socket_is_loopback_and_os_selects_port():
 
 def test_readiness_line_format():
     assert f"{READINESS_PREFIX}18001" == "CODEX_QUOTA_DESKTOP_PORT=18001"
+
+
+def test_desktop_server_uses_bound_socket(monkeypatch, tmp_path):
+    listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    listener.bind((LOOPBACK_HOST, 0))
+    listener.listen()
+    captured = {}
+
+    class FakeConfig:
+        def __init__(self, app, **kwargs):
+            captured["app"] = app
+            captured["config_kwargs"] = kwargs
+
+    class FakeServer:
+        def __init__(self, config):
+            captured["config"] = config
+
+        def run(self, sockets):
+            captured["sockets"] = sockets
+
+    try:
+        monkeypatch.setitem(
+            sys.modules,
+            "app.main",
+            types.SimpleNamespace(app=object()),
+        )
+        monkeypatch.setattr(desktop_module, "create_loopback_socket", lambda port: listener)
+        monkeypatch.setattr(desktop_module.uvicorn, "Config", FakeConfig)
+        monkeypatch.setattr(desktop_module.uvicorn, "Server", FakeServer)
+
+        assert desktop_module.main(["--data-dir", str(tmp_path)]) == 0
+        assert captured["sockets"] == [listener]
+        assert "fd" not in captured["config_kwargs"]
+    finally:
+        listener.close()
 
 
 def test_tauri_templates_use_canonical_version(tmp_path):
