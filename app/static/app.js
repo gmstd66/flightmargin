@@ -77,6 +77,49 @@ function updateWindow(prefix, data) {
         `${prefix}Bar`
     ).style.width =
         `${Math.max(0, Math.min(100, data.used))}%`;
+
+    const card = document.querySelector(`[data-panel="${prefix === "five" ? "five-hour" : prefix}"]`);
+    const remaining = data.remaining;
+    card.classList.remove("quota-warning", "quota-critical");
+    if (remaining !== null && remaining <= QUOTA_THRESHOLDS.critical) card.classList.add("quota-critical");
+    else if (remaining !== null && remaining <= QUOTA_THRESHOLDS.warning) card.classList.add("quota-warning");
+}
+
+const QUOTA_THRESHOLDS = Object.freeze({ warning: 25, critical: 10 });
+let preferences = null;
+
+async function savePreferences() {
+    const response = await fetch("/api/preferences", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(preferences) });
+    preferences = await response.json();
+    applyPreferences();
+}
+
+function applyPreferences() {
+    Object.entries(preferences.panels).forEach(([id, panel]) => {
+        const element = document.querySelector(`[data-panel="${id}"]`);
+        element.hidden = !panel.visible;
+        element.style.setProperty("--column", panel.column);
+        element.style.setProperty("--row", panel.row);
+        element.style.setProperty("--width", panel.width);
+        element.style.setProperty("--height", panel.height);
+    });
+    document.getElementById("trayIndicator").checked = preferences.tray_indicator;
+}
+
+function renderSettings() {
+    const target = document.getElementById("panelSettings");
+    target.replaceChildren(...Object.entries(preferences.panels).map(([id, panel]) => {
+        const row = document.createElement("div"); row.className = "setting-row";
+        row.innerHTML = `<label><input type="checkbox" data-visible="${id}" ${panel.visible ? "checked" : ""}> ${id}</label><span><button type="button" data-size="${id}" data-delta="-1">−</button><button type="button" data-size="${id}" data-delta="1">+</button></span>`;
+        return row;
+    }));
+}
+
+async function loadPreferences() {
+    preferences = await (await fetch("/api/preferences", { cache: "no-store" })).json();
+    applyPreferences(); renderSettings();
+    document.querySelectorAll("[data-visible]").forEach(input => input.addEventListener("change", async event => { preferences.panels[event.target.dataset.visible].visible = event.target.checked; await savePreferences(); }));
+    document.querySelectorAll("[data-size]").forEach(button => button.addEventListener("click", async event => { const panel = preferences.panels[event.target.dataset.size]; panel.width = Math.max(1, Math.min(4, panel.width + Number(event.target.dataset.delta))); await savePreferences(); }));
 }
 
 
@@ -621,6 +664,19 @@ document.getElementById(
 );
 
 
+document.getElementById("settings").addEventListener("click", () => document.getElementById("settingsDialog").showModal());
+document.getElementById("trayIndicator").addEventListener("change", async event => { preferences.tray_indicator = event.target.checked; await savePreferences(); });
+document.getElementById("resetLayout").addEventListener("click", async () => { preferences = await (await fetch("/api/preferences/reset", { method: "POST" })).json(); applyPreferences(); renderSettings(); });
+
+let draggedPanel = null;
+document.querySelectorAll(".panel").forEach(panel => {
+    panel.addEventListener("dragstart", () => { draggedPanel = panel; panel.classList.add("dragging"); });
+    panel.addEventListener("dragend", () => panel.classList.remove("dragging"));
+    panel.addEventListener("dragover", event => event.preventDefault());
+    panel.addEventListener("drop", async event => { event.preventDefault(); if (!draggedPanel || draggedPanel === panel) return; const a = preferences.panels[draggedPanel.dataset.panel]; const b = preferences.panels[panel.dataset.panel]; [a.column,b.column]=[b.column,a.column]; [a.row,b.row]=[b.row,a.row]; await savePreferences(); });
+});
+
+loadPreferences().catch(error => { document.getElementById("status").textContent = `Settings unavailable: ${error.message}`; });
 reloadAll();
 
 

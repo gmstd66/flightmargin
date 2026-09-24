@@ -11,10 +11,10 @@
       {
         "label": "main",
         "title": "Codex Quota Monitor",
-        "width": 1200,
-        "height": 850,
-        "minWidth": 900,
-        "minHeight": 650,
+        "width": 760,
+        "height": 620,
+        "minWidth": 620,
+        "minHeight": 500,
         "visible": true
       }
     ],

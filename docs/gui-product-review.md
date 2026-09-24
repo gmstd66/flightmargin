@@ -5,6 +5,9 @@ This is an owner-led review of the internal Windows desktop build at version
 Record observations and decisions separately; this checklist deliberately does
 not prescribe a redesign.
 
+The current review build adds a compact 760×620 default window, dashboard
+Settings, grid drag-swap, bounded card resizing, panel visibility, and reset.
+
 ## Launch
 
 1. Start Codex Quota Monitor from the Start menu.

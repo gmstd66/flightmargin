@@ -7,6 +7,13 @@ It records the present dashboard, diagnostics, and tray behavior in
 `docs/gui-product-review.md`; it does not authorize a public release, license
 selection, signing implementation, or Tauri auto-update.
 
+Milestone 6.19 reduces the Windows shell from 1200×850 (minimum 900×650) to
+760×620 (minimum 620×500). The dashboard uses a four-column snap grid with
+drag-swap placement, bounded card widths, visibility controls, and reset.
+Preferences are stored in `%LOCALAPPDATA%\Codex Quota Monitor\desktop-preferences.json`.
+Remaining quota is neutral above 25%, warning at 25% or less, and critical red
+at 10% or less. The PyInstaller sidecar is built with `--noconsole` on Windows.
+
 ## Project layout
 
 ```text

@@ -20,6 +20,7 @@ from app.adapters.codex_stdio import (
 from app.core.config import (
     load_config,
 )
+from app.desktop_preferences import default_preferences, load_preferences, save_preferences
 
 from app.core.metrics import (
     enrich_sample,
@@ -340,6 +341,21 @@ async def history(
         "hours": hours,
         "samples": samples,
     }
+
+
+@app.get("/api/preferences")
+async def preferences():
+    return load_preferences(config.data_dir)
+
+
+@app.put("/api/preferences")
+async def update_preferences(preferences: dict):
+    return save_preferences(config.data_dir, preferences)
+
+
+@app.post("/api/preferences/reset")
+async def reset_preferences():
+    return save_preferences(config.data_dir, default_preferences())
 
 
 @app.get("/api/health")

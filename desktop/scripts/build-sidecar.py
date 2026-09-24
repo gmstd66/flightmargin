@@ -76,6 +76,8 @@ def main(argv=None):
         str(BUILD_ROOT / "spec"),
         str(PROJECT_ROOT / "app" / "desktop.py"),
     ]
+    if sys.platform == "win32":
+        command.append("--noconsole")
     subprocess.run(command, check=True)
 
     source = BUILD_ROOT / "dist" / executable_name
