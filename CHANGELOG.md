@@ -13,6 +13,7 @@ Notable changes to Codex Quota Monitor are documented here. This file summarizes
 - Windows-first desktop prototype: Tauri 2 shell scaffold, PyInstaller sidecar build, loopback readiness protocol, desktop data paths, and cross-platform Codex discovery.
 - Native Windows internal validation for the Tauri/PyInstaller desktop prototype, including unsigned MSI and NSIS artifacts, installed-app startup, host Codex discovery, authenticated quota collection, and app-data persistence.
 - Windows beta desktop lifecycle: tray controls, single-instance activation, opt-in start-at-login, bounded local shell logs, and a repeatable Windows beta checklist.
+- Owner GUI/product review walkthrough for the internal Windows desktop build.
 
 ### Changed
 
@@ -20,6 +21,7 @@ Notable changes to Codex Quota Monitor are documented here. This file summarizes
 - Fixed Windows sidecar startup by passing the pre-bound loopback socket directly to Uvicorn.
 - Added Windows Tauri icon configuration, current shell-plugin compatibility, clear sidecar-startup and collector diagnostics, and process-tree shutdown for PyInstaller one-file sidecars.
 - Selected a current-user NSIS installer as the internal beta path and preserved per-user SQLite data on normal uninstall and upgrade.
+- Standardized the dashboard title on Codex Quota Monitor and made collector status updates accessible to screen readers.
 
 - Made `app.version.__version__` the canonical application version used by setuptools metadata, the CLI, API responses, and Codex app-server client identification.
 

@@ -2,6 +2,11 @@
 
 Status: the Windows desktop shell is internal/beta ready after native validation. It remains unsigned and is not a public or signed distribution.
 
+Milestone 6.18 prepares the current 0.2.0 build for owner GUI/product review.
+It records the present dashboard, diagnostics, and tray behavior in
+`docs/gui-product-review.md`; it does not authorize a public release, license
+selection, signing implementation, or Tauri auto-update.
+
 ## Project layout
 
 ```text

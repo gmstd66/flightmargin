@@ -92,6 +92,7 @@ Git history records these completed capabilities:
 - Milestone 6.15: Docker feasibility and approved deferral of self-contained Docker distribution.
 - Milestone 6.16: native desktop feasibility, approved Windows-first Tauri/PyInstaller/FastAPI-sidecar prototype, platform-specific data paths, Codex discovery fallbacks, dynamic loopback readiness, Linux sidecar validation, and first Windows-native validation. On Windows 11, the built and installed unsigned Tauri artifact started the PyInstaller sidecar on an ephemeral loopback port, discovered authenticated host Codex through the npm wrapper, served quota/dashboard resources, persisted `%LOCALAPPDATA%\Codex Quota Monitor\quota.db`, and exited without sidecar residue. See `docs/desktop-implementation.md`.
 - Milestone 6.17: Windows beta polish adds tray/background lifecycle, single-instance activation, opt-in start-at-login, controlled startup/crash diagnostics, bounded local shell logs, a current-user NSIS beta installer preference, and `docs/windows-beta.md` for repeatable validation. Public signing, update distribution, and release approval remain separate gates.
+- Milestone 6.18: prepares the current Windows desktop beta for owner GUI/product review, with a documented UI inventory and review walkthrough. Public release, license, signing, and auto-update decisions remain deferred.
 
 ## Branch workflow, caveats, and next work
 
