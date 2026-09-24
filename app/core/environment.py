@@ -5,6 +5,8 @@ import subprocess
 import tempfile
 from pathlib import Path
 
+from app.adapters.codex_stdio import windows_hidden_subprocess_kwargs
+
 
 def detect_platform():
     return {
@@ -95,6 +97,7 @@ def get_codex_version(executable=None):
             text=True,
             timeout=10,
             check=False,
+            **windows_hidden_subprocess_kwargs(),
         )
     except (OSError, subprocess.TimeoutExpired):
         return None

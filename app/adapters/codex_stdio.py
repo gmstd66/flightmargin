@@ -11,6 +11,19 @@ from app.version import (
 )
 
 
+def windows_hidden_subprocess_kwargs(system_name=None):
+    """Prevent desktop-invoked Windows CLI wrappers from allocating a console."""
+    if (system_name or os.name) != "nt":
+        return {}
+    startupinfo = subprocess.STARTUPINFO()
+    startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+    startupinfo.wShowWindow = subprocess.SW_HIDE
+    return {
+        "creationflags": subprocess.CREATE_NO_WINDOW,
+        "startupinfo": startupinfo,
+    }
+
+
 class CodexNotFoundError(RuntimeError):
     pass
 
@@ -74,6 +87,7 @@ class CodexAppServer:
             stderr=None,
             text=True,
             bufsize=1,
+            **windows_hidden_subprocess_kwargs(),
         )
 
         self.reader_thread = (
