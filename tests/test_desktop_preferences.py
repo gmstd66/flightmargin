@@ -11,6 +11,7 @@ from app.desktop_preferences import (
 
 def test_default_preferences_cover_each_panel_and_enable_tray_indicator():
     preferences = default_preferences()
+    assert preferences["layout_schema"] == 2
     assert preferences["tray_indicator"] is True
     assert set(preferences["panels"]) == set(PANEL_IDS)
 
@@ -34,3 +35,9 @@ def test_preferences_clamp_panel_grid_values(tmp_path):
     preferences["panels"]["weekly"]["width"] = 99
     save_preferences(tmp_path, preferences)
     assert load_preferences(tmp_path)["panels"]["weekly"]["width"] == 2
+
+
+def test_legacy_preferences_keep_unrelated_tray_choice(tmp_path):
+    save_preferences(tmp_path, {"tray_indicator": False, "panels": {}})
+    assert load_preferences(tmp_path)["tray_indicator"] is False
+    assert load_preferences(tmp_path)["layout_schema"] == 2

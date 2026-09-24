@@ -184,3 +184,24 @@ canvas {
 .quota-critical .card-heading strong { color: #ff6b6b; }
 
 @media (max-width: 700px) { .container { width:min(96%,1100px); padding-top:24px; } .dashboard-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .panel { grid-column:auto / span 2; grid-row:auto; } .panel[data-panel="resets"], .panel[data-panel="account"] { grid-column:auto / span 1; } }
+
+/* Compact desktop utility defaults. */
+.container { width: min(1000px, 96%); padding: 12px 0 16px; }
+header { margin-bottom: 10px; }
+h1 { font-size: 21px; }
+header p { margin: 2px 0 0; font-size: 12px; }
+button { padding: 6px 10px; }
+.dashboard-grid { grid-auto-rows: 78px; gap: 7px; }
+.panel { position: relative; }
+.card { padding: 10px; }
+.card-heading { gap: 8px; margin-bottom: 8px; }
+.card-heading strong { font-size: 18px; }
+.progress { height: 8px; }
+.stats { margin-top: 6px; font-size: 11px; }
+.large-value { margin-top: 8px; font-size: 24px; }
+.card p { margin: 6px 0 0; line-height: 1.25; font-size: 12px; }
+.pace { margin-top: 8px; font-size: 21px; }
+.pace-ratio { font-size: 14px; }
+.history-heading { margin-bottom: 5px; }
+.history-heading h2 { margin: 2px 0 0; font-size: 16px; }
+.resize-handle { position:absolute; right:5px; bottom:5px; width:12px; height:12px; border-right:2px solid #8f949d; border-bottom:2px solid #8f949d; cursor:nwse-resize; }

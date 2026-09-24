@@ -263,7 +263,7 @@ function drawHistory(samples) {
         rect.width * ratio;
 
     canvas.height =
-        290 * ratio;
+        150 * ratio;
 
     const ctx =
         canvas.getContext("2d");
@@ -271,12 +271,12 @@ function drawHistory(samples) {
     ctx.scale(ratio, ratio);
 
     const width = rect.width;
-    const height = 290;
+    const height = 150;
 
     const left = 46;
     const right = 12;
     const top = 15;
-    const bottom = 50;
+    const bottom = 34;
 
     const graphWidth =
         width - left - right;
@@ -670,6 +670,22 @@ document.getElementById("resetLayout").addEventListener("click", async () => { p
 
 let draggedPanel = null;
 document.querySelectorAll(".panel").forEach(panel => {
+    const resizeHandle = document.createElement("span");
+    resizeHandle.className = "resize-handle";
+    resizeHandle.title = "Resize panel";
+    panel.append(resizeHandle);
+    resizeHandle.addEventListener("pointerdown", event => {
+        event.preventDefault(); event.stopPropagation();
+        const panelState = preferences.panels[panel.dataset.panel];
+        const startX = event.clientX, startY = event.clientY, startWidth = panelState.width, startHeight = panelState.height;
+        const finish = async move => {
+            const grid = document.getElementById("dashboardGrid").getBoundingClientRect();
+            panelState.width = Math.max(1, Math.min(4, startWidth + Math.round((move.clientX - startX) / (grid.width / 4))));
+            panelState.height = Math.max(1, Math.min(4, startHeight + Math.round((move.clientY - startY) / 78)));
+            window.removeEventListener("pointerup", finish); await savePreferences();
+        };
+        window.addEventListener("pointerup", finish, { once: true });
+    });
     panel.addEventListener("dragstart", () => { draggedPanel = panel; panel.classList.add("dragging"); });
     panel.addEventListener("dragend", () => panel.classList.remove("dragging"));
     panel.addEventListener("dragover", event => event.preventDefault());

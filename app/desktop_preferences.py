@@ -7,6 +7,7 @@ from pathlib import Path
 
 PANEL_IDS = ("five-hour", "weekly", "pace", "resets", "account", "history")
 DEFAULT_PREFERENCES = {
+    "layout_schema": 2,
     "tray_indicator": True,
     "panels": {
         "five-hour": {"visible": True, "column": 1, "row": 1, "width": 2, "height": 1},
