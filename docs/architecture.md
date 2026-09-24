@@ -108,7 +108,7 @@ The current prototype assumes:
 - local browser/network access
 - SQLite filesystem access
 
-Some code currently contains deployment-specific paths and assumptions that will be removed during the portable-core refactor.
+Runtime configuration is centralized in `app.core.config`; deployment-specific paths can be supplied through environment variables and the installer-generated systemd unit.
 
 ## Security model
 
@@ -117,4 +117,3 @@ The application does not store ChatGPT passwords or manually managed API credent
 It relies on the existing authenticated Codex CLI environment.
 
 The dashboard currently has no application-level authentication and is intended for trusted local/LAN use only.
-

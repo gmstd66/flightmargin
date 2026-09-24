@@ -114,6 +114,21 @@ For an approved milestone, work through the full loop autonomously:
 
 A milestone should be returned to the human only when it is complete, blocked by a decision gate, or blocked by an external limitation.
 
+## Project continuity and Git history
+
+Git is the detailed engineering record for this project. The continuity documents summarize that history for efficient handoff; they do not replace it.
+
+For every meaningful milestone, Codex must maintain the following as part of the development work:
+
+- `docs/project-status.md` must reflect the current technical and operational state, completed work, constraints, and near-term plan.
+- `CHANGELOG.md` must record meaningful product and release changes in a readable, product-facing form.
+- Update the README and affected technical documentation when implementation changes make them stale.
+- Include documentation updates in the same milestone commit whenever practical.
+- Keep Git commits and the GitHub branch state synchronized after completed milestones.
+- Push completed milestone work to `origin/dev/productization`.
+
+Codex must stop for explicit human approval before merging to `main`, tagging a release, publishing a package, creating a GitHub release, changing production, or crossing any other protected gate listed in this policy.
+
 ## Completion report
 
 At the end of each milestone, report:

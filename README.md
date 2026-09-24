@@ -243,7 +243,6 @@ docs/private-deployment-record.md
 Planned work includes:
 
 - Docker deployment
-- packaged command-line installation
 - desktop application
 - tray/menu-bar quota display
 - Windows support
