@@ -13,6 +13,8 @@
         "title": "Codex Quota Monitor",
         "width": 1200,
         "height": 850,
+        "minWidth": 900,
+        "minHeight": 650,
         "visible": true
       }
     ],
@@ -22,12 +24,18 @@
   },
   "bundle": {
     "active": true,
-    "targets": "all",
+    "targets": ["nsis"],
     "icon": [
       "icons/icon.ico"
     ],
     "externalBin": [
       "binaries/codex-quota-backend"
-    ]
+    ],
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser",
+        "startMenuFolder": "Codex Quota Monitor"
+      }
+    }
   }
 }

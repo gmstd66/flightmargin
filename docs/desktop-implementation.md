@@ -1,6 +1,6 @@
 # Native Desktop Prototype Implementation
 
-Status: the first desktop prototype is implemented and has completed its first native Windows validation. The Python sidecar and loopback dashboard remain Linux-validated; the Tauri shell, unsigned internal installers, installed application, Codex integration, and Windows lifecycle were validated on Windows 11. This remains an internal prototype, not a public or signed distribution.
+Status: the Windows desktop shell is internal/beta ready after native validation. It remains unsigned and is not a public or signed distribution.
 
 ## Project layout
 
@@ -77,7 +77,7 @@ Milestone 6.16C was validated on Windows 11 Pro 10.0.26200 x64 with Python 3.14.
 - The native Tauri build produced unsigned MSI and NSIS artifacts at version 0.2.0. The NSIS artifact installed per-user and its installed application passed the same sidecar, dashboard, quota, persistence, restart, and shutdown checks.
 - On Windows, Uvicorn must receive the already-bound loopback socket through `Server.run(sockets=[listener])`; configuring it with `fd=` causes Uvicorn to attempt an unsupported `AF_UNIX` path. The socket-list form preserves the dynamic-port race protection.
 - The Tauri shell resolves the user-installed Codex CLI through PATH; the validated installation used the npm `codex.cmd` wrapper. `CODEX_BIN` override also worked. Isolated missing-Codex and missing-auth tests kept the sidecar running and surfaced the collector diagnostic through `/api/health` and the dashboard's controlled 503 response until a sample became available.
-- A one-file PyInstaller sidecar has a launcher and payload process on Windows. Desktop shutdown uses `taskkill /T /F` for the sidecar tree so normal window close terminates both levels without an orphan. There is no tray/background mode yet: closing the window exits the application.
+- A one-file PyInstaller sidecar has a launcher and payload process on Windows. Explicit tray **Quit** uses `taskkill /T /F` for the sidecar tree. Closing the dashboard hides it to the tray so monitoring continues; **Open** restores it. The official Tauri single-instance and autostart plugins prevent duplicate collectors and provide an opt-in **Start at login** tray-menu setting.
 - If the sidecar cannot start, the Tauri loading page remains open and displays a startup error instead of panicking. The application can then be closed normally.
 - The artifacts are unsigned internal-test builds. Microsoft Defender real-time protection remained enabled and no detection was observed. The NSIS install was silent, so interactive SmartScreen behavior was not observed.
 
@@ -94,7 +94,10 @@ Milestone 6.16C was validated on Windows 11 Pro 10.0.26200 x64 with Python 3.14.
 
 ## Current limits
 
-- Tray, single-instance, autostart, auto-update, native notifications, and restart/backoff policy are intentionally not implemented in this prototype.
+- Tray lifecycle, single-instance handling, opt-in start-at-login, and bounded local desktop logging are implemented for the Windows beta. An unexpected sidecar exit presents a controlled diagnostic; reopening the application starts a fresh sidecar.
+- The primary internal beta installer is current-user NSIS. It preserves `%LOCALAPPDATA%\Codex Quota Monitor` on ordinary uninstall and upgrade. MSI output is no longer a primary beta path.
+- Shell logs are `%LOCALAPPDATA%\Codex Quota Monitor\logs\desktop.log`, rotate at 1 MB, and keep one prior file. They must never contain credentials, authentication-file content, or quota payloads.
+- Auto-update, native notifications, signed/public distribution, and broad Windows compatibility validation remain pending.
 - Linux desktop shell compilation remains unverified.
 - Signing and release distribution remain unapproved.
 - No desktop installer or release artifact is committed, published, or signed. Local unsigned validation artifacts are development-only and must not be published.

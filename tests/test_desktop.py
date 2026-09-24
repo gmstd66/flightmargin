@@ -14,6 +14,7 @@ from app.desktop import (
     parse_args,
 )
 from app.version import __version__
+from app.core.config import default_desktop_log_dir
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -111,3 +112,13 @@ def test_tauri_templates_use_canonical_version(tmp_path):
         module.render_template(source, destination)
         assert "__APP_VERSION__" not in destination.read_text(encoding="utf-8")
         assert __version__ in destination.read_text(encoding="utf-8")
+
+
+def test_windows_desktop_logs_share_the_application_data_root():
+    local_app_data = Path("C:/Users/test/AppData/Local")
+
+    assert default_desktop_log_dir(
+        system="Windows",
+        environ={"LOCALAPPDATA": str(local_app_data)},
+        home="C:/Users/test",
+    ) == local_app_data / "Codex Quota Monitor" / "logs"

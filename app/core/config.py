@@ -129,6 +129,19 @@ def default_user_data_dir_from(
     return home / ".local" / "share" / DEFAULT_APP_DATA_NAME
 
 
+def default_desktop_log_dir(
+    system=None,
+    environ=None,
+    home=None,
+):
+    """Return the desktop log directory beside the per-user SQLite data."""
+    return default_desktop_data_dir(
+        system=system,
+        environ=environ,
+        home=home,
+    ) / "logs"
+
+
 def default_data_dir(
     app_root,
 ):
