@@ -26,6 +26,8 @@ use url::Url;
 const READY_PREFIX: &str = "CODEX_QUOTA_DESKTOP_PORT=";
 const DATA_DIRECTORY_NAME: &str = "Codex Quota Monitor";
 const LOG_ROTATE_BYTES: u64 = 1_000_000;
+const WEEKLY_INDICATOR_ID: &str = "weekly-quota-indicator";
+const FIVE_HOUR_INDICATOR_ID: &str = "five-hour-quota-indicator";
 
 struct BackendChild(Mutex<Option<CommandChild>>);
 struct QuitState(AtomicBool);
@@ -118,6 +120,55 @@ fn update_tray_quota(app: &tauri::AppHandle, five: &str, weekly: &str) {
     if let Ok(state) = app.state::<TrayState>().0.lock() {
         if let Some(tray) = state.as_ref() { let _ = tray.set_tooltip(Some(&tooltip)); }
     }
+    sync_quota_indicators(app, five, weekly);
+}
+
+fn quota_color(value: Option<u8>) -> [u8; 4] {
+    match value {
+        Some(value) if value <= 10 => [235, 75, 75, 255],
+        Some(value) if value <= 25 => [246, 196, 83, 255],
+        Some(_) => [225, 229, 235, 255],
+        None => [125, 130, 139, 255],
+    }
+}
+
+fn fill(pixels: &mut [u8], x: usize, y: usize, width: usize, height: usize, color: [u8; 4]) {
+    for row in y..(y + height).min(32) { for column in x..(x + width).min(32) {
+        let index = (row * 32 + column) * 4; pixels[index..index + 4].copy_from_slice(&color);
+    }}
+}
+
+fn quota_icon(value: Option<u8>, marker: [u8; 4]) -> tauri::image::Image<'static> {
+    let mut pixels = vec![0; 32 * 32 * 4];
+    fill(&mut pixels, 0, 0, 32, 4, marker);
+    let segments = [[1,1,1,1,1,1,0],[0,1,1,0,0,0,0],[1,1,0,1,1,0,1],[1,1,1,1,0,0,1],[0,1,1,0,0,1,1],[1,0,1,1,0,1,1],[1,0,1,1,1,1,1],[1,1,1,0,0,0,0],[1,1,1,1,1,1,1],[1,1,1,1,0,1,1]];
+    let text = value.map(|number| number.to_string()).unwrap_or_else(|| "--".to_string());
+    let color = quota_color(value);
+    for (position, character) in text.chars().enumerate() {
+        if let Some(digit) = character.to_digit(10) { let x = 3 + position * 14; let s = segments[digit as usize];
+            if s[0] == 1 { fill(&mut pixels,x+2,7,8,2,color) } if s[1] == 1 { fill(&mut pixels,x+10,9,2,8,color) }
+            if s[2] == 1 { fill(&mut pixels,x+10,18,2,8,color) } if s[3] == 1 { fill(&mut pixels,x+2,26,8,2,color) }
+            if s[4] == 1 { fill(&mut pixels,x,18,2,8,color) } if s[5] == 1 { fill(&mut pixels,x,9,2,8,color) }
+            if s[6] == 1 { fill(&mut pixels,x+2,17,8,2,color) }
+        } else { fill(&mut pixels, 4 + position * 14, 17, 8, 2, color); }
+    }
+    tauri::image::Image::new_owned(pixels, 32, 32)
+}
+
+fn sync_indicator(app: &tauri::AppHandle, id: &str, value: Option<u8>, marker: [u8; 4], label: &str) {
+    let tooltip = value.map(|value| format!("{label} remaining: {value}%")).unwrap_or_else(|| format!("{label} remaining: unavailable"));
+    if let Some(icon) = app.tray_by_id(id) { let _ = icon.set_icon(Some(quota_icon(value, marker))); let _ = icon.set_tooltip(Some(tooltip)); return; }
+    let _ = TrayIconBuilder::with_id(id).icon(quota_icon(value, marker)).tooltip(tooltip).build(app);
+}
+
+fn sync_quota_indicators(app: &tauri::AppHandle, five: &str, weekly: &str) {
+    if !tray_indicator_enabled() {
+        let _ = app.remove_tray_by_id(WEEKLY_INDICATOR_ID);
+        let _ = app.remove_tray_by_id(FIVE_HOUR_INDICATOR_ID);
+        return;
+    }
+    sync_indicator(app, WEEKLY_INDICATOR_ID, weekly.trim_end_matches('%').parse().ok(), [83, 150, 246, 255], "Weekly");
+    sync_indicator(app, FIVE_HOUR_INDICATOR_ID, five.trim_end_matches('%').parse().ok(), [168, 85, 247, 255], "5-hour");
 }
 
 fn wait_for_health(port: u16) -> Result<(), String> {
