@@ -292,7 +292,7 @@ def test_desktop_mode_uses_desktop_data_directory(
 
     config = load_config()
 
-    assert config.data_dir == tmp_path / "xdg" / DEFAULT_APP_DATA_NAME
+    assert config.data_dir == default_desktop_data_dir()
     assert config.database_path == config.data_dir / "quota.db"
 
     xdg_home = (

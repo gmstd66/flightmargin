@@ -1,5 +1,5 @@
 import sys
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 from app.core.config import AppConfig
 from app.core.environment import find_codex
@@ -28,12 +28,21 @@ def _systemd_quote(value):
     return f'"{value}"'
 
 
+def _systemd_path(value):
+    """Render a path for a systemd unit, which always uses POSIX syntax."""
+    return str(
+        PurePosixPath(
+            str(value).replace("\\", "/")
+        )
+    )
+
+
 def build_service_path(
     executable,
 ):
     executable_dir = str(
-        Path(
-            executable
+        PurePosixPath(
+            _systemd_path(executable)
         ).parent
     )
 
@@ -56,9 +65,11 @@ def render_systemd_unit(
     group = group or user
 
     home = (
-        Path(home).expanduser()
+        _systemd_path(
+            Path(home).expanduser()
+        )
         if home
-        else Path.home()
+        else _systemd_path(Path.home())
     )
 
     python_executable = (
@@ -84,7 +95,7 @@ def render_systemd_unit(
     environment = [
         (
             "HOME",
-            str(home),
+            home,
         ),
         (
             "PATH",
@@ -92,11 +103,11 @@ def render_systemd_unit(
         ),
         (
             "CODEX_QUOTA_DATA_DIR",
-            str(config.data_dir),
+            _systemd_path(config.data_dir),
         ),
         (
             "CODEX_QUOTA_DB",
-            str(config.database_path),
+            _systemd_path(config.database_path),
         ),
         (
             "CODEX_QUOTA_HOST",
@@ -132,7 +143,7 @@ def render_systemd_unit(
         f"Group={group}",
         (
             "WorkingDirectory="
-            f"{config.app_root}"
+            f"{_systemd_path(config.app_root)}"
         ),
     ]
 
@@ -148,7 +159,7 @@ def render_systemd_unit(
         exec_start = (
             "ExecStart="
             + _systemd_quote(
-                cli_executable
+                _systemd_path(cli_executable)
             )
             + " serve"
         )
@@ -156,7 +167,7 @@ def render_systemd_unit(
         exec_start = (
             "ExecStart="
             + _systemd_quote(
-                python_executable
+                _systemd_path(python_executable)
             )
             + " -m app.cli serve"
         )
