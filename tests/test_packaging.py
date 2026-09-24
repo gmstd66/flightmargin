@@ -1,5 +1,10 @@
 from pathlib import Path
+import re
 import tomllib
+
+from app.version import (
+    __version__,
+)
 
 
 PROJECT_ROOT = (
@@ -32,8 +37,26 @@ def test_project_metadata():
     )
 
     assert (
-        data["project"]["version"]
-        == "0.2.0"
+        data["project"]["dynamic"]
+        == ["version"]
+    )
+
+    assert (
+        data["tool"]["setuptools"]
+        ["dynamic"]["version"]
+        == {"attr": "app.version.__version__"}
+    )
+
+    assert (
+        "version"
+        not in data["project"]
+    )
+
+
+def test_canonical_version_is_valid():
+    assert re.fullmatch(
+        r"[0-9]+(?:\.[0-9]+)+(?:[a-zA-Z0-9.+-]+)?",
+        __version__,
     )
 
 

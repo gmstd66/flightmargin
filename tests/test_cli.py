@@ -3,6 +3,10 @@ from app.cli import (
     format_percent_used,
 )
 
+from app.version import (
+    __version__,
+)
+
 
 def test_format_percent_used():
     assert (
@@ -51,6 +55,24 @@ def test_doctor_command_parses():
     assert (
         args.command
         == "doctor"
+    )
+
+
+def test_version_uses_canonical_application_version(
+    capsys,
+):
+    parser = build_parser()
+
+    try:
+        parser.parse_args(["--version"])
+    except SystemExit as exc:
+        assert exc.code == 0
+    else:
+        raise AssertionError("--version did not exit")
+
+    assert (
+        capsys.readouterr().out
+        == f"codex-quota-monitor {__version__}\n"
     )
 
 

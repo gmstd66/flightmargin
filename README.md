@@ -226,6 +226,34 @@ source venv/bin/activate
 pytest -v
 ```
 
+### Local release-artifact check
+
+The canonical application version is defined in:
+
+```text
+app/version.py
+```
+
+Build one local wheel without publishing it:
+
+```bash
+PYTHON=venv/bin/python scripts/build-release.sh
+```
+
+Verify its metadata, console entry point, and packaged dashboard resources:
+
+```bash
+venv/bin/python scripts/verify-release.py dist
+```
+
+Run the complete release check (tests, wheel build, artifact verification, and an isolated installed-wheel runtime check):
+
+```bash
+PYTHON=venv/bin/python scripts/check-release.sh
+```
+
+The complete check uses a disposable virtual environment and isolated application-data directory, runs the real Codex `doctor` and `status` checks, and starts the installed server on port `18097` by default. Override the development port with `CODEX_QUOTA_RELEASE_PORT` in the `18000-18999` range. The resulting local wheel is retained in `dist/`; nothing is tagged or published.
+
 Current architecture documentation:
 
 ```text

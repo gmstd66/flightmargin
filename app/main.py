@@ -33,6 +33,10 @@ from app.storage.sqlite_store import (
     SQLiteQuotaStore,
 )
 
+from app.version import (
+    __version__,
+)
+
 
 config = load_config()
 
@@ -232,7 +236,7 @@ async def lifespan(
 
 app = FastAPI(
     title="Codex Quota Monitor",
-    version="0.2.0",
+    version=__version__,
     lifespan=lifespan,
 )
 
@@ -339,7 +343,7 @@ async def history(
 async def health():
     return {
         "status": "ok",
-        "version": "0.2.0",
+        "version": __version__,
         "collector": collector_status,
         "database": str(
             DATABASE_PATH

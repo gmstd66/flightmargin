@@ -25,6 +25,10 @@ from app.systemd import (
     render_systemd_unit,
 )
 
+from app.version import (
+    __version__,
+)
+
 
 def format_percent_used(value):
     if value is None:
@@ -172,7 +176,7 @@ def build_parser():
         action="version",
         version=(
             "codex-quota-monitor "
-            "0.2.0"
+            + __version__
         ),
     )
 

@@ -6,6 +6,10 @@ import subprocess
 import threading
 from typing import Any
 
+from app.version import (
+    __version__,
+)
+
 
 class CodexNotFoundError(RuntimeError):
     pass
@@ -88,7 +92,7 @@ class CodexAppServer:
                     "name":
                         "codex-quota-monitor",
                     "version":
-                        "0.2.0",
+                        __version__,
                 }
             },
         )

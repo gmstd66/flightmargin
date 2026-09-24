@@ -6,7 +6,7 @@ This is the primary continuity and handoff document for future Codex sessions. R
 
 Codex Quota Monitor is a local-first browser dashboard and CLI for monitoring OpenAI Codex quota usage through the locally authenticated Codex CLI. It reads `account/rateLimits/read` from `codex app-server --stdio`, persists local history, and serves a FastAPI dashboard.
 
-The current package version is `0.2.0` (`pyproject.toml`). The project has moved beyond the original <private-host> prototype into a Linux-installable Python package with a generated systemd service. It is not an officially published package or release: do not tag, publish, or create a GitHub release without explicit approval.
+The current package version is `0.2.0`, canonically defined by `app/version.py`. Setuptools reads that value dynamically for project metadata, and the CLI, API, and Codex app-server client use the same source. The project has moved beyond the original <private-host> prototype into a Linux-installable Python package with a generated systemd service. It is not an officially published package or release: do not tag, publish, or create a GitHub release without explicit approval.
 
 ## Architecture and modules
 
@@ -31,7 +31,13 @@ Web templates and static files are package-relative (`app/templates`, `app/stati
 
 ## Packaging, configuration, and storage
 
-`pyproject.toml` defines the `codex-quota-monitor` Python project, version `0.2.0`, and the `codex-quota` console script. Runtime dependencies are FastAPI, Uvicorn, and Jinja2. The Linux installer installs the project into its selected virtual environment and systemd starts the installed `codex-quota` CLI.
+`pyproject.toml` defines the `codex-quota-monitor` Python project and dynamically obtains its version from `app.version.__version__`; it also defines the `codex-quota` console script. Runtime dependencies are FastAPI, Uvicorn, and Jinja2. The Linux installer installs the project into its selected virtual environment and systemd starts the installed `codex-quota` CLI.
+
+Local release-artifact workflow (no publication):
+
+- `scripts/build-release.sh` cleans `dist/`, builds exactly one local wheel with `python -m pip wheel`, and prints its path.
+- `scripts/verify-release.py dist` confirms the expected normalized wheel name/version, wheel metadata, `codex-quota` entry point, and required template/static files.
+- `scripts/check-release.sh` runs the test suite, build, verification, and a temporary out-of-tree virtual-environment check. It verifies imports are from `site-packages`, the CLI version, real Codex `doctor`/`status`, isolated storage, server health, dashboard HTML, and static resources on a configurable `18000-18999` port (default `18097`). The temporary environment and test data are removed on completion; `dist/` retains the local artifact.
 
 Supported configuration variables are:
 
@@ -69,7 +75,7 @@ The application does not store ChatGPT passwords or use a separately configured 
 
 ## Tests and completed work
 
-`pytest` is configured to run the `tests/` suite. The documentation milestone validation completed with 56 passing tests. Coverage currently includes quota normalization and metrics, configuration defaults and overrides, environment checks, CLI parsing/status behavior, systemd generation, package metadata, and package-relative resources. Run `pytest -v` after changes; documentation milestones must also run `git diff --check`.
+`pytest` is configured to run the `tests/` suite. Milestone 6.14 validation completed with 58 passing tests. Coverage includes quota normalization and metrics, configuration defaults and overrides, environment checks, CLI behavior (including canonical version output), systemd generation, dynamic packaging metadata, and package-relative resources. Run `pytest -v` after changes; release-facing work should also run `scripts/check-release.sh` and `git diff --check`.
 
 Git history records these completed capabilities:
 
@@ -82,6 +88,7 @@ Git history records these completed capabilities:
 - Package-relative templates/static resources, Python wheel/package metadata, and correct installed-package user data-directory behavior.
 - Systemd execution through the packaged `codex-quota` CLI.
 - Bounded-autonomy development policy.
+- Milestone 6.14: single-source versioning and a reproducible local wheel build, artifact verification, and isolated installed-artifact validation workflow.
 
 ## Branch workflow, caveats, and next work
 
@@ -94,11 +101,12 @@ Known caveats:
 - The dashboard has no built-in authentication and should remain local, trusted-LAN, or private-VPN only.
 - The service `WorkingDirectory` is the project root even though its executable is packaged; repository-based installation remains the documented workflow.
 
-Near-term work is the next productization milestone after this documentation/governance milestone. The README roadmap identifies Docker deployment, desktop application, tray/menu-bar display, Windows, and macOS support; selecting a release plan, a package-publication plan, or a deployment-model change requires the appropriate human decision gate first.
+The next logical productization milestone is 6.15 Docker deployment. Docker would change the deployment model, so its design requires explicit human approval before implementation. The README roadmap also identifies desktop application, tray/menu-bar display, Windows, and macOS support; selecting a release or package-publication plan likewise requires the appropriate human decision gate first.
 
 ## Instructions for future Codex sessions
 
 1. Read `AGENTS.md`, this document, `CHANGELOG.md`, README, and the relevant technical documentation.
 2. Verify branch, remote synchronization, package version, paths, commands, and tests from the current repository; do not treat this summary as proof when code disagrees.
 3. Preserve protected production resources and use isolated development ports/services.
-4. Update this document, the changelog, and any affected docs in the same milestone whenever practical; commit and push the completed milestone to `origin/dev/productization`.
+4. For release-facing work, use `scripts/check-release.sh` with a development port, inspect `dist/`, and remember that a verified local wheel is not a tagged, published, or GitHub release.
+5. Update this document, the changelog, and any affected docs in the same milestone whenever practical; commit and push the completed milestone to `origin/dev/productization`.

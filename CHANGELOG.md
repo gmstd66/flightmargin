@@ -7,6 +7,11 @@ Notable changes to Codex Quota Monitor are documented here. This file summarizes
 ### Added
 
 - Project continuity and milestone-handoff documentation.
+- Reproducible local wheel build, artifact verification, and isolated installed-wheel release check scripts.
+
+### Changed
+
+- Made `app.version.__version__` the canonical application version used by setuptools metadata, the CLI, API responses, and Codex app-server client identification.
 
 ## 0.2.0
 
