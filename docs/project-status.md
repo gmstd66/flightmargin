@@ -96,12 +96,12 @@ Routine work belongs on `dev/productization`, not `main`. Before editing, fetch 
 
 Known caveats:
 
-- Linux/systemd is the currently supported deployment model; Windows, macOS, Docker, desktop, and tray/menu-bar implementations are not present.
+- Linux/systemd is the currently supported deployment model; Windows, macOS, Docker, desktop, and tray/menu-bar implementations are not present. Docker feasibility was investigated in milestone 6.15, but an architecture decision is required before implementation; see `docs/docker-feasibility.md`.
 - Codex CLI availability, its authenticated user context, and the app-server rate-limit response are external dependencies.
 - The dashboard has no built-in authentication and should remain local, trusted-LAN, or private-VPN only.
 - The service `WorkingDirectory` is the project root even though its executable is packaged; repository-based installation remains the documented workflow.
 
-The next logical productization milestone is 6.15 Docker deployment. Docker would change the deployment model, so its design requires explicit human approval before implementation. The README roadmap also identifies desktop application, tray/menu-bar display, Windows, and macOS support; selecting a release or package-publication plan likewise requires the appropriate human decision gate first.
+Milestone 6.15 completed Docker deployment feasibility validation. Its primary conclusion is that direct containerized Codex app-server execution is blocked by Docker's default bubblewrap namespace restrictions, and several materially different deployment/authentication options remain. Human approval is required to select the next Docker architecture; see `docs/docker-feasibility.md`. The README roadmap also identifies desktop application, tray/menu-bar display, Windows, and macOS support; selecting a release or package-publication plan likewise requires the appropriate human decision gate first.
 
 ## Instructions for future Codex sessions
 

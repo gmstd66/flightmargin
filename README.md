@@ -276,6 +276,12 @@ Planned work includes:
 - Windows support
 - macOS support
 
+Docker deployment feasibility, including Codex authentication and sandbox constraints, is documented in:
+
+```text
+docs/docker-feasibility.md
+```
+
 ## License
 
 A license will be selected before public release.
