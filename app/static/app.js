@@ -87,9 +87,17 @@ async function loadQuota() {
     );
 
     if (!response.ok) {
-        throw new Error(
-            `Quota API returned ${response.status}`
-        );
+        let message =
+            `Quota API returned ${response.status}`;
+
+        try {
+            const error = await response.json();
+            message = error.detail || message;
+        } catch (_error) {
+            // Retain the status-based message for non-JSON errors.
+        }
+
+        throw new Error(message);
     }
 
     const data = await response.json();

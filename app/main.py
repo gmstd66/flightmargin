@@ -284,7 +284,10 @@ async def quota():
         raise HTTPException(
             status_code=503,
             detail=(
-                "No quota sample available"
+                collector_status[
+                    "last_error"
+                ]
+                or "No quota sample available"
             ),
         )
 

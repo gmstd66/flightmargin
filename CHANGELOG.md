@@ -16,7 +16,7 @@ Notable changes to Codex Quota Monitor are documented here. This file summarizes
 ### Changed
 
 - Fixed Windows sidecar startup by passing the pre-bound loopback socket directly to Uvicorn.
-- Added Windows Tauri icon configuration, current shell-plugin compatibility, clear sidecar-startup diagnostics, and process-tree shutdown for PyInstaller one-file sidecars.
+- Added Windows Tauri icon configuration, current shell-plugin compatibility, clear sidecar-startup and collector diagnostics, and process-tree shutdown for PyInstaller one-file sidecars.
 
 - Made `app.version.__version__` the canonical application version used by setuptools metadata, the CLI, API responses, and Codex app-server client identification.
 
