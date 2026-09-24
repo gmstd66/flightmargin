@@ -126,7 +126,7 @@ def test_service_codex_executable():
     )
 
 
-def test_service_exec_start():
+def test_legacy_service_exec_start():
     unit = render_systemd_unit(
         make_config(),
         user="quotauser",
@@ -148,6 +148,32 @@ def test_service_exec_start():
     )
 
 
+def test_cli_service_exec_start():
+    unit = render_systemd_unit(
+        make_config(),
+        user="quotauser",
+        python_executable=(
+            "/opt/codex-quota/"
+            "venv/bin/python"
+        ),
+        cli_executable=(
+            "/opt/codex-quota/"
+            "venv/bin/codex-quota"
+        ),
+        codex_executable=(
+            "/usr/bin/codex"
+        ),
+    )
+
+    assert (
+        'ExecStart="'
+        '/opt/codex-quota/'
+        'venv/bin/codex-quota" '
+        'serve'
+        in unit
+    )
+
+
 def test_service_path_includes_venv():
     path = build_service_path(
         "/opt/codex-quota/"
@@ -164,6 +190,30 @@ def test_service_path_includes_venv():
         "/usr/bin:"
         "/bin"
         in path
+    )
+
+
+def test_cli_service_path_includes_venv():
+    unit = render_systemd_unit(
+        make_config(),
+        user="quotauser",
+        cli_executable=(
+            "/opt/codex-quota/"
+            "venv/bin/codex-quota"
+        ),
+        codex_executable=(
+            "/usr/bin/codex"
+        ),
+    )
+
+    assert (
+        'Environment="PATH='
+        '/opt/codex-quota/'
+        'venv/bin:'
+        '/usr/local/bin:'
+        '/usr/bin:'
+        '/bin"'
+        in unit
     )
 
 

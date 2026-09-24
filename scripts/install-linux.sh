@@ -26,10 +26,15 @@ SERVICE_GROUP="$(id -gn)"
 SERVICE_HOME="${HOME}"
 
 VENV_DIR="${PROJECT_DIR}/venv"
+
 DEFAULT_RUNTIME_PYTHON="${VENV_DIR}/bin/python"
+DEFAULT_RUNTIME_CLI="${VENV_DIR}/bin/codex-quota"
 
 PYTHON_EXECUTABLE="${DEFAULT_RUNTIME_PYTHON}"
 PYTHON_EXPLICIT=0
+
+CLI_EXECUTABLE="${DEFAULT_RUNTIME_CLI}"
+CLI_EXPLICIT=0
 
 BOOTSTRAP_PYTHON="$(
     command -v python3 || true
@@ -85,14 +90,26 @@ Options:
       Default: ${SERVICE_HOME}
 
   --python PATH
-      Existing Python executable to use
-      for the installed application.
+      Existing Python executable used to
+      install and manage the application.
 
       If omitted, the installer uses:
         ${DEFAULT_RUNTIME_PYTHON}
 
-      If that default virtual environment
+      If the default virtual environment
       does not exist, --apply creates it.
+
+  --cli PATH
+      Installed codex-quota executable used
+      by systemd.
+
+      Default:
+        ${DEFAULT_RUNTIME_CLI}
+
+      When --python is supplied and --cli is
+      omitted, the CLI defaults to a sibling
+      named codex-quota in the same bin
+      directory as that Python executable.
 
   --bootstrap-python PATH
       Python used to create the virtual
@@ -119,13 +136,13 @@ Options:
         /etc/systemd/system/<service-name>.service
 
   --dev
-      Install development dependencies
-      from requirements-dev.txt instead
-      of requirements.txt.
+      Also install development dependencies
+      from requirements-dev.txt.
 
   --apply
-      Create/install dependencies as needed
-      and install/reinstall the service.
+      Create the virtual environment if needed,
+      install Codex Quota Monitor as a Python
+      package, and install/reinstall the service.
 
   --dry-run
       Validate the proposed installation
@@ -249,6 +266,22 @@ while [[ $# -gt 0 ]]; do
 
             PYTHON_EXECUTABLE="$2"
             PYTHON_EXPLICIT=1
+
+            if (( CLI_EXPLICIT == 0 )); then
+                CLI_EXECUTABLE="$(
+                    dirname -- "${PYTHON_EXECUTABLE}"
+                )/codex-quota"
+            fi
+
+            shift 2
+            ;;
+
+        --cli)
+            [[ $# -ge 2 ]] \
+                || fail "--cli requires a value"
+
+            CLI_EXECUTABLE="$2"
+            CLI_EXPLICIT=1
             shift 2
             ;;
 
@@ -268,6 +301,15 @@ while [[ $# -gt 0 ]]; do
 
             if (( PYTHON_EXPLICIT == 0 )); then
                 PYTHON_EXECUTABLE="${VENV_DIR}/bin/python"
+            fi
+
+            if (
+                ((
+                    CLI_EXPLICIT == 0
+                    && PYTHON_EXPLICIT == 0
+                ))
+            ); then
+                CLI_EXECUTABLE="${VENV_DIR}/bin/codex-quota"
             fi
 
             shift 2
@@ -331,7 +373,10 @@ fi
     || fail "Application directory not found: ${PROJECT_DIR}/app"
 
 [[ -f "${PROJECT_DIR}/app/cli.py" ]] \
-    || fail "CLI not found: ${PROJECT_DIR}/app/cli.py"
+    || fail "CLI source not found: ${PROJECT_DIR}/app/cli.py"
+
+[[ -f "${PROJECT_DIR}/pyproject.toml" ]] \
+    || fail "pyproject.toml was not found."
 
 [[ -f "${PROJECT_DIR}/requirements.txt" ]] \
     || fail "requirements.txt was not found."
@@ -410,7 +455,8 @@ if (( NEEDS_BOOTSTRAP == 1 )); then
         echo "On --apply the installer would:"
         echo "  1. Create the virtual environment"
         echo "  2. Upgrade pip"
-        echo "  3. Install application dependencies"
+        echo "  3. Install Codex Quota Monitor"
+        echo "  4. Create the codex-quota executable"
         echo
     else
         info "Creating virtual environment"
@@ -431,6 +477,10 @@ if (( NEEDS_BOOTSTRAP == 1 )); then
         ok "Virtual environment created: ${VENV_DIR}"
 
         PYTHON_EXECUTABLE="${VENV_DIR}/bin/python"
+
+        if (( CLI_EXPLICIT == 0 )); then
+            CLI_EXECUTABLE="${VENV_DIR}/bin/codex-quota"
+        fi
     fi
 fi
 
@@ -463,20 +513,33 @@ if (( APPLY == 1 )); then
     ok "pip upgraded"
 
 
-    if (( INSTALL_DEV == 1 )); then
-        REQUIREMENTS_FILE="${PROJECT_DIR}/requirements-dev.txt"
-    else
-        REQUIREMENTS_FILE="${PROJECT_DIR}/requirements.txt"
-    fi
-
-    info "Installing Python dependencies"
+    info "Installing Codex Quota Monitor package"
 
     "${PYTHON_EXECUTABLE}" \
         -m pip \
         install \
-        -r "${REQUIREMENTS_FILE}"
+        --upgrade \
+        "${PROJECT_DIR}"
 
-    ok "Python dependencies installed"
+    ok "Codex Quota Monitor package installed"
+
+
+    if (( INSTALL_DEV == 1 )); then
+        info "Installing development dependencies"
+
+        "${PYTHON_EXECUTABLE}" \
+            -m pip \
+            install \
+            -r "${PROJECT_DIR}/requirements-dev.txt"
+
+        ok "Development dependencies installed"
+    fi
+
+
+    [[ -x "${CLI_EXECUTABLE}" ]] \
+        || fail "Installed CLI executable not found: ${CLI_EXECUTABLE}"
+
+    ok "Installed CLI found: ${CLI_EXECUTABLE}"
 fi
 
 
@@ -496,9 +559,17 @@ fi
 
 info "Running environment diagnostics"
 
-CODEX_BIN="${CODEX_EXECUTABLE}" \
-"${DOCTOR_PYTHON}" \
-    -m app.doctor
+if [[ -x "${CLI_EXECUTABLE}" ]]; then
+    CODEX_BIN="${CODEX_EXECUTABLE}" \
+    CODEX_QUOTA_DATA_DIR="${PROJECT_DIR}/data" \
+    "${CLI_EXECUTABLE}" \
+        doctor
+else
+    CODEX_BIN="${CODEX_EXECUTABLE}" \
+    CODEX_QUOTA_DATA_DIR="${PROJECT_DIR}/data" \
+    "${DOCTOR_PYTHON}" \
+        -m app.doctor
+fi
 
 ok "Environment diagnostics passed"
 
@@ -524,88 +595,48 @@ cleanup() {
 trap cleanup EXIT
 
 
-if [[ -x "${PYTHON_EXECUTABLE}" ]]; then
-    UNIT_PYTHON="${PYTHON_EXECUTABLE}"
-else
-    UNIT_PYTHON="${VENV_DIR}/bin/python"
-fi
-
-
 info "Generating systemd unit"
 
+CODEX_QUOTA_DATA_DIR="${PROJECT_DIR}/data" \
+CODEX_QUOTA_DB="${PROJECT_DIR}/data/quota.db" \
 CODEX_QUOTA_HOST="${HOST}" \
 CODEX_QUOTA_PORT="${PORT}" \
 CODEX_QUOTA_SAMPLE_SECONDS="${SAMPLE_SECONDS}" \
 CODEX_BIN="${CODEX_EXECUTABLE}" \
 "${DOCTOR_PYTHON}" \
-    -c '
-import sys
-
-from app.core.config import load_config
-from app.systemd import render_systemd_unit
-
-config = load_config()
-
-print(
-    render_systemd_unit(
-        config,
-        user=sys.argv[1],
-        group=sys.argv[2],
-        home=sys.argv[3],
-        python_executable=sys.argv[4],
-        codex_executable=sys.argv[5],
-    ),
-    end="",
-)
-' \
-    "${SERVICE_USER}" \
-    "${SERVICE_GROUP}" \
-    "${SERVICE_HOME}" \
-    "${UNIT_PYTHON}" \
-    "${CODEX_EXECUTABLE}" \
+    -m app.cli service-unit \
+    --user "${SERVICE_USER}" \
+    --group "${SERVICE_GROUP}" \
+    --home "${SERVICE_HOME}" \
+    --python-executable "${PYTHON_EXECUTABLE}" \
+    --cli-executable "${CLI_EXECUTABLE}" \
+    --codex-executable "${CODEX_EXECUTABLE}" \
     > "${UNIT_FILE}"
 
 
 info "Validating systemd unit"
 
-if [[ -x "${UNIT_PYTHON}" ]]; then
+if [[ -x "${CLI_EXECUTABLE}" ]]; then
     cp \
         "${UNIT_FILE}" \
         "${VERIFY_UNIT_FILE}"
 else
+    CODEX_QUOTA_DATA_DIR="${PROJECT_DIR}/data" \
+    CODEX_QUOTA_DB="${PROJECT_DIR}/data/quota.db" \
     CODEX_QUOTA_HOST="${HOST}" \
     CODEX_QUOTA_PORT="${PORT}" \
     CODEX_QUOTA_SAMPLE_SECONDS="${SAMPLE_SECONDS}" \
     CODEX_BIN="${CODEX_EXECUTABLE}" \
     "${DOCTOR_PYTHON}" \
-        -c '
-import sys
-
-from app.core.config import load_config
-from app.systemd import render_systemd_unit
-
-config = load_config()
-
-print(
-    render_systemd_unit(
-        config,
-        user=sys.argv[1],
-        group=sys.argv[2],
-        home=sys.argv[3],
-        python_executable=sys.argv[4],
-        codex_executable=sys.argv[5],
-    ),
-    end="",
-)
-' \
-        "${SERVICE_USER}" \
-        "${SERVICE_GROUP}" \
-        "${SERVICE_HOME}" \
-        "${DOCTOR_PYTHON}" \
-        "${CODEX_EXECUTABLE}" \
+        -m app.cli service-unit \
+        --user "${SERVICE_USER}" \
+        --group "${SERVICE_GROUP}" \
+        --home "${SERVICE_HOME}" \
+        --python-executable "${DOCTOR_PYTHON}" \
+        --codex-executable "${CODEX_EXECUTABLE}" \
         > "${VERIFY_UNIT_FILE}"
 
-    info "Using bootstrap Python for dry-run unit verification"
+    info "Using Python module form for dry-run unit verification"
 fi
 
 
@@ -636,15 +667,17 @@ if (( APPLY == 0 )); then
     echo "  Group:     ${SERVICE_GROUP}"
     echo "  HOME:      ${SERVICE_HOME}"
     echo "  Venv:      ${VENV_DIR}"
-    echo "  Python:    ${UNIT_PYTHON}"
+    echo "  Python:    ${PYTHON_EXECUTABLE}"
+    echo "  CLI:       ${CLI_EXECUTABLE}"
     echo "  Bootstrap: ${BOOTSTRAP_PYTHON:-not required}"
     echo "  Codex:     ${CODEX_EXECUTABLE}"
+    echo "  Data:      ${PROJECT_DIR}/data"
     echo "  Host:      ${HOST}"
     echo "  Port:      ${PORT}"
     echo "  Sample:    ${SAMPLE_SECONDS}s"
 
     if (( INSTALL_DEV == 1 )); then
-        echo "  Packages:  development"
+        echo "  Packages:  runtime + development"
     else
         echo "  Packages:  runtime"
     fi
@@ -772,10 +805,15 @@ echo
 echo "Service:"
 echo "  ${SERVICE_NAME}"
 echo
+echo "CLI:"
+echo "  ${CLI_EXECUTABLE}"
+echo
 echo "Python:"
 echo "  ${PYTHON_EXECUTABLE}"
 echo
 echo "Useful commands:"
+echo "  ${CLI_EXECUTABLE} doctor"
+echo "  ${CLI_EXECUTABLE} status"
 echo "  systemctl status ${SERVICE_NAME}"
 echo "  sudo systemctl restart ${SERVICE_NAME}"
 echo "  journalctl -u ${SERVICE_NAME} -f"

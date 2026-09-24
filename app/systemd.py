@@ -29,16 +29,16 @@ def _systemd_quote(value):
 
 
 def build_service_path(
-    python_executable,
+    executable,
 ):
-    python_dir = str(
+    executable_dir = str(
         Path(
-            python_executable
+            executable
         ).parent
     )
 
     return (
-        f"{python_dir}:"
+        f"{executable_dir}:"
         f"{DEFAULT_SYSTEM_PATH}"
     )
 
@@ -50,6 +50,7 @@ def render_systemd_unit(
     group=None,
     home=None,
     python_executable=None,
+    cli_executable=None,
     codex_executable=None,
 ):
     group = group or user
@@ -71,8 +72,13 @@ def render_systemd_unit(
         or find_codex()
     )
 
+    runtime_executable = (
+        cli_executable
+        or python_executable
+    )
+
     service_path = build_service_path(
-        python_executable
+        runtime_executable
     )
 
     environment = [
@@ -138,15 +144,26 @@ def render_systemd_unit(
             )
         )
 
+    if cli_executable:
+        exec_start = (
+            "ExecStart="
+            + _systemd_quote(
+                cli_executable
+            )
+            + " serve"
+        )
+    else:
+        exec_start = (
+            "ExecStart="
+            + _systemd_quote(
+                python_executable
+            )
+            + " -m app.cli serve"
+        )
+
     lines.extend(
         [
-            (
-                "ExecStart="
-                + _systemd_quote(
-                    python_executable
-                )
-                + " -m app.cli serve"
-            ),
+            exec_start,
             "Restart=on-failure",
             "RestartSec=5",
             "NoNewPrivileges=true",

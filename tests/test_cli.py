@@ -133,3 +133,26 @@ def test_service_unit_parses():
         args.user
         == "quotauser"
     )
+
+
+def test_service_unit_cli_executable():
+    parser = build_parser()
+
+    args = parser.parse_args(
+        [
+            "service-unit",
+            "--cli-executable",
+            (
+                "/opt/codex-quota/"
+                "venv/bin/codex-quota"
+            ),
+        ]
+    )
+
+    assert (
+        args.cli_executable
+        == (
+            "/opt/codex-quota/"
+            "venv/bin/codex-quota"
+        )
+    )

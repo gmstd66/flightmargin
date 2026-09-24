@@ -140,6 +140,9 @@ def service_unit_command(args):
         python_executable=(
             args.python_executable
         ),
+        cli_executable=(
+            args.cli_executable
+        ),
         codex_executable=(
             args.codex_executable
         ),
@@ -281,7 +284,17 @@ def build_parser():
         default=sys.executable,
         help=(
             "Python executable used "
-            "by systemd."
+            "for the legacy module-based "
+            "service command."
+        ),
+    )
+
+    service_parser.add_argument(
+        "--cli-executable",
+        default=None,
+        help=(
+            "Installed codex-quota "
+            "executable used by systemd."
         ),
     )
 
