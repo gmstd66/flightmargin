@@ -76,4 +76,3 @@ scrollbar appears, or the history graph becomes hard to read.
 
 
 ### Ideas for a mobile/iPhone companion
-
