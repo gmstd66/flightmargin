@@ -1,6 +1,6 @@
 # Native Desktop Feasibility — Milestone 6.16
 
-Status: architecture study complete. Tauri is the recommended desktop shell, but no framework or desktop deployment implementation is approved yet. A Windows test machine is required before a supported desktop release.
+Status: the approved Tauri/PyInstaller/loopback prototype is implemented. The Python sidecar is Linux-validated; the Tauri manifests are generated and syntax-validated, but no Tauri shell has been compiled on this Linux host. A real Windows machine is required before any Windows runtime or installer claim.
 
 ## Recommendation
 
@@ -17,7 +17,7 @@ packaged Python sidecar ── 127.0.0.1:<random-port> ── existing FastAPI/d
         └── existing Codex app-server stdio subprocess
 ```
 
-This is a recommendation, not an implementation authorization. Adding Tauri, Rust, a Python freezer, supported desktop platforms, or a desktop distribution model crosses the repository's architecture/support decision gate.
+This architecture is approved for the internal prototype only. It does not approve a public desktop release, code signing, auto-updates, or a supported cross-platform distribution.
 
 ## What was verified and what was not
 
@@ -26,7 +26,8 @@ Verified on the Linux development host:
 - The existing packaged wheel starts a FastAPI server, reads Codex quota through the installed authenticated CLI, serves the dashboard/static assets, and stores SQLite data in an isolated directory; the release check already validates this on an unreserved development port.
 - The dashboard uses relative `/api/*` and `/static/*` URLs and polls existing API endpoints every 15 seconds. It can therefore load almost unchanged from a loopback FastAPI origin.
 - Codex CLI 0.153.2 is installed at `/usr/bin/codex` and works with the current stdio adapter.
-- Node/npm are present, but Rust/Cargo and Linux WebKit build prerequisites are absent. No Tauri scaffold or binary was created, and no desktop shell was built on this host.
+- A PyInstaller-built Linux sidecar selected OS port `41299`, served `/api/health`, the existing dashboard/CSS/JS, performed an authenticated quota collection, created SQLite only beneath an isolated temporary desktop data root, and stopped cleanly.
+- A Tauri 2 workspace now contains the shell, sidecar configuration, strict local CSP, and generated versioned manifests. Node/npm are present, but Rust/Cargo and Linux WebKit build prerequisites are absent, so no Tauri shell was compiled on this host.
 
 Not yet verified:
 
@@ -54,7 +55,7 @@ Build one frozen Python executable per OS/architecture, named and packaged as a 
 
 1. enforce a single application instance;
 2. resolve desktop data/log directories and launch the sidecar with explicit environment variables;
-3. choose a loopback port, start `codex-quota serve`, and wait for `/api/health` with a bounded timeout;
+3. start the sidecar, parse its OS-assigned loopback port from constrained stdout, and wait for `/api/health` with a bounded timeout;
 4. create/load the webview only after health succeeds; show a diagnostic window if it fails;
 5. keep the sidecar running when the main window is hidden to tray;
 6. terminate the child process on explicit Quit and use a bounded restart/backoff policy for unexpected crashes; and
@@ -66,7 +67,7 @@ The collector already catches individual Codex failures and continues its 60-sec
 
 Keep FastAPI in the initial desktop architecture. It preserves the dashboard exactly, keeps browser/webview development simple, and already separates polling from Codex collection.
 
-Bind only to `127.0.0.1`, never `0.0.0.0`, in desktop mode. Avoid a fixed port: it creates conflicts and makes accidental local discovery easier. The sidecar should report its selected port/readiness to Tauri via a constrained readiness file or a structured stdout line; implement bounded retries because reserving a port in Tauri and releasing it before Python binds has an unavoidable race.
+Bind only to `127.0.0.1`, never `0.0.0.0`, in desktop mode. Avoid a fixed port: it creates conflicts and makes accidental local discovery easier. The implemented sidecar binds `127.0.0.1:0` itself, retains that socket for Uvicorn, and reports the selected port through one constrained stdout line. This removes the parent-reserves-then-releases race; Tauri then performs a bounded health poll.
 
 Loopback HTTP is the recommended initial transport. A random loopback port is not remotely reachable and the existing endpoints have low-impact operations (read quota/history and request an immediate refresh). Another local process can still call them. A per-launch session token would improve same-machine multi-user/malware resistance, but requires API middleware and frontend request changes; defer it unless the first desktop threat model includes hostile local processes. Tauri CSP must allow only the selected loopback origin and no remote scripts. See [Tauri CSP guidance](https://v2.tauri.app/security/csp/).
 
@@ -146,23 +147,20 @@ quit → stop collector, terminate sidecar, flush logs, exit
 
 The first implementation should provide Show, Pause/Resume, Check status, and Quit menu items. Native quota notifications and dynamic tray quota text are later enhancements; keep the existing 15-second dashboard refresh initially.
 
-## Milestone 6.16B proposal
+## Milestone 6.16B implementation status
 
-After explicit architecture approval, implement a Windows-only experimental desktop build:
+The approved architecture is now represented in the development branch:
 
-1. add a `desktop/` Tauri 2 workspace plus build documentation, with no production installer changes;
-2. add a native Windows PyInstaller sidecar build that packages the wheel/resources;
-3. add desktop configuration/path and Codex-discovery tests, preserving `CODEX_BIN` override;
-4. implement loopback startup readiness, health timeout, child cleanup, and desktop log paths;
-5. load the existing dashboard from the sidecar endpoint;
-6. add single-instance and basic tray show/quit behavior; and
-7. validate on a real Windows machine using existing authenticated Codex, isolated `%LOCALAPPDATA%` test data, and an unsigned internal installer.
+1. `desktop/` contains a Tauri 2 workspace with a native loading page, shell-sidecar lifecycle code, local CSP, and no production installer changes.
+2. `desktop/scripts/build-sidecar.py` builds a target-native PyInstaller sidecar with Python modules, templates, static assets, and dependencies.
+3. Desktop path selection, Codex discovery, loopback socket allocation, readiness format, and version generation have tests.
+4. The sidecar binds an OS-selected loopback socket, reports it through stdout, and supports clean signal shutdown; the Tauri shell holds/kills the child and health-checks before navigation.
+5. The shell navigates to the existing dashboard endpoint; no dashboard copy or redesign was added.
 
-Do not add autostart, auto-update, notifications, macOS/Linux installers, a local API token, or bundled Codex in 6.16B unless separately approved.
+The remaining Windows-native work is the checklist in `docs/desktop-implementation.md`, especially a real `tauri build`, installed-app lifecycle, executable discovery, tray/single-instance behavior, and unsigned installer validation.
 
-## Decisions required before 6.16B
+Do not add autostart, auto-update, notifications, macOS/Linux installers, a local API token, or bundled Codex unless separately approved.
 
-1. Approve Tauri 2 + PyInstaller sidecar + loopback FastAPI as the Windows-first experimental architecture.
-2. Approve Windows as the first supported desktop platform and provide a Windows build/test environment.
-3. Decide whether the initial desktop loopback API needs a per-launch session token, based on the intended local threat model.
-4. Confirm that unsigned internal installers are acceptable for the experiment; public signing, updates, GitHub Releases, and macOS notarization remain separate future gates.
+## Remaining gates before Windows-native validation
+
+The architecture, Windows-first scope, no-token internal prototype, and unsigned internal builds are approved. No further architecture decision blocks Windows-native validation. A Windows machine with existing authenticated Codex is required. Public signing, updates, GitHub Releases, auto-update, macOS notarization, and any change to the local API threat model remain separate gates.

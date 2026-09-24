@@ -10,6 +10,7 @@ Notable changes to Codex Quota Monitor are documented here. This file summarizes
 - Reproducible local wheel build, artifact verification, and isolated installed-wheel release check scripts.
 - Docker deployment feasibility findings and authentication-model investigation.
 - Native desktop architecture feasibility findings and a Windows-first implementation proposal.
+- Windows-first desktop prototype: Tauri 2 shell scaffold, PyInstaller sidecar build, loopback readiness protocol, desktop data paths, and cross-platform Codex discovery.
 
 ### Changed
 

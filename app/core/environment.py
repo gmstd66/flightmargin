@@ -15,8 +15,46 @@ def detect_platform():
     }
 
 
-def find_codex():
-    configured = os.environ.get("CODEX_BIN")
+def codex_candidate_paths(
+    system=None,
+    environ=None,
+):
+    """Return documented platform-specific fallback paths for Codex.
+
+    PATH remains the primary discovery mechanism. These are deliberately small
+    fallbacks for the standalone installer, not a search of arbitrary user
+    directories or an attempt to locate credentials.
+    """
+    environ = os.environ if environ is None else environ
+    system = (system or platform.system()).lower()
+
+    if system == "windows":
+        local_app_data = environ.get("LOCALAPPDATA")
+        if local_app_data:
+            return [
+                Path(local_app_data)
+                / "Programs"
+                / "OpenAI"
+                / "Codex"
+                / "bin"
+                / "codex.exe"
+            ]
+        return []
+
+    if system in {"darwin", "linux"}:
+        return [Path.home() / ".local" / "bin" / "codex"]
+
+    return []
+
+
+def find_codex(
+    system=None,
+    environ=None,
+    which=None,
+):
+    environ = os.environ if environ is None else environ
+    which = shutil.which if which is None else which
+    configured = environ.get("CODEX_BIN")
 
     if configured:
         path = Path(configured).expanduser()
@@ -24,7 +62,24 @@ def find_codex():
         if path.is_file():
             return str(path)
 
-    return shutil.which("codex")
+    executable_names = ["codex"]
+
+    if (system or platform.system()).lower() == "windows":
+        executable_names.append("codex.exe")
+
+    for executable_name in executable_names:
+        found = which(executable_name)
+        if found:
+            return found
+
+    for candidate in codex_candidate_paths(
+        system=system,
+        environ=environ,
+    ):
+        if candidate.is_file():
+            return str(candidate)
+
+    return None
 
 
 def get_codex_version(executable=None):

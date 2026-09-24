@@ -8,6 +8,7 @@ from app.core.config import (
     DEFAULT_PORT,
     DEFAULT_SAMPLE_SECONDS,
     default_data_dir,
+    default_desktop_data_dir,
     default_user_data_dir,
     load_config,
 )
@@ -21,6 +22,8 @@ ENV_NAMES = (
     "CODEX_QUOTA_SAMPLE_SECONDS",
     "CODEX_BIN",
     "XDG_DATA_HOME",
+    "CODEX_QUOTA_DESKTOP",
+    "LOCALAPPDATA",
 )
 
 
@@ -241,6 +244,56 @@ def test_xdg_data_home(
     clear_config_environment(
         monkeypatch
     )
+
+
+def test_desktop_data_directories_are_platform_specific(
+    tmp_path,
+):
+    home = tmp_path / "home"
+
+    assert (
+        default_desktop_data_dir(
+            system="Windows",
+            environ={"LOCALAPPDATA": str(tmp_path / "local")},
+            home=home,
+        )
+        == tmp_path / "local" / "Codex Quota Monitor"
+    )
+
+    assert (
+        default_desktop_data_dir(
+            system="Darwin",
+            environ={},
+            home=home,
+        )
+        == home
+        / "Library"
+        / "Application Support"
+        / "Codex Quota Monitor"
+    )
+
+    assert (
+        default_desktop_data_dir(
+            system="Linux",
+            environ={"XDG_DATA_HOME": str(tmp_path / "xdg")},
+            home=home,
+        )
+        == tmp_path / "xdg" / DEFAULT_APP_DATA_NAME
+    )
+
+
+def test_desktop_mode_uses_desktop_data_directory(
+    monkeypatch,
+    tmp_path,
+):
+    clear_config_environment(monkeypatch)
+    monkeypatch.setenv("CODEX_QUOTA_DESKTOP", "1")
+    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "xdg"))
+
+    config = load_config()
+
+    assert config.data_dir == tmp_path / "xdg" / DEFAULT_APP_DATA_NAME
+    assert config.database_path == config.data_dir / "quota.db"
 
     xdg_home = (
         tmp_path / "xdg-data"

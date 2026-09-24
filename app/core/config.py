@@ -1,4 +1,5 @@
 import os
+import platform
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -9,6 +10,7 @@ DEFAULT_SAMPLE_SECONDS = 60
 DEFAULT_APP_DATA_NAME = (
     "codex-quota-monitor"
 )
+DESKTOP_ENVIRONMENT_FLAG = "CODEX_QUOTA_DESKTOP"
 
 
 @dataclass(frozen=True)
@@ -79,6 +81,54 @@ def default_user_data_dir():
     )
 
 
+def default_desktop_data_dir(
+    system=None,
+    environ=None,
+    home=None,
+):
+    """Return the conventional per-user data directory for desktop mode.
+
+    This intentionally avoids a third-party platform-path dependency while the
+    application supports only these three desktop targets. Callers may still
+    override the result with ``CODEX_QUOTA_DATA_DIR``.
+    """
+    environ = os.environ if environ is None else environ
+    system = (system or platform.system()).lower()
+    home = Path(home) if home is not None else Path.home()
+
+    if system == "windows":
+        local_app_data = environ.get("LOCALAPPDATA")
+        if local_app_data:
+            return Path(local_app_data) / "Codex Quota Monitor"
+        return home / "AppData" / "Local" / "Codex Quota Monitor"
+
+    if system == "darwin":
+        return (
+            home
+            / "Library"
+            / "Application Support"
+            / "Codex Quota Monitor"
+        )
+
+    return default_user_data_dir_from(
+        environ=environ,
+        home=home,
+    )
+
+
+def default_user_data_dir_from(
+    environ,
+    home,
+):
+    """Internal parameterized form used by desktop path selection tests."""
+    xdg_data_home = environ.get("XDG_DATA_HOME")
+
+    if xdg_data_home:
+        return Path(xdg_data_home).expanduser() / DEFAULT_APP_DATA_NAME
+
+    return home / ".local" / "share" / DEFAULT_APP_DATA_NAME
+
+
 def default_data_dir(
     app_root,
 ):
@@ -105,14 +155,21 @@ def load_config():
         .parents[2]
     )
 
+    desktop_mode = os.environ.get(
+        DESKTOP_ENVIRONMENT_FLAG,
+        "",
+    ).lower() in {"1", "true", "yes"}
+
+    default_directory = (
+        default_desktop_data_dir()
+        if desktop_mode
+        else default_data_dir(app_root)
+    )
+
     data_dir = Path(
         os.environ.get(
             "CODEX_QUOTA_DATA_DIR",
-            str(
-                default_data_dir(
-                    app_root
-                )
-            ),
+            str(default_directory),
         )
     ).expanduser()
 

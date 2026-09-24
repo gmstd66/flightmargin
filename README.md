@@ -288,6 +288,12 @@ Native desktop feasibility, including the proposed Windows-first architecture, i
 docs/desktop-feasibility.md
 ```
 
+The internal desktop prototype structure, local sidecar build instructions, and required Windows validation checklist are documented in:
+
+```text
+docs/desktop-implementation.md
+```
+
 ## License
 
 A license will be selected before public release.
