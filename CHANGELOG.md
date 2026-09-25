@@ -36,6 +36,8 @@ Notable changes to Codex Quota Monitor are documented here. This file summarizes
   singleton Settings window.
 - Reduced compact Weekly History Y-axis labels to 8 px while retaining all five
   percentage ticks and the existing X-axis sizing.
+- Expanded Weekly History and its chart into the dashboard's remaining viewport
+  height instead of leaving unused space below a fixed shallow card.
 
 - Made `app.version.__version__` the canonical application version used by setuptools metadata, the CLI, API responses, and Codex app-server client identification.
 

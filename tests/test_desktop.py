@@ -158,9 +158,23 @@ def test_dashboard_uses_fixed_reflowing_panels_and_visibility_only_controls():
     assert 'id="showAllPanels"' not in template
 
 
+def test_history_panel_fills_remaining_dashboard_height():
+    styles = DESKTOP_CSS.read_text(encoding="utf-8")
+    template = (PROJECT_ROOT / "app" / "templates" / "index.html").read_text(encoding="utf-8")
+    grid_end = template.index("</section>", template.index('id="dashboardGrid"'))
+    history_start = template.index('data-panel="history"')
+
+    assert grid_end < history_start
+    assert "height:100vh" in styles
+    assert ".container > main { flex:1 1 auto; min-height:0; display:flex; flex-direction:column; gap:6px; }" in styles
+    assert ".history-card { flex:1 1 92px; min-height:92px; height:auto;" in styles
+    assert ".history-card canvas { flex:1 1 0; height:0; min-height:38px; }" in styles
+    assert "height:clamp(92px,18vh,160px)" not in styles
+
+
 def test_dashboard_assets_are_revisioned_for_desktop_webview_cache():
     template = (PROJECT_ROOT / "app" / "templates" / "index.html").read_text(encoding="utf-8")
-    assert '/static/app.css?v=11' in template
+    assert '/static/app.css?v=12' in template
     assert '/static/app.js?v=12' in template
 
 
