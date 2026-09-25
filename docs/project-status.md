@@ -110,6 +110,10 @@ Git history records these completed capabilities:
   its hidden canvas, and decimal sidecar percentages made numeric tray icons
   remain unavailable. Source fixes and regression tests are complete; a fresh
   Windows artifact must still be built and visually revalidated.
+- Final desktop UX refinement: Settings now opens as a single native window
+  adjacent to the dashboard, with DPI-aware right/left placement and monitor
+  work-area clamping. Its quota-indicator option includes concise Windows
+  hidden-icons guidance; Windows remains responsible for icon placement.
 
 ## Branch workflow, caveats, and next work
 

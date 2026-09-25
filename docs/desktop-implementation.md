@@ -16,15 +16,21 @@ layout behavior outweighed their usefulness. Layout schema 4 discards obsolete
 schema-2/schema-3 geometry, restores all panels once during migration, and
 preserves unrelated desktop preferences.
 Preferences are stored in `%LOCALAPPDATA%\Codex Quota Monitor\desktop-preferences.json`.
+Settings opens in one native Tauri window beside the dashboard. It prefers a
+16-logical-pixel gap on the right, falls back to the left when needed, and
+clamps to the active monitor work area using its Windows DPI scale. Reopening
+Settings focuses and repositions the existing window.
 Remaining quota is neutral above 25%, warning at 25% or less, and critical red
 at 10% or less. The PyInstaller sidecar is built with `--noconsole` on Windows,
 and the release Tauri entry point uses the Windows GUI subsystem. Dashboard
 asset revisions prevent WebView2 from retaining an obsolete stacked layout.
-The single Windows tray icon is retained. After each existing collector sample,
-its tooltip shows `Weekly remaining: xx%` and `5-hour remaining: xx%`; the
-Settings tray preference returns the tooltip to the neutral monitoring label.
-Windows notification-area icons are too small for two readable percentage
-strings, so no text is rendered into the icon itself.
+The normal Windows application tray icon is retained alongside the optional
+Weekly and 5-hour numeric indicator icons. After each existing collector
+sample, their tooltips identify the quota window and exact remaining value;
+the Settings tray preference removes the two numeric indicators while keeping
+the normal application tray and menu.
+Settings also explains that Windows may place quota indicators in the
+hidden-icons menu and that users can drag them from `^` to keep them visible.
 
 ## Project layout
 

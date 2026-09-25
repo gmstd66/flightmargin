@@ -16,7 +16,8 @@ use std::{
 use tauri::{
     menu::{CheckMenuItem, Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    LogicalSize, Manager, RunEvent, WindowEvent,
+    LogicalSize, Manager, PhysicalPosition, RunEvent, WebviewUrl, WebviewWindow,
+    WebviewWindowBuilder, WindowEvent,
 };
 use tauri_plugin_autostart::ManagerExt as AutostartExt;
 use tauri_plugin_shell::{
@@ -30,6 +31,18 @@ const DATA_DIRECTORY_NAME: &str = "Codex Quota Monitor";
 const LOG_ROTATE_BYTES: u64 = 1_000_000;
 const WEEKLY_INDICATOR_ID: &str = "weekly-quota-indicator";
 const FIVE_HOUR_INDICATOR_ID: &str = "five-hour-quota-indicator";
+const SETTINGS_WINDOW_LABEL: &str = "settings";
+const SETTINGS_WINDOW_WIDTH: f64 = 420.0;
+const SETTINGS_WINDOW_HEIGHT: f64 = 450.0;
+const SETTINGS_WINDOW_GAP: f64 = 16.0;
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+struct ScreenRect {
+    x: i32,
+    y: i32,
+    width: u32,
+    height: u32,
+}
 
 struct BackendChild(Mutex<Option<CommandChild>>);
 struct QuitState(AtomicBool);
@@ -103,6 +116,130 @@ fn show_main_window(app: &tauri::AppHandle) {
         let _ = window.unminimize();
         let _ = window.set_focus();
     }
+}
+
+fn clamp_coordinate(value: i64, minimum: i64, maximum: i64) -> i32 {
+    if maximum < minimum {
+        minimum as i32
+    } else {
+        value.clamp(minimum, maximum) as i32
+    }
+}
+
+fn adjacent_window_position(
+    main: ScreenRect,
+    settings: ScreenRect,
+    work_area: ScreenRect,
+    gap: u32,
+) -> (i32, i32) {
+    let work_left = i64::from(work_area.x);
+    let work_top = i64::from(work_area.y);
+    let work_right = work_left + i64::from(work_area.width);
+    let work_bottom = work_top + i64::from(work_area.height);
+    let settings_width = i64::from(settings.width);
+    let settings_height = i64::from(settings.height);
+    let gap = i64::from(gap);
+
+    let right_x = i64::from(main.x) + i64::from(main.width) + gap;
+    let left_x = i64::from(main.x) - settings_width - gap;
+    let right_fits = right_x + settings_width <= work_right;
+    let left_fits = left_x >= work_left;
+    let maximum_x = work_right - settings_width;
+    let x = if right_fits {
+        right_x as i32
+    } else if left_fits {
+        left_x as i32
+    } else {
+        clamp_coordinate(right_x, work_left, maximum_x)
+    };
+    let y = clamp_coordinate(
+        i64::from(main.y),
+        work_top,
+        work_bottom - settings_height,
+    );
+    (x, y)
+}
+
+fn position_settings_window(
+    app: &tauri::AppHandle,
+    settings: &WebviewWindow,
+) -> Result<(), String> {
+    let main = app
+        .get_webview_window("main")
+        .ok_or_else(|| "Main desktop window is unavailable".to_string())?;
+    let main_position = main.outer_position().map_err(|error| error.to_string())?;
+    let main_size = main.outer_size().map_err(|error| error.to_string())?;
+    let settings_size = settings.outer_size().map_err(|error| error.to_string())?;
+    let monitor = main
+        .current_monitor()
+        .map_err(|error| error.to_string())?
+        .or(app.primary_monitor().map_err(|error| error.to_string())?)
+        .ok_or_else(|| "No Windows monitor is available".to_string())?;
+    let work_area = monitor.work_area();
+    let gap = (SETTINGS_WINDOW_GAP * monitor.scale_factor()).round() as u32;
+    let (x, y) = adjacent_window_position(
+        ScreenRect {
+            x: main_position.x,
+            y: main_position.y,
+            width: main_size.width,
+            height: main_size.height,
+        },
+        ScreenRect {
+            x: 0,
+            y: 0,
+            width: settings_size.width,
+            height: settings_size.height,
+        },
+        ScreenRect {
+            x: work_area.position.x,
+            y: work_area.position.y,
+            width: work_area.size.width,
+            height: work_area.size.height,
+        },
+        gap,
+    );
+    settings
+        .set_position(PhysicalPosition::new(x, y))
+        .map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+async fn open_settings(app: tauri::AppHandle) -> Result<(), String> {
+    if let Some(settings) = app.get_webview_window(SETTINGS_WINDOW_LABEL) {
+        position_settings_window(&app, &settings)?;
+        settings.show().map_err(|error| error.to_string())?;
+        settings.unminimize().map_err(|error| error.to_string())?;
+        settings.set_focus().map_err(|error| error.to_string())?;
+        return Ok(());
+    }
+
+    let main = app
+        .get_webview_window("main")
+        .ok_or_else(|| "Main desktop window is unavailable".to_string())?;
+    let mut url = main.url().map_err(|error| error.to_string())?;
+    url.query_pairs_mut().append_pair("settings", "1");
+    let settings = WebviewWindowBuilder::new(
+        &app,
+        SETTINGS_WINDOW_LABEL,
+        WebviewUrl::External(url),
+    )
+    .title("Codex Quota Monitor Settings")
+    .inner_size(SETTINGS_WINDOW_WIDTH, SETTINGS_WINDOW_HEIGHT)
+    .min_inner_size(360.0, 360.0)
+    .visible(false)
+    .build()
+    .map_err(|error| error.to_string())?;
+    position_settings_window(&app, &settings)?;
+    settings.show().map_err(|error| error.to_string())?;
+    settings.set_focus().map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+fn close_settings(app: tauri::AppHandle) -> Result<(), String> {
+    if let Some(settings) = app.get_webview_window(SETTINGS_WINDOW_LABEL) {
+        settings.close().map_err(|error| error.to_string())?;
+    }
+    Ok(())
 }
 
 fn tray_indicator_enabled() -> bool {
@@ -354,6 +491,7 @@ fn setup_tray(app: &tauri::AppHandle) -> tauri::Result<()> {
 
 fn main() {
     let app = tauri::Builder::default()
+        .invoke_handler(tauri::generate_handler![open_settings, close_settings])
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_autostart::init(
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
@@ -383,9 +521,10 @@ fn main() {
         .expect("error while building Codex Quota Monitor desktop shell");
     app.run(|app_handle, event| match event {
         RunEvent::WindowEvent {
+            label,
             event: WindowEvent::CloseRequested { api, .. },
             ..
-        } if !app_handle.state::<QuitState>().0.load(Ordering::SeqCst) => {
+        } if label == "main" && !app_handle.state::<QuitState>().0.load(Ordering::SeqCst) => {
             api.prevent_close();
             if let Some(window) = app_handle.get_webview_window("main") {
                 let _ = window.hide();
@@ -399,7 +538,7 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
-    use super::parse_percentage;
+    use super::{adjacent_window_position, parse_percentage, ScreenRect};
 
     #[test]
     fn parses_integer_and_decimal_percentages() {
@@ -417,5 +556,42 @@ mod tests {
         assert_eq!(parse_percentage("NaN%"), None);
         assert_eq!(parse_percentage("-1%"), None);
         assert_eq!(parse_percentage("101%"), None);
+    }
+
+    #[test]
+    fn settings_prefers_the_right_then_the_left_of_the_main_window() {
+        let work_area = ScreenRect { x: 0, y: 0, width: 1920, height: 1040 };
+        let settings = ScreenRect { x: 0, y: 0, width: 420, height: 450 };
+        assert_eq!(
+            adjacent_window_position(
+                ScreenRect { x: 200, y: 100, width: 600, height: 450 },
+                settings,
+                work_area,
+                16,
+            ),
+            (816, 100)
+        );
+        assert_eq!(
+            adjacent_window_position(
+                ScreenRect { x: 1250, y: 100, width: 600, height: 450 },
+                settings,
+                work_area,
+                16,
+            ),
+            (814, 100)
+        );
+    }
+
+    #[test]
+    fn settings_clamps_inside_the_monitor_work_area_when_neither_side_fits() {
+        assert_eq!(
+            adjacent_window_position(
+                ScreenRect { x: 120, y: -40, width: 600, height: 450 },
+                ScreenRect { x: 0, y: 0, width: 420, height: 450 },
+                ScreenRect { x: 100, y: 20, width: 900, height: 700 },
+                24,
+            ),
+            (580, 20)
+        );
     }
 }

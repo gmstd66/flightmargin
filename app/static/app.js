@@ -86,6 +86,10 @@ function updateWindow(prefix, data) {
 }
 
 const QUOTA_THRESHOLDS = Object.freeze({ warning: 25, critical: 10 });
+const IS_SETTINGS_WINDOW = new URLSearchParams(window.location.search).get("settings") === "1";
+const preferenceChannel = "BroadcastChannel" in window
+    ? new BroadcastChannel("codex-quota-preferences")
+    : null;
 const PANEL_LABELS = Object.freeze({
     "five-hour": "5-hour quota",
     weekly: "Weekly quota",
@@ -100,6 +104,7 @@ async function savePreferences() {
     const response = await fetch("/api/preferences", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(preferences) });
     preferences = await response.json();
     applyPreferences();
+    preferenceChannel?.postMessage("changed");
 }
 
 function applyPreferences() {
@@ -674,7 +679,25 @@ document.getElementById(
 );
 
 
-document.getElementById("settings").addEventListener("click", () => document.getElementById("settingsDialog").showModal());
+async function openSettings() {
+    if (window.__TAURI__?.core?.invoke) {
+        try {
+            await window.__TAURI__.core.invoke("open_settings");
+            return;
+        } catch (error) {
+            document.getElementById("status").textContent = `Unable to open Settings: ${error}`;
+        }
+    }
+    document.getElementById("settingsDialog").showModal();
+}
+
+document.getElementById("settings").addEventListener("click", openSettings);
+document.getElementById("closeSettings").addEventListener("click", async event => {
+    if (IS_SETTINGS_WINDOW && window.__TAURI__?.core?.invoke) {
+        event.preventDefault();
+        await window.__TAURI__.core.invoke("close_settings");
+    }
+});
 document.getElementById("trayIndicator").addEventListener("change", async event => { preferences.tray_indicator = event.target.checked; await savePreferences(); });
 document.getElementById("panelSettings").addEventListener("change", async event => {
     const panelId = event.target.dataset.visible;
@@ -687,10 +710,18 @@ document.getElementById("showAllPanels").addEventListener("click", async () => {
     preferences = await (await fetch("/api/preferences/show-all", { method: "POST" })).json();
     applyPreferences();
     renderSettings();
+    preferenceChannel?.postMessage("changed");
 });
 
+if (IS_SETTINGS_WINDOW) {
+    document.body.classList.add("settings-window");
+    document.getElementById("settingsDialog").show();
+} else {
+    preferenceChannel?.addEventListener("message", () => { void loadPreferences(); });
+}
+
 loadPreferences().catch(error => { document.getElementById("status").textContent = `Settings unavailable: ${error.message}`; });
-reloadAll();
+if (!IS_SETTINGS_WINDOW) reloadAll();
 
 
 /*
@@ -700,13 +731,7 @@ reloadAll();
  * local FastAPI/SQLite backend every 15 seconds,
  * so this does not increase Codex quota polling.
  */
-setInterval(
-    reloadAll,
-    15000
-);
+if (!IS_SETTINGS_WINDOW) setInterval(reloadAll, 15000);
 
 
-window.addEventListener(
-    "resize",
-    loadHistory
-);
+if (!IS_SETTINGS_WINDOW) window.addEventListener("resize", loadHistory);
