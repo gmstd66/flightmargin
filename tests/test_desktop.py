@@ -142,6 +142,8 @@ def test_dashboard_uses_fixed_reflowing_panels_and_visibility_only_controls():
     assert "data-size" not in source
     assert 'document.getElementById("panelSettings").addEventListener("change"' in source
     assert 'document.getElementById("showAllPanels")' in source
+    assert "historyBecameVisible" in source
+    assert "requestAnimationFrame(() => { void loadHistory(); })" in source
     assert "grid-auto-flow:dense" in styles
     assert "draggable=" not in template
     assert 'id="showAllPanels"' in template
@@ -149,5 +151,5 @@ def test_dashboard_uses_fixed_reflowing_panels_and_visibility_only_controls():
 
 def test_dashboard_assets_are_revisioned_for_desktop_webview_cache():
     template = (PROJECT_ROOT / "app" / "templates" / "index.html").read_text(encoding="utf-8")
-    assert '/static/app.css?v=8' in template
-    assert '/static/app.js?v=8' in template
+    assert '/static/app.css?v=9' in template
+    assert '/static/app.js?v=9' in template

@@ -164,14 +164,22 @@ fn sync_indicator(app: &tauri::AppHandle, id: &str, value: Option<u8>, marker: [
     let _ = TrayIconBuilder::with_id(id).icon(quota_icon(value, marker)).tooltip(tooltip).build(app);
 }
 
+fn parse_percentage(value: &str) -> Option<u8> {
+    let value = value.trim_end_matches('%').parse::<f64>().ok()?;
+    if !value.is_finite() || !(0.0..=100.0).contains(&value) {
+        return None;
+    }
+    Some(value.round() as u8)
+}
+
 fn sync_quota_indicators(app: &tauri::AppHandle, five: &str, weekly: &str) {
     if !tray_indicator_enabled() {
         let _ = app.remove_tray_by_id(WEEKLY_INDICATOR_ID);
         let _ = app.remove_tray_by_id(FIVE_HOUR_INDICATOR_ID);
         return;
     }
-    sync_indicator(app, WEEKLY_INDICATOR_ID, weekly.trim_end_matches('%').parse().ok(), [83, 150, 246, 255], "Weekly");
-    sync_indicator(app, FIVE_HOUR_INDICATOR_ID, five.trim_end_matches('%').parse().ok(), [168, 85, 247, 255], "5-hour");
+    sync_indicator(app, WEEKLY_INDICATOR_ID, parse_percentage(weekly), [83, 150, 246, 255], "Weekly");
+    sync_indicator(app, FIVE_HOUR_INDICATOR_ID, parse_percentage(five), [168, 85, 247, 255], "5-hour");
 }
 
 fn wait_for_health(port: u16) -> Result<(), String> {
@@ -387,4 +395,27 @@ fn main() {
         RunEvent::ExitRequested { .. } | RunEvent::Exit => stop_backend(app_handle),
         _ => {}
     });
+}
+
+#[cfg(test)]
+mod tests {
+    use super::parse_percentage;
+
+    #[test]
+    fn parses_integer_and_decimal_percentages() {
+        assert_eq!(parse_percentage("0%"), Some(0));
+        assert_eq!(parse_percentage("9.4%"), Some(9));
+        assert_eq!(parse_percentage("10.5%"), Some(11));
+        assert_eq!(parse_percentage("25.0%"), Some(25));
+        assert_eq!(parse_percentage("99.6%"), Some(100));
+        assert_eq!(parse_percentage("100.0%"), Some(100));
+    }
+
+    #[test]
+    fn rejects_missing_invalid_and_out_of_range_percentages() {
+        assert_eq!(parse_percentage("--"), None);
+        assert_eq!(parse_percentage("NaN%"), None);
+        assert_eq!(parse_percentage("-1%"), None);
+        assert_eq!(parse_percentage("101%"), None);
+    }
 }

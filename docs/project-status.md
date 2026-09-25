@@ -104,6 +104,12 @@ Git history records these completed capabilities:
   outweighed their usefulness. Schema 4 retains only stable panel visibility,
   restores all panels for schema-2/schema-3 users, and preserves unrelated
   desktop preferences such as the tray-indicator choice.
+- Milestone 6.19F native validation confirmed the fixed 600×450 dashboard,
+  schema-4 visibility persistence, dense panel reflow, and windowless startup.
+  It also found two localized defects: restoring Weekly History did not redraw
+  its hidden canvas, and decimal sidecar percentages made numeric tray icons
+  remain unavailable. Source fixes and regression tests are complete; a fresh
+  Windows artifact must still be built and visually revalidated.
 
 ## Branch workflow, caveats, and next work
 

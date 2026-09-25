@@ -103,11 +103,16 @@ async function savePreferences() {
 }
 
 function applyPreferences() {
+    let historyBecameVisible = false;
     Object.entries(preferences.panels).forEach(([id, visible]) => {
         const element = document.querySelector(`[data-panel="${id}"]`);
-        if (element) element.hidden = !visible;
+        if (element) {
+            historyBecameVisible ||= id === "history" && element.hidden && visible;
+            element.hidden = !visible;
+        }
     });
     document.getElementById("trayIndicator").checked = preferences.tray_indicator;
+    if (historyBecameVisible) requestAnimationFrame(() => { void loadHistory(); });
 }
 
 function renderSettings() {

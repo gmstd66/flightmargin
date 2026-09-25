@@ -24,6 +24,7 @@ Notable changes to Codex Quota Monitor are documented here. This file summarizes
 - Selected a current-user NSIS installer as the internal beta path and preserved per-user SQLite data on normal uninstall and upgrade.
 - Standardized the dashboard title on Codex Quota Monitor and made collector status updates accessible to screen readers.
 - Simplified the owner-reviewed Windows dashboard to a fixed compact responsive layout with visibility-only customization. Drag/reorder, arbitrary resizing, persisted geometry, and obsolete Settings controls were removed; schema 4 resets incompatible layout geometry while preserving unrelated preferences.
+- Restored the Weekly History graph immediately when a hidden panel is shown and accepted decimal sidecar percentages when updating the numeric Windows tray indicators.
 
 - Made `app.version.__version__` the canonical application version used by setuptools metadata, the CLI, API responses, and Codex app-server client identification.
 
