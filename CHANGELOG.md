@@ -34,6 +34,8 @@ Notable changes to Codex Quota Monitor are documented here. This file summarizes
 - Granted the native Settings commands through narrow Tauri 2 capabilities and
   added tray **Settings...** and **About...** actions that reuse the adjacent
   singleton Settings window.
+- Reduced compact Weekly History Y-axis labels to 8 px while retaining all five
+  percentage ticks and the existing X-axis sizing.
 
 - Made `app.version.__version__` the canonical application version used by setuptools metadata, the CLI, API responses, and Codex app-server client identification.
 

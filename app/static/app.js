@@ -310,7 +310,8 @@ function drawHistory(samples) {
     /*
      * Horizontal percentage grid.
      */
-    ctx.font = "11px system-ui";
+    const yAxisFontSize = compact ? 8 : 11;
+    ctx.font = `${yAxisFontSize}px system-ui`;
     ctx.fillStyle = "#7d828b";
     ctx.strokeStyle = "#2d3036";
     ctx.lineWidth = 1;

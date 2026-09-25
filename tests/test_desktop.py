@@ -161,7 +161,17 @@ def test_dashboard_uses_fixed_reflowing_panels_and_visibility_only_controls():
 def test_dashboard_assets_are_revisioned_for_desktop_webview_cache():
     template = (PROJECT_ROOT / "app" / "templates" / "index.html").read_text(encoding="utf-8")
     assert '/static/app.css?v=11' in template
-    assert '/static/app.js?v=11' in template
+    assert '/static/app.js?v=12' in template
+
+
+def test_compact_history_uses_smaller_y_axis_labels_without_changing_ticks():
+    source = DESKTOP_JS.read_text(encoding="utf-8")
+
+    assert "const left = compact ? 28 : 46;" in source
+    assert "const yAxisFontSize = compact ? 8 : 11;" in source
+    assert "ctx.font = `${yAxisFontSize}px system-ui`;" in source
+    assert "[0, 25, 50, 75, 100]" in source
+    assert '"9px system-ui"' in source
 
 
 def test_settings_uses_one_native_window_with_loopback_ipc_and_tray_guidance():
