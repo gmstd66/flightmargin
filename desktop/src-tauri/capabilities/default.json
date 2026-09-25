@@ -3,7 +3,7 @@
   "identifier": "default",
   "description": "Capability for the loopback-backed desktop windows.",
   "remote": {
-    "urls": ["http://127.0.0.1:*"]
+    "urls": ["http://127.0.0.1:*/*"]
   },
   "windows": ["main", "settings"],
   "permissions": ["core:default"]

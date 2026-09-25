@@ -114,6 +114,11 @@ Git history records these completed capabilities:
   adjacent to the dashboard, with DPI-aware right/left placement and monitor
   work-area clamping. Its quota-indicator option includes concise Windows
   hidden-icons guidance; Windows remains responsible for icon placement.
+- Owner validation found that the retained modal fallback could mask an
+  unavailable global Tauri bridge and that the original three-digit tray glyphs
+  overlapped at `100`. Settings now has a dedicated native-window page with no
+  dashboard overlay fallback, and the 32x32 tray renderer uses a non-overlapping
+  compact three-digit layout.
 
 ## Branch workflow, caveats, and next work
 

@@ -86,26 +86,10 @@ function updateWindow(prefix, data) {
 }
 
 const QUOTA_THRESHOLDS = Object.freeze({ warning: 25, critical: 10 });
-const IS_SETTINGS_WINDOW = new URLSearchParams(window.location.search).get("settings") === "1";
 const preferenceChannel = "BroadcastChannel" in window
     ? new BroadcastChannel("codex-quota-preferences")
     : null;
-const PANEL_LABELS = Object.freeze({
-    "five-hour": "5-hour quota",
-    weekly: "Weekly quota",
-    pace: "Weekly Pace",
-    resets: "Full Resets",
-    account: "Account",
-    history: "Weekly History"
-});
 let preferences = null;
-
-async function savePreferences() {
-    const response = await fetch("/api/preferences", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(preferences) });
-    preferences = await response.json();
-    applyPreferences();
-    preferenceChannel?.postMessage("changed");
-}
 
 function applyPreferences() {
     let historyBecameVisible = false;
@@ -116,22 +100,12 @@ function applyPreferences() {
             element.hidden = !visible;
         }
     });
-    document.getElementById("trayIndicator").checked = preferences.tray_indicator;
     if (historyBecameVisible) requestAnimationFrame(() => { void loadHistory(); });
-}
-
-function renderSettings() {
-    const target = document.getElementById("panelSettings");
-    target.replaceChildren(...Object.entries(preferences.panels).map(([id, visible]) => {
-        const row = document.createElement("div"); row.className = "setting-row";
-        row.innerHTML = `<label><input type="checkbox" data-visible="${id}" ${visible ? "checked" : ""}> ${PANEL_LABELS[id]}</label>`;
-        return row;
-    }));
 }
 
 async function loadPreferences() {
     preferences = await (await fetch("/api/preferences", { cache: "no-store" })).json();
-    applyPreferences(); renderSettings();
+    applyPreferences();
 }
 
 
@@ -680,48 +654,24 @@ document.getElementById(
 
 
 async function openSettings() {
-    if (window.__TAURI__?.core?.invoke) {
-        try {
-            await window.__TAURI__.core.invoke("open_settings");
-            return;
-        } catch (error) {
-            document.getElementById("status").textContent = `Unable to open Settings: ${error}`;
-        }
+    const invoke = window.__TAURI__?.core?.invoke
+        ?? window.__TAURI_INTERNALS__?.invoke;
+    if (!invoke) {
+        document.getElementById("status").textContent = "Native Settings bridge is unavailable";
+        return;
     }
-    document.getElementById("settingsDialog").showModal();
+    try {
+        await invoke("open_settings");
+    } catch (error) {
+        document.getElementById("status").textContent = `Unable to open Settings: ${error}`;
+    }
 }
 
 document.getElementById("settings").addEventListener("click", openSettings);
-document.getElementById("closeSettings").addEventListener("click", async event => {
-    if (IS_SETTINGS_WINDOW && window.__TAURI__?.core?.invoke) {
-        event.preventDefault();
-        await window.__TAURI__.core.invoke("close_settings");
-    }
-});
-document.getElementById("trayIndicator").addEventListener("change", async event => { preferences.tray_indicator = event.target.checked; await savePreferences(); });
-document.getElementById("panelSettings").addEventListener("change", async event => {
-    const panelId = event.target.dataset.visible;
-    if (!panelId) return;
-    preferences.panels[panelId] = event.target.checked;
-    applyPreferences();
-    await savePreferences();
-});
-document.getElementById("showAllPanels").addEventListener("click", async () => {
-    preferences = await (await fetch("/api/preferences/show-all", { method: "POST" })).json();
-    applyPreferences();
-    renderSettings();
-    preferenceChannel?.postMessage("changed");
-});
-
-if (IS_SETTINGS_WINDOW) {
-    document.body.classList.add("settings-window");
-    document.getElementById("settingsDialog").show();
-} else {
-    preferenceChannel?.addEventListener("message", () => { void loadPreferences(); });
-}
+preferenceChannel?.addEventListener("message", () => { void loadPreferences(); });
 
 loadPreferences().catch(error => { document.getElementById("status").textContent = `Settings unavailable: ${error.message}`; });
-if (!IS_SETTINGS_WINDOW) reloadAll();
+reloadAll();
 
 
 /*
@@ -731,7 +681,7 @@ if (!IS_SETTINGS_WINDOW) reloadAll();
  * local FastAPI/SQLite backend every 15 seconds,
  * so this does not increase Codex quota polling.
  */
-if (!IS_SETTINGS_WINDOW) setInterval(reloadAll, 15000);
+setInterval(reloadAll, 15000);
 
 
-if (!IS_SETTINGS_WINDOW) window.addEventListener("resize", loadHistory);
+window.addEventListener("resize", loadHistory);

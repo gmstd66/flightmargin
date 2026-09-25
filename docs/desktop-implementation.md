@@ -19,7 +19,9 @@ Preferences are stored in `%LOCALAPPDATA%\Codex Quota Monitor\desktop-preference
 Settings opens in one native Tauri window beside the dashboard. It prefers a
 16-logical-pixel gap on the right, falls back to the left when needed, and
 clamps to the active monitor work area using its Windows DPI scale. Reopening
-Settings focuses and repositions the existing window.
+Settings focuses and repositions the existing window. The native window loads
+the dedicated loopback `/settings` page; the dashboard contains no modal
+Settings markup or fallback overlay.
 Remaining quota is neutral above 25%, warning at 25% or less, and critical red
 at 10% or less. The PyInstaller sidecar is built with `--noconsole` on Windows,
 and the release Tauri entry point uses the Windows GUI subsystem. Dashboard
@@ -29,6 +31,8 @@ Weekly and 5-hour numeric indicator icons. After each existing collector
 sample, their tooltips identify the quota window and exact remaining value;
 the Settings tray preference removes the two numeric indicators while keeping
 the normal application tray and menu.
+The compact seven-segment renderer uses narrower digits and spacing for
+three-digit values so `100` fits completely within the standard 32x32 icon.
 Settings also explains that Windows may place quota indicators in the
 hidden-icons menu and that users can drag them from `^` to keep them visible.
 

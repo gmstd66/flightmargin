@@ -23,6 +23,7 @@ TAURI_MAIN = PROJECT_ROOT / "desktop" / "src-tauri" / "src" / "main.rs"
 TAURI_CONFIG = PROJECT_ROOT / "desktop" / "src-tauri" / "tauri.conf.template.json"
 TAURI_CAPABILITY = PROJECT_ROOT / "desktop" / "src-tauri" / "capabilities" / "default.json"
 DESKTOP_JS = PROJECT_ROOT / "app" / "static" / "app.js"
+SETTINGS_JS = PROJECT_ROOT / "app" / "static" / "settings.js"
 DESKTOP_CSS = PROJECT_ROOT / "app" / "static" / "app.css"
 
 
@@ -136,40 +137,47 @@ def test_release_tauri_binary_uses_windows_gui_subsystem():
 
 def test_dashboard_uses_fixed_reflowing_panels_and_visibility_only_controls():
     source = DESKTOP_JS.read_text(encoding="utf-8")
+    settings_source = SETTINGS_JS.read_text(encoding="utf-8")
     styles = DESKTOP_CSS.read_text(encoding="utf-8")
     template = (PROJECT_ROOT / "app" / "templates" / "index.html").read_text(encoding="utf-8")
 
     assert "dragHandle" not in source
     assert "resizeHandle" not in source
     assert "data-size" not in source
-    assert 'document.getElementById("panelSettings").addEventListener("change"' in source
-    assert 'document.getElementById("showAllPanels")' in source
+    assert 'document.getElementById("panelSettings").addEventListener("change"' in settings_source
+    assert 'document.getElementById("showAllPanels")' in settings_source
     assert "historyBecameVisible" in source
     assert "requestAnimationFrame(() => { void loadHistory(); })" in source
     assert "grid-auto-flow:dense" in styles
     assert "draggable=" not in template
-    assert 'id="showAllPanels"' in template
+    assert 'id="showAllPanels"' not in template
 
 
 def test_dashboard_assets_are_revisioned_for_desktop_webview_cache():
     template = (PROJECT_ROOT / "app" / "templates" / "index.html").read_text(encoding="utf-8")
-    assert '/static/app.css?v=10' in template
-    assert '/static/app.js?v=10' in template
+    assert '/static/app.css?v=11' in template
+    assert '/static/app.js?v=11' in template
 
 
 def test_settings_uses_one_native_window_with_loopback_ipc_and_tray_guidance():
     source = DESKTOP_JS.read_text(encoding="utf-8")
+    settings_source = SETTINGS_JS.read_text(encoding="utf-8")
     rust = TAURI_MAIN.read_text(encoding="utf-8")
-    template = (PROJECT_ROOT / "app" / "templates" / "index.html").read_text(encoding="utf-8")
+    dashboard = (PROJECT_ROOT / "app" / "templates" / "index.html").read_text(encoding="utf-8")
+    settings = (PROJECT_ROOT / "app" / "templates" / "settings.html").read_text(encoding="utf-8")
     config = TAURI_CONFIG.read_text(encoding="utf-8")
     capability = TAURI_CAPABILITY.read_text(encoding="utf-8")
 
     assert 'invoke("open_settings")' in source
+    assert "__TAURI_INTERNALS__?.invoke" in source
     assert 'get_webview_window(SETTINGS_WINDOW_LABEL)' in rust
     assert "adjacent_window_position" in rust
     assert 'label == "main"' in rust
     assert '"withGlobalTauri": true' in config
-    assert '"http://127.0.0.1:*"' in capability
+    assert '"http://127.0.0.1:*/*"' in capability
     assert '"main", "settings"' in capability
-    assert "Windows may place quota indicators in the hidden-icons menu." in template
-    assert "Drag them from ^ to the system tray to keep them visible." in template
+    assert "settingsDialog" not in dashboard
+    assert "showModal" not in source
+    assert 'tauriInvoke("close_settings")' in settings_source
+    assert "Windows may place quota indicators in the hidden-icons menu." in settings
+    assert "Drag them from ^ to the system tray to keep them visible." in settings

@@ -60,14 +60,12 @@ button:disabled {
 .dashboard-grid { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); grid-auto-flow:dense; gap:14px; }
 .panel { min-width:0; }
 .header-actions { display:flex; gap:8px; }
-dialog { background:#181a1e; color:#f2f2f2; border:1px solid #34363b; border-radius:12px; width:min(440px,90vw); }
 #panelSettings { display:grid; gap:8px; margin:16px 0; } .setting-row { display:flex; align-items:center; justify-content:space-between; gap:8px; } .settings-actions { display:flex; justify-content:space-between; margin-top:18px; }
 .settings-help { margin:8px 0 0; color:#9ca1a9; font-size:12px; line-height:1.35; }
 .settings-window { background:#181a1e; }
-.settings-window .container { display:none; }
-.settings-window #settingsDialog { display:block; position:static; width:100%; max-width:none; min-height:100vh; margin:0; padding:18px; border:0; border-radius:0; }
-.settings-window #settingsDialog::backdrop { display:none; }
-.settings-window #settingsDialog h2 { margin-top:0; }
+.settings-surface { min-height:100vh; padding:18px; }
+.settings-surface h1 { margin:0 0 20px; }
+.settings-surface h2 { margin:0; font-size:16px; }
 
 .card {
     background: #181a1e;

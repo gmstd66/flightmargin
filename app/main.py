@@ -365,6 +365,19 @@ async def restore_all_panels():
     )
 
 
+@app.get(
+    "/settings",
+    response_class=HTMLResponse,
+)
+async def desktop_settings(
+    request: Request,
+):
+    return templates.TemplateResponse(
+        request=request,
+        name="settings.html",
+    )
+
+
 @app.get("/api/health")
 async def health():
     return {

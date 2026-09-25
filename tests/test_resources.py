@@ -34,6 +34,15 @@ def test_dashboard_template_exists():
     assert template.is_file()
 
 
+def test_desktop_settings_template_exists():
+    template = (
+        main.TEMPLATES_DIR
+        / "settings.html"
+    )
+
+    assert template.is_file()
+
+
 def test_static_directory_exists():
     assert (
         main.STATIC_DIR

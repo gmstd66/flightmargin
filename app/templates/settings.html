@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Codex Quota Monitor Settings</title>
+    <link rel="stylesheet" href="/static/app.css?v=11">
+</head>
+<body class="settings-window">
+    <main class="settings-surface">
+        <h1>Settings</h1>
+        <h2>Dashboard panels</h2>
+        <div id="panelSettings"></div>
+        <label><input id="trayIndicator" type="checkbox"> Show quota indicators in the system tray</label>
+        <p class="settings-help">Windows may place quota indicators in the hidden-icons menu. Drag them from ^ to the system tray to keep them visible.</p>
+        <p id="settingsStatus" class="settings-help" role="status" aria-live="polite"></p>
+        <div class="settings-actions">
+            <button id="showAllPanels" type="button">Show all panels</button>
+            <button id="closeSettings" type="button">Done</button>
+        </div>
+    </main>
+    <script src="/static/settings.js?v=1"></script>
+</body>
+</html>

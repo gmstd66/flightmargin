@@ -217,7 +217,8 @@ async fn open_settings(app: tauri::AppHandle) -> Result<(), String> {
         .get_webview_window("main")
         .ok_or_else(|| "Main desktop window is unavailable".to_string())?;
     let mut url = main.url().map_err(|error| error.to_string())?;
-    url.query_pairs_mut().append_pair("settings", "1");
+    url.set_path("/settings");
+    url.set_query(None);
     let settings = WebviewWindowBuilder::new(
         &app,
         SETTINGS_WINDOW_LABEL,
@@ -277,22 +278,34 @@ fn fill(pixels: &mut [u8], x: usize, y: usize, width: usize, height: usize, colo
     }}
 }
 
-fn quota_icon(value: Option<u8>, marker: [u8; 4]) -> tauri::image::Image<'static> {
+fn digit_layout(character_count: usize) -> (usize, usize, usize, usize) {
+    match character_count {
+        0 | 1 => (10, 0, 8, 10),
+        2 => (3, 14, 8, 10),
+        _ => (1, 10, 4, 6),
+    }
+}
+
+fn quota_icon_pixels(value: Option<u8>, marker: [u8; 4]) -> Vec<u8> {
     let mut pixels = vec![0; 32 * 32 * 4];
     fill(&mut pixels, 0, 0, 32, 4, marker);
     let segments = [[1,1,1,1,1,1,0],[0,1,1,0,0,0,0],[1,1,0,1,1,0,1],[1,1,1,1,0,0,1],[0,1,1,0,0,1,1],[1,0,1,1,0,1,1],[1,0,1,1,1,1,1],[1,1,1,0,0,0,0],[1,1,1,1,1,1,1],[1,1,1,1,0,1,1]];
     let text = value.map(|number| number.to_string()).unwrap_or_else(|| "--".to_string());
     let color = quota_color(value);
-    let (start, step) = if text.len() >= 3 { (0, 10) } else { (3, 14) };
+    let (start, step, horizontal_width, right_offset) = digit_layout(text.len());
     for (position, character) in text.chars().enumerate() {
         if let Some(digit) = character.to_digit(10) { let x = start + position * step; let s = segments[digit as usize];
-            if s[0] == 1 { fill(&mut pixels,x+2,7,8,2,color) } if s[1] == 1 { fill(&mut pixels,x+10,9,2,8,color) }
-            if s[2] == 1 { fill(&mut pixels,x+10,18,2,8,color) } if s[3] == 1 { fill(&mut pixels,x+2,26,8,2,color) }
+            if s[0] == 1 { fill(&mut pixels,x+2,7,horizontal_width,2,color) } if s[1] == 1 { fill(&mut pixels,x+right_offset,9,2,8,color) }
+            if s[2] == 1 { fill(&mut pixels,x+right_offset,18,2,8,color) } if s[3] == 1 { fill(&mut pixels,x+2,26,horizontal_width,2,color) }
             if s[4] == 1 { fill(&mut pixels,x,18,2,8,color) } if s[5] == 1 { fill(&mut pixels,x,9,2,8,color) }
-            if s[6] == 1 { fill(&mut pixels,x+2,17,8,2,color) }
+            if s[6] == 1 { fill(&mut pixels,x+2,17,horizontal_width,2,color) }
         } else { fill(&mut pixels, 4 + position * 14, 17, 8, 2, color); }
     }
-    tauri::image::Image::new_owned(pixels, 32, 32)
+    pixels
+}
+
+fn quota_icon(value: Option<u8>, marker: [u8; 4]) -> tauri::image::Image<'static> {
+    tauri::image::Image::new_owned(quota_icon_pixels(value, marker), 32, 32)
 }
 
 fn sync_indicator(app: &tauri::AppHandle, id: &str, value: Option<u8>, marker: [u8; 4], label: &str) {
@@ -538,7 +551,10 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
-    use super::{adjacent_window_position, parse_percentage, ScreenRect};
+    use super::{
+        adjacent_window_position, digit_layout, parse_percentage, quota_color,
+        quota_icon_pixels, ScreenRect,
+    };
 
     #[test]
     fn parses_integer_and_decimal_percentages() {
@@ -556,6 +572,35 @@ mod tests {
         assert_eq!(parse_percentage("NaN%"), None);
         assert_eq!(parse_percentage("-1%"), None);
         assert_eq!(parse_percentage("101%"), None);
+    }
+
+    #[test]
+    fn tray_renderer_handles_required_percentage_boundaries() {
+        let marker = [83, 150, 246, 255];
+        for value in [0, 9, 10, 25, 99, 100] {
+            let pixels = quota_icon_pixels(Some(value), marker);
+            assert_eq!(pixels.len(), 32 * 32 * 4);
+            assert!(pixels.chunks_exact(4).any(|pixel| pixel == quota_color(Some(value))));
+        }
+    }
+
+    #[test]
+    fn tray_renderer_fits_all_three_digits_of_100_inside_the_icon() {
+        let value = 100;
+        let text = value.to_string();
+        let (start, step, _horizontal_width, right_offset) = digit_layout(text.len());
+        let digit_width = right_offset + 2;
+        let pixels = quota_icon_pixels(Some(value), [168, 85, 247, 255]);
+        let color = quota_color(Some(value));
+
+        for position in 0..text.len() {
+            let left = start + position * step;
+            let right = left + digit_width;
+            assert!(right <= 32, "digit {position} exceeds the icon bounds");
+            assert!((7..28).any(|y| {
+                (left..right).any(|x| pixels[(y * 32 + x) * 4..(y * 32 + x + 1) * 4] == color)
+            }), "digit {position} was not rendered");
+        }
     }
 
     #[test]
