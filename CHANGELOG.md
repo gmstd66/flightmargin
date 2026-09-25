@@ -28,6 +28,7 @@ Notable changes to Codex Quota Monitor are documented here. This file summarizes
 - Opened Settings in a focused, DPI-aware native window beside the dashboard and added Windows hidden-icons guidance for quota indicators.
 - Removed the legacy in-dashboard Settings fallback in favor of a dedicated native-window page, and tightened three-digit tray rendering so `100` remains fully visible.
 - Added a green purchased-Credits tray indicator using floored whole balances, a `999+` overflow glyph, exact-value tooltips, and the existing tray preference and collector stream.
+- Restored resilient tray startup by creating unknown-state informational icons immediately, accepting both two-field and three-field sidecar samples, retaining the normal tray handle directly, and logging each icon failure independently.
 
 - Made `app.version.__version__` the canonical application version used by setuptools metadata, the CLI, API responses, and Codex app-server client identification.
 

@@ -249,8 +249,13 @@ fn close_settings(app: tauri::AppHandle) -> Result<(), String> {
 
 fn tray_indicator_enabled() -> bool {
     let path = desktop_data_dir().join("desktop-preferences.json");
-    fs::read_to_string(path).ok()
-        .and_then(|text| serde_json::from_str::<serde_json::Value>(&text).ok())
+    let contents = fs::read_to_string(path).ok();
+    tray_indicator_preference(contents.as_deref())
+}
+
+fn tray_indicator_preference(contents: Option<&str>) -> bool {
+    contents
+        .and_then(|text| serde_json::from_str::<serde_json::Value>(text).ok())
         .and_then(|value| value.get("tray_indicator").and_then(|enabled| enabled.as_bool()))
         .unwrap_or(true)
 }
@@ -319,10 +324,20 @@ fn quota_icon(value: Option<u8>, marker: [u8; 4]) -> tauri::image::Image<'static
     tauri::image::Image::new_owned(numeric_icon_pixels(&text, marker, quota_color(value)), 32, 32)
 }
 
-fn sync_indicator(app: &tauri::AppHandle, id: &str, value: Option<u8>, marker: [u8; 4], label: &str) {
+fn sync_indicator(app: &tauri::AppHandle, id: &str, value: Option<u8>, marker: [u8; 4], label: &str) -> Result<(), String> {
     let tooltip = value.map(|value| format!("{label} remaining: {value}%")).unwrap_or_else(|| format!("{label} remaining: unavailable"));
-    if let Some(icon) = app.tray_by_id(id) { let _ = icon.set_icon(Some(quota_icon(value, marker))); let _ = icon.set_tooltip(Some(tooltip)); return; }
-    let _ = TrayIconBuilder::with_id(id).icon(quota_icon(value, marker)).tooltip(tooltip).build(app);
+    if let Some(icon) = app.tray_by_id(id) {
+        icon.set_icon(Some(quota_icon(value, marker))).map_err(|error| error.to_string())?;
+        icon.set_tooltip(Some(tooltip)).map_err(|error| error.to_string())?;
+        return Ok(());
+    }
+    TrayIconBuilder::with_id(id)
+        .icon(quota_icon(value, marker))
+        .tooltip(tooltip)
+        .build(app)
+        .map_err(|error| error.to_string())?;
+    log_message(app, &format!("{label} tray indicator created"));
+    Ok(())
 }
 
 fn parse_percentage(value: &str) -> Option<u8> {
@@ -363,7 +378,7 @@ fn credits_tooltip(value: Option<u64>) -> String {
         .unwrap_or_else(|| "Credits remaining: unavailable".to_string())
 }
 
-fn sync_credits_indicator(app: &tauri::AppHandle, raw_value: &str) {
+fn sync_credits_indicator(app: &tauri::AppHandle, raw_value: &str) -> Result<(), String> {
     let value = parse_credits(raw_value);
     let display = credits_display(value);
     let tooltip = credits_tooltip(value);
@@ -373,14 +388,17 @@ fn sync_credits_indicator(app: &tauri::AppHandle, raw_value: &str) {
         32,
     );
     if let Some(indicator) = app.tray_by_id(CREDITS_INDICATOR_ID) {
-        let _ = indicator.set_icon(Some(icon));
-        let _ = indicator.set_tooltip(Some(tooltip));
-        return;
+        indicator.set_icon(Some(icon)).map_err(|error| error.to_string())?;
+        indicator.set_tooltip(Some(tooltip)).map_err(|error| error.to_string())?;
+        return Ok(());
     }
-    let _ = TrayIconBuilder::with_id(CREDITS_INDICATOR_ID)
+    TrayIconBuilder::with_id(CREDITS_INDICATOR_ID)
         .icon(icon)
         .tooltip(tooltip)
-        .build(app);
+        .build(app)
+        .map_err(|error| error.to_string())?;
+    log_message(app, "Credits tray indicator created");
+    Ok(())
 }
 
 fn sync_quota_indicators(app: &tauri::AppHandle, five: &str, weekly: &str, credits: &str) {
@@ -390,9 +408,29 @@ fn sync_quota_indicators(app: &tauri::AppHandle, five: &str, weekly: &str, credi
         let _ = app.remove_tray_by_id(CREDITS_INDICATOR_ID);
         return;
     }
-    sync_indicator(app, WEEKLY_INDICATOR_ID, parse_percentage(weekly), WEEKLY_MARKER, "Weekly");
-    sync_indicator(app, FIVE_HOUR_INDICATOR_ID, parse_percentage(five), FIVE_HOUR_MARKER, "5-hour");
-    sync_credits_indicator(app, credits);
+    if let Err(error) = sync_indicator(app, WEEKLY_INDICATOR_ID, parse_percentage(weekly), WEEKLY_MARKER, "Weekly") {
+        log_message(app, &format!("Unable to create or update Weekly tray indicator: {error}"));
+    }
+    if let Err(error) = sync_indicator(app, FIVE_HOUR_INDICATOR_ID, parse_percentage(five), FIVE_HOUR_MARKER, "5-hour") {
+        log_message(app, &format!("Unable to create or update 5-hour tray indicator: {error}"));
+    }
+    if let Err(error) = sync_credits_indicator(app, credits) {
+        log_message(app, &format!("Unable to create or update Credits tray indicator: {error}"));
+    }
+}
+
+fn initialize_tray_icons(app: &tauri::AppHandle) {
+    match setup_tray(app) {
+        Ok(()) => log_message(app, "Normal application tray icon created"),
+        Err(error) => log_message(app, &format!("Unable to create normal application tray icon: {error}")),
+    }
+    let enabled = tray_indicator_enabled();
+    log_message(app, &format!("Tray indicator preference loaded: enabled={enabled}"));
+    if enabled {
+        sync_quota_indicators(app, "--", "--", "--");
+    } else {
+        log_message(app, "Informational tray indicators are disabled by user preference");
+    }
 }
 
 fn wait_for_health(port: u16) -> Result<(), String> {
@@ -463,10 +501,13 @@ fn start_backend(app: tauri::AppHandle) -> Result<(), String> {
                         }
                     } else if let Some(values) = line.trim().strip_prefix("Quota sample: ") {
                         let parts: Vec<_> = values.split_whitespace().collect();
-                        if parts.len() >= 3 {
+                        if parts.len() >= 2 {
                             let five = parts[0].strip_prefix("5h=").unwrap_or("--");
                             let weekly = parts[1].strip_prefix("weekly=").unwrap_or("--");
-                            let credits = parts[2].strip_prefix("credits=").unwrap_or("--");
+                            let credits = parts
+                                .get(2)
+                                .and_then(|value| value.strip_prefix("credits="))
+                                .unwrap_or("--");
                             update_tray_quota(&error_app, five, weekly, credits);
                         }
                     }
@@ -520,7 +561,7 @@ fn setup_tray(app: &tauri::AppHandle) -> tauri::Result<()> {
     )?;
     let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
     let menu = Menu::with_items(app, &[&open, &autostart, &quit])?;
-    TrayIconBuilder::with_id("main-tray")
+    let tray = TrayIconBuilder::with_id("main-tray")
         .icon(
             app.default_window_icon()
                 .expect("application icon missing")
@@ -562,7 +603,7 @@ fn setup_tray(app: &tauri::AppHandle) -> tauri::Result<()> {
             }
         })
         .build(app)?;
-    if let Some(tray) = app.tray_by_id("main-tray") { *app.state::<TrayState>().0.lock().expect("tray state lock") = Some(tray); }
+    *app.state::<TrayState>().0.lock().expect("tray state lock") = Some(tray);
     Ok(())
 }
 
@@ -588,7 +629,7 @@ fn main() {
             if let Some(window) = app.get_webview_window("main") {
                 let _ = window.set_size(LogicalSize::new(600.0, 450.0));
             }
-            setup_tray(app.handle())?;
+            initialize_tray_icons(app.handle());
             if let Err(error) = start_backend(app.handle().clone()) {
                 show_startup_error(app.handle(), &error);
             }
@@ -618,7 +659,8 @@ mod tests {
     use super::{
         adjacent_window_position, credits_color, credits_display, credits_tooltip,
         digit_layout, numeric_icon_pixels, parse_credits, parse_percentage, quota_color,
-        ScreenRect,
+        tray_indicator_preference, ScreenRect, CREDITS_INDICATOR_ID,
+        FIVE_HOUR_INDICATOR_ID, WEEKLY_INDICATOR_ID,
     };
 
     #[test]
@@ -637,6 +679,27 @@ mod tests {
         assert_eq!(parse_percentage("NaN%"), None);
         assert_eq!(parse_percentage("-1%"), None);
         assert_eq!(parse_percentage("101%"), None);
+    }
+
+    #[test]
+    fn tray_indicator_preference_defaults_enabled_and_respects_explicit_false() {
+        assert!(tray_indicator_preference(None));
+        assert!(tray_indicator_preference(Some("not json")));
+        assert!(tray_indicator_preference(Some("{}")));
+        assert!(tray_indicator_preference(Some(r#"{"tray_indicator": true}"#)));
+        assert!(!tray_indicator_preference(Some(r#"{"tray_indicator": false}"#)));
+    }
+
+    #[test]
+    fn informational_tray_ids_are_unique() {
+        let ids = [
+            WEEKLY_INDICATOR_ID,
+            FIVE_HOUR_INDICATOR_ID,
+            CREDITS_INDICATOR_ID,
+        ];
+        for (index, id) in ids.iter().enumerate() {
+            assert!(!ids[index + 1..].contains(id), "duplicate tray id: {id}");
+        }
     }
 
     #[test]

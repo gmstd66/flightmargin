@@ -28,6 +28,9 @@ not public-release artifacts and do not provide auto-update.
    number, use `999+` above 999, and retain the exact whole balance in its
    tooltip. Use **Open** to restore the dashboard and **Quit** to stop the
    sidecar tree.
+   Confirm `%LOCALAPPDATA%\Codex Quota Monitor\logs\desktop.log` records the
+   loaded tray preference and each icon's creation, with any failure isolated
+   to the named indicator.
 4. Toggle **Start at login** from the tray menu, verify it is disabled by
    default, and verify it is removed when toggled off or when the app is
    uninstalled.

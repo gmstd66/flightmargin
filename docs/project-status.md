@@ -124,6 +124,10 @@ Git history records these completed capabilities:
   balances to whole credits, renders balances above 999 as `999+`, preserves
   the exact whole balance in the tooltip, and shares the existing collector
   sample and Settings lifecycle.
+- Tray startup is failure-isolated and backward-compatible: the normal icon is
+  retained directly, enabled informational icons appear initially with neutral
+  unavailable values, two-field sidecar samples still update Weekly/5-hour,
+  and creation failures are logged per icon rather than suppressing the tray.
 
 ## Branch workflow, caveats, and next work
 

@@ -190,5 +190,18 @@ def test_credits_share_the_existing_tray_sample_and_preference_lifecycle():
     assert 'f"credits={credits if credits is not None else \'--\'}"' in backend
     assert 'const CREDITS_INDICATOR_ID: &str = "credits-indicator";' in rust
     assert "CREDITS_MARKER: [u8; 4] = [52, 211, 153, 255]" in rust
-    assert "sync_credits_indicator(app, credits);" in rust
+    assert "sync_credits_indicator(app, credits)" in rust
     assert "remove_tray_by_id(CREDITS_INDICATOR_ID)" in rust
+
+
+def test_tray_startup_is_backward_compatible_and_failure_isolated():
+    rust = TAURI_MAIN.read_text(encoding="utf-8")
+
+    assert 'initialize_tray_icons(app.handle());' in rust
+    assert 'match setup_tray(app)' in rust
+    assert 'sync_quota_indicators(app, "--", "--", "--");' in rust
+    assert 'if parts.len() >= 2' in rust
+    assert '.get(2)' in rust
+    assert rust.count("if let Err(error) = sync_") == 3
+    assert "Tray indicator preference loaded: enabled={enabled}" in rust
+    assert "Normal application tray icon created" in rust
