@@ -20,7 +20,11 @@ from app.adapters.codex_stdio import (
 from app.core.config import (
     load_config,
 )
-from app.desktop_preferences import default_preferences, load_preferences, save_preferences
+from app.desktop_preferences import (
+    load_preferences,
+    save_preferences,
+    show_all_panels,
+)
 
 from app.core.metrics import (
     enrich_sample,
@@ -353,9 +357,12 @@ async def update_preferences(preferences: dict):
     return save_preferences(config.data_dir, preferences)
 
 
-@app.post("/api/preferences/reset")
-async def reset_preferences():
-    return save_preferences(config.data_dir, default_preferences())
+@app.post("/api/preferences/show-all")
+async def restore_all_panels():
+    return save_preferences(
+        config.data_dir,
+        show_all_panels(load_preferences(config.data_dir)),
+    )
 
 
 @app.get("/api/health")

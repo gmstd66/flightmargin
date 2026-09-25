@@ -21,6 +21,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 PREPARE_SCRIPT = PROJECT_ROOT / "desktop" / "scripts" / "prepare-tauri-config.py"
 TAURI_MAIN = PROJECT_ROOT / "desktop" / "src-tauri" / "src" / "main.rs"
 DESKTOP_JS = PROJECT_ROOT / "app" / "static" / "app.js"
+DESKTOP_CSS = PROJECT_ROOT / "app" / "static" / "app.css"
 
 
 def load_prepare_module():
@@ -131,15 +132,22 @@ def test_release_tauri_binary_uses_windows_gui_subsystem():
     assert '#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]' in source
 
 
-def test_quota_panels_receive_real_drag_handles():
+def test_dashboard_uses_fixed_reflowing_panels_and_visibility_only_controls():
     source = DESKTOP_JS.read_text(encoding="utf-8")
-    assert 'dragHandle.className = "drag-handle"' in source
-    assert 'dragHandle.addEventListener("pointerdown"' in source
-    assert 'document.elementFromPoint(pointer.clientX, pointer.clientY)' in source
-    assert 'resolvePanelCollisions(panel.dataset.panel)' in source
+    styles = DESKTOP_CSS.read_text(encoding="utf-8")
+    template = (PROJECT_ROOT / "app" / "templates" / "index.html").read_text(encoding="utf-8")
+
+    assert "dragHandle" not in source
+    assert "resizeHandle" not in source
+    assert "data-size" not in source
+    assert 'document.getElementById("panelSettings").addEventListener("change"' in source
+    assert 'document.getElementById("showAllPanels")' in source
+    assert "grid-auto-flow:dense" in styles
+    assert "draggable=" not in template
+    assert 'id="showAllPanels"' in template
 
 
 def test_dashboard_assets_are_revisioned_for_desktop_webview_cache():
     template = (PROJECT_ROOT / "app" / "templates" / "index.html").read_text(encoding="utf-8")
-    assert '/static/app.css?v=7' in template
-    assert '/static/app.js?v=7' in template
+    assert '/static/app.css?v=8' in template
+    assert '/static/app.js?v=8' in template

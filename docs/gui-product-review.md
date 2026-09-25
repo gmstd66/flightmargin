@@ -6,12 +6,13 @@ Record observations and decisions separately; this checklist deliberately does
 not prescribe a redesign.
 
 The current review build uses a compact 600×450 default window (560×400
-minimum), a three-row schema-v3 dashboard, pointer-handle drag/snap, bounded
-direct card resizing, panel visibility, and reset. All six default panels must
-be visible without a scrollbar. The first owner review found stale stacked
-assets, immovable quota gauges, resize spill, and a visible console; the review
-build now revisions its local assets, keeps gauge cards at responsive minimums,
-and builds the release shell as a Windows GUI-subsystem executable.
+minimum) and a fixed responsive dashboard. All six panels are visible by
+default without a scrollbar: the two quota cards form the top row, pace and
+the two summary cards form the middle row, and compact weekly history forms the
+bottom row. Settings can hide individual panels or restore all panels; visible
+panels reflow automatically. Drag/reorder and arbitrary resizing were removed
+after owner testing because their complexity and unstable layouts outweighed
+their usefulness.
 
 ## Launch
 
@@ -34,6 +35,8 @@ the dashboard or shows the failure in the status line.
    explanation? Which information feels unnecessary or missing?
 5. Review full-reset availability, account plan, and credits where Codex
    supplies them.
+6. In Settings, hide and restore several panels. Each change should apply
+   immediately, and **Show all panels** should restore the complete dashboard.
 
 ## History
 

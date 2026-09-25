@@ -10,7 +10,8 @@ not public-release artifacts and do not provide auto-update.
 - The log is rotated at 1 MB and retains one previous file. Do not add tokens,
   auth-file content, or quota payloads to these logs.
 - Normal uninstalls preserve this directory. An upgrade must preserve it too.
-- `desktop-preferences.json` stores dashboard layout and tray-indicator choice.
+- `desktop-preferences.json` stores dashboard panel visibility and the
+  tray-indicator choice. Dashboard geometry is fixed and is not persisted.
 
 ## Repeatable beta validation
 
@@ -18,8 +19,9 @@ not public-release artifacts and do not provide auto-update.
 2. Launch the application. Confirm the loading state, dashboard, CSS/JS, and
    authenticated quota read all work with the user's existing Codex CLI.
    At the 600×450 default, confirm all six panels and the compact history graph
-   are visible without scrollbars. Drag and resize both quota gauges from their
-   card handles and confirm no content leaves a card border.
+   are visible without scrollbars. In Settings, hide several panels and confirm
+   the remaining cards reflow; use **Show all panels** to restore the complete
+   fixed dashboard.
 3. Close the dashboard window. Confirm monitoring remains available from the
    tray; use **Open** to restore it and **Quit** to stop the sidecar tree.
 4. Toggle **Start at login** from the tray menu, verify it is disabled by

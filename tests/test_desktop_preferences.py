@@ -2,66 +2,121 @@ import json
 
 from app.desktop_preferences import (
     LAYOUT_SCHEMA,
-    PANEL_MINIMUMS,
     PANEL_IDS,
     default_preferences,
     load_preferences,
     preferences_path,
     save_preferences,
+    show_all_panels,
 )
 
 
-def test_default_preferences_cover_each_panel_and_enable_tray_indicator():
+def test_default_preferences_show_every_stable_panel_and_enable_tray_indicator():
     preferences = default_preferences()
-    assert preferences["layout_schema"] == LAYOUT_SCHEMA == 3
+
+    assert preferences["layout_schema"] == LAYOUT_SCHEMA == 4
     assert preferences["tray_indicator"] is True
-    assert set(preferences["panels"]) == set(PANEL_IDS)
+    assert tuple(preferences["panels"]) == PANEL_IDS
+    assert all(preferences["panels"].values())
 
 
 def test_preferences_round_trip_and_preserve_hidden_panel(tmp_path):
     preferences = default_preferences()
     preferences["tray_indicator"] = False
-    preferences["panels"]["history"]["visible"] = False
+    preferences["panels"]["history"] = False
+
     save_preferences(tmp_path, preferences)
-    assert load_preferences(tmp_path)["tray_indicator"] is False
-    assert load_preferences(tmp_path)["panels"]["history"]["visible"] is False
+    loaded = load_preferences(tmp_path)
+
+    assert loaded["tray_indicator"] is False
+    assert loaded["panels"]["history"] is False
+
+
+def test_show_all_panels_restores_visibility_without_changing_tray_choice():
+    preferences = default_preferences()
+    preferences["tray_indicator"] = False
+    preferences["panels"]["weekly"] = False
+    preferences["panels"]["history"] = False
+
+    restored = show_all_panels(preferences)
+
+    assert restored["tray_indicator"] is False
+    assert all(restored["panels"].values())
 
 
 def test_corrupt_preferences_fall_back_to_defaults(tmp_path):
     preferences_path(tmp_path).write_text("{not json", encoding="utf-8")
+
     assert load_preferences(tmp_path) == default_preferences()
 
 
-def test_preferences_clamp_panel_grid_values(tmp_path):
-    preferences = default_preferences()
-    preferences["panels"]["weekly"]["width"] = 99
-    save_preferences(tmp_path, preferences)
-    assert load_preferences(tmp_path)["panels"]["weekly"]["width"] == 2
+def test_current_schema_ignores_geometry_and_unknown_panels(tmp_path):
+    raw = {
+        "layout_schema": LAYOUT_SCHEMA,
+        "tray_indicator": True,
+        "panels": {
+            "five-hour": {"visible": False, "column": 4, "width": 4},
+            "weekly": False,
+            "made-up": False,
+        },
+    }
+    preferences_path(tmp_path).write_text(json.dumps(raw), encoding="utf-8")
 
-
-def test_quota_panels_enforce_responsive_minimum_width(tmp_path):
-    preferences = default_preferences()
-    preferences["panels"]["five-hour"]["width"] = 1
-    preferences["panels"]["weekly"]["width"] = 1
-    save_preferences(tmp_path, preferences)
     loaded = load_preferences(tmp_path)
-    assert loaded["panels"]["five-hour"]["width"] == PANEL_MINIMUMS["five-hour"]["width"] == 2
-    assert loaded["panels"]["weekly"]["width"] == PANEL_MINIMUMS["weekly"]["width"] == 2
+
+    assert loaded["panels"]["five-hour"] is True
+    assert loaded["panels"]["weekly"] is False
+    assert "made-up" not in loaded["panels"]
+    assert set(loaded) == {"layout_schema", "tray_indicator", "panels"}
+    assert json.loads(preferences_path(tmp_path).read_text(encoding="utf-8")) == loaded
 
 
-def test_v2_layout_migrates_to_compact_defaults_but_keeps_tray_choice(tmp_path):
-    legacy = default_preferences()
-    legacy["layout_schema"] = 2
-    legacy["tray_indicator"] = False
-    legacy["panels"]["history"]["height"] = 4
-    save_preferences(tmp_path, legacy)
+def test_v2_layout_migrates_to_all_visible_and_preserves_tray_choice(tmp_path):
+    legacy = {
+        "layout_schema": 2,
+        "tray_indicator": False,
+        "panels": {
+            "history": {
+                "visible": False,
+                "column": 1,
+                "row": 3,
+                "width": 4,
+                "height": 4,
+            },
+        },
+    }
+    preferences_path(tmp_path).write_text(json.dumps(legacy), encoding="utf-8")
+
     loaded = load_preferences(tmp_path)
-    assert loaded["layout_schema"] == 3
+
+    assert loaded["layout_schema"] == LAYOUT_SCHEMA
     assert loaded["tray_indicator"] is False
-    assert loaded["panels"]["history"]["height"] == 1
+    assert all(loaded["panels"].values())
+    assert json.loads(preferences_path(tmp_path).read_text(encoding="utf-8")) == loaded
 
 
-def test_legacy_preferences_keep_unrelated_tray_choice(tmp_path):
-    save_preferences(tmp_path, {"tray_indicator": False, "panels": {}})
-    assert load_preferences(tmp_path)["tray_indicator"] is False
-    assert load_preferences(tmp_path)["layout_schema"] == 3
+def test_v3_layout_migrates_to_all_visible_and_discards_geometry(tmp_path):
+    legacy = {
+        "layout_schema": 3,
+        "tray_indicator": False,
+        "panels": {
+            panel_id: {
+                "visible": panel_id != "account",
+                "column": 1,
+                "row": 20,
+                "width": 4,
+                "height": 4,
+            }
+            for panel_id in PANEL_IDS
+        },
+    }
+    preferences_path(tmp_path).write_text(json.dumps(legacy), encoding="utf-8")
+
+    loaded = load_preferences(tmp_path)
+
+    assert loaded == {
+        "layout_schema": LAYOUT_SCHEMA,
+        "tray_indicator": False,
+        "panels": {panel_id: True for panel_id in PANEL_IDS},
+    }
+    assert json.loads(preferences_path(tmp_path).read_text(encoding="utf-8")) == loaded

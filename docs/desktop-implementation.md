@@ -9,9 +9,12 @@ selection, signing implementation, or Tauri auto-update.
 
 Milestone 6.19 reduces the Windows shell from 1200×850 (minimum 900×650) to
 600×450 (minimum 560×400). The dashboard uses a compact four-column,
-three-row snap grid with pointer-handle drag-swap placement, bounded responsive
-card dimensions, visibility controls, and reset. Layout schema 3 replaces
-incompatible schema-2 geometry while preserving unrelated desktop preferences.
+three-row fixed responsive grid with persistent panel visibility controls and
+a **Show all panels** action. Dashboard panel drag/reorder and arbitrary
+resizing were removed after owner testing because their complexity and unstable
+layout behavior outweighed their usefulness. Layout schema 4 discards obsolete
+schema-2/schema-3 geometry, restores all panels once during migration, and
+preserves unrelated desktop preferences.
 Preferences are stored in `%LOCALAPPDATA%\Codex Quota Monitor\desktop-preferences.json`.
 Remaining quota is neutral above 25%, warning at 25% or less, and critical red
 at 10% or less. The PyInstaller sidecar is built with `--noconsole` on Windows,

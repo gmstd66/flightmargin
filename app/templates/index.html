@@ -11,7 +11,7 @@
 
     <link
         rel="stylesheet"
-        href="/static/app.css?v=7"
+        href="/static/app.css?v=8"
     >
 </head>
 
@@ -35,7 +35,7 @@
 
         <section id="dashboardGrid" class="dashboard-grid">
 
-            <article class="card panel" data-panel="five-hour" draggable="true">
+            <article class="card panel quota-card" data-panel="five-hour">
 
                 <div class="card-heading">
                     <span>5-HOUR WINDOW</span>
@@ -64,7 +64,7 @@
             </article>
 
 
-            <article class="card panel" data-panel="weekly" draggable="true">
+            <article class="card panel quota-card" data-panel="weekly">
 
                 <div class="card-heading">
                     <span>WEEKLY WINDOW</span>
@@ -93,7 +93,7 @@
 
             </article>
 
-            <article class="card panel pace-card" data-panel="pace" draggable="true">
+            <article class="card panel pace-card" data-panel="pace">
 
                 <span class="label">
                     WEEKLY PACE
@@ -117,7 +117,7 @@
             </article>
 
 
-            <article class="card panel" data-panel="resets" draggable="true">
+            <article class="card panel summary-card" data-panel="resets">
 
                 <span class="label">
                     FULL RESETS
@@ -137,7 +137,7 @@
             </article>
 
 
-            <article class="card panel" data-panel="account" draggable="true">
+            <article class="card panel summary-card" data-panel="account">
 
                 <span class="label">
                     ACCOUNT
@@ -156,7 +156,7 @@
 
             </article>
 
-            <section class="card history-card panel" data-panel="history" draggable="true">
+            <section class="card history-card panel" data-panel="history">
 
             <div class="history-heading">
                 <div>
@@ -182,9 +182,9 @@
 
 </div>
 
-<dialog id="settingsDialog"><form method="dialog"><h2>Settings</h2><p>Choose dashboard panels. Drag cards to move them; use the size buttons below.</p><div id="panelSettings"></div><label><input id="trayIndicator" type="checkbox"> Show quota values in the tray tooltip</label><div class="settings-actions"><button id="resetLayout" type="button">Reset layout</button><button id="closeSettings">Done</button></div></form></dialog>
+<dialog id="settingsDialog"><form method="dialog"><h2>Settings</h2><h3>Dashboard panels</h3><div id="panelSettings"></div><label><input id="trayIndicator" type="checkbox"> Show quota indicators in the system tray</label><div class="settings-actions"><button id="showAllPanels" type="button">Show all panels</button><button id="closeSettings">Done</button></div></form></dialog>
 
-<script src="/static/app.js?v=7"></script>
+<script src="/static/app.js?v=8"></script>
 
 </body>
 </html>
