@@ -8,11 +8,15 @@ It records the present dashboard, diagnostics, and tray behavior in
 selection, signing implementation, or Tauri auto-update.
 
 Milestone 6.19 reduces the Windows shell from 1200×850 (minimum 900×650) to
-760×620 (minimum 620×500). The dashboard uses a four-column snap grid with
-drag-swap placement, bounded card widths, visibility controls, and reset.
+600×450 (minimum 560×400). The dashboard uses a compact four-column,
+three-row snap grid with pointer-handle drag-swap placement, bounded responsive
+card dimensions, visibility controls, and reset. Layout schema 3 replaces
+incompatible schema-2 geometry while preserving unrelated desktop preferences.
 Preferences are stored in `%LOCALAPPDATA%\Codex Quota Monitor\desktop-preferences.json`.
 Remaining quota is neutral above 25%, warning at 25% or less, and critical red
-at 10% or less. The PyInstaller sidecar is built with `--noconsole` on Windows.
+at 10% or less. The PyInstaller sidecar is built with `--noconsole` on Windows,
+and the release Tauri entry point uses the Windows GUI subsystem. Dashboard
+asset revisions prevent WebView2 from retaining an obsolete stacked layout.
 The single Windows tray icon is retained. After each existing collector sample,
 its tooltip shows `Weekly remaining: xx%` and `5-hour remaining: xx%`; the
 Settings tray preference returns the tooltip to the neutral monitoring label.

@@ -23,6 +23,7 @@ Notable changes to Codex Quota Monitor are documented here. This file summarizes
 - Added Windows Tauri icon configuration, current shell-plugin compatibility, clear sidecar-startup and collector diagnostics, and process-tree shutdown for PyInstaller one-file sidecars.
 - Selected a current-user NSIS installer as the internal beta path and preserved per-user SQLite data on normal uninstall and upgrade.
 - Standardized the dashboard title on Codex Quota Monitor and made collector status updates accessible to screen readers.
+- Corrected the owner-reviewed Windows dashboard to fit all default panels at 600×450 without scrolling, made quota gauges reliably movable and responsively resizable, migrated layouts to schema 3, invalidated stale WebView assets, and removed the release shell console window.
 
 - Made `app.version.__version__` the canonical application version used by setuptools metadata, the CLI, API responses, and Codex app-server client identification.
 

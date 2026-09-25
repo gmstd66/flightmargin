@@ -17,6 +17,9 @@ not public-release artifacts and do not provide auto-update.
 1. Install the current-user NSIS installer and verify its Start menu entry.
 2. Launch the application. Confirm the loading state, dashboard, CSS/JS, and
    authenticated quota read all work with the user's existing Codex CLI.
+   At the 600×450 default, confirm all six panels and the compact history graph
+   are visible without scrollbars. Drag and resize both quota gauges from their
+   card handles and confirm no content leaves a card border.
 3. Close the dashboard window. Confirm monitoring remains available from the
    tray; use **Open** to restore it and **Quit** to stop the sidecar tree.
 4. Toggle **Start at login** from the tray menu, verify it is disabled by
@@ -34,6 +37,8 @@ not public-release artifacts and do not provide auto-update.
    exit-safe; do not alter the user's real authentication.
 9. Record any interactive SmartScreen prompt and Defender observation. Do not
    disable either product or add exclusions to complete this checklist.
+10. Launch from both the Start menu and installed executable. The release shell
+    and its windowless sidecar/Codex subprocess chain must not display a console.
 
 ## Distribution gate
 

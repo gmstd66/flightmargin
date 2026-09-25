@@ -86,7 +86,40 @@ function updateWindow(prefix, data) {
 }
 
 const QUOTA_THRESHOLDS = Object.freeze({ warning: 25, critical: 10 });
+const PANEL_MINIMUMS = Object.freeze({
+    "five-hour": { width: 2, height: 1 },
+    weekly: { width: 2, height: 1 },
+    pace: { width: 2, height: 1 },
+    resets: { width: 1, height: 1 },
+    account: { width: 1, height: 1 },
+    history: { width: 2, height: 1 }
+});
 let preferences = null;
+
+function panelsOverlap(a, b) {
+    return a.column < b.column + b.width &&
+        a.column + a.width > b.column &&
+        a.row < b.row + b.height &&
+        a.row + a.height > b.row;
+}
+
+function resolvePanelCollisions(panelId) {
+    const queue = [panelId];
+    while (queue.length) {
+        const sourceId = queue.shift();
+        const source = preferences.panels[sourceId];
+        Object.entries(preferences.panels).forEach(([candidateId, candidate]) => {
+            if (candidateId === panelId || candidateId === sourceId || !candidate.visible) return;
+            if (panelsOverlap(source, candidate)) {
+                const nextRow = Math.min(20, source.row + source.height);
+                if (candidate.row !== nextRow) {
+                    candidate.row = nextRow;
+                    queue.push(candidateId);
+                }
+            }
+        });
+    }
+}
 
 async function savePreferences() {
     const response = await fetch("/api/preferences", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(preferences) });
@@ -119,7 +152,7 @@ async function loadPreferences() {
     preferences = await (await fetch("/api/preferences", { cache: "no-store" })).json();
     applyPreferences(); renderSettings();
     document.querySelectorAll("[data-visible]").forEach(input => input.addEventListener("change", async event => { preferences.panels[event.target.dataset.visible].visible = event.target.checked; await savePreferences(); }));
-    document.querySelectorAll("[data-size]").forEach(button => button.addEventListener("click", async event => { const panel = preferences.panels[event.target.dataset.size]; panel.width = Math.max(1, Math.min(4, panel.width + Number(event.target.dataset.delta))); await savePreferences(); }));
+    document.querySelectorAll("[data-size]").forEach(button => button.addEventListener("click", async event => { const id = event.target.dataset.size; const panel = preferences.panels[id]; panel.width = Math.max(PANEL_MINIMUMS[id].width, Math.min(4, panel.width + Number(event.target.dataset.delta))); panel.column = Math.min(panel.column, 5 - panel.width); await savePreferences(); }));
 }
 
 
@@ -262,8 +295,10 @@ function drawHistory(samples) {
     canvas.width =
         rect.width * ratio;
 
+    const displayHeight = Math.max(38, Math.round(rect.height));
+
     canvas.height =
-        150 * ratio;
+        displayHeight * ratio;
 
     const ctx =
         canvas.getContext("2d");
@@ -271,12 +306,13 @@ function drawHistory(samples) {
     ctx.scale(ratio, ratio);
 
     const width = rect.width;
-    const height = 150;
+    const height = displayHeight;
 
-    const left = 46;
-    const right = 12;
-    const top = 15;
-    const bottom = 34;
+    const compact = height < 80;
+    const left = compact ? 28 : 46;
+    const right = compact ? 6 : 12;
+    const top = compact ? 4 : 15;
+    const bottom = compact ? 14 : 34;
 
     const graphWidth =
         width - left - right;
@@ -670,6 +706,11 @@ document.getElementById("resetLayout").addEventListener("click", async () => { p
 
 let draggedPanel = null;
 document.querySelectorAll(".panel").forEach(panel => {
+    panel.draggable = false;
+    const dragHandle = document.createElement("span");
+    dragHandle.className = "drag-handle";
+    dragHandle.title = "Move panel";
+    panel.append(dragHandle);
     const resizeHandle = document.createElement("span");
     resizeHandle.className = "resize-handle";
     resizeHandle.title = "Resize panel";
@@ -678,18 +719,45 @@ document.querySelectorAll(".panel").forEach(panel => {
         event.preventDefault(); event.stopPropagation();
         const panelState = preferences.panels[panel.dataset.panel];
         const startX = event.clientX, startY = event.clientY, startWidth = panelState.width, startHeight = panelState.height;
-        const finish = async move => {
+        const resize = move => {
             const grid = document.getElementById("dashboardGrid").getBoundingClientRect();
-            panelState.width = Math.max(1, Math.min(4, startWidth + Math.round((move.clientX - startX) / (grid.width / 4))));
-            panelState.height = Math.max(1, Math.min(4, startHeight + Math.round((move.clientY - startY) / 78)));
-            window.removeEventListener("pointerup", finish); await savePreferences();
+            const minimum = PANEL_MINIMUMS[panel.dataset.panel];
+            panelState.width = Math.max(minimum.width, Math.min(4, startWidth + Math.round((move.clientX - startX) / (grid.width / 4))));
+            panelState.height = Math.max(minimum.height, Math.min(4, startHeight + Math.round((move.clientY - startY) / 94)));
+            panelState.column = Math.min(panelState.column, 5 - panelState.width);
+            applyPreferences();
         };
+        const finish = async move => { resize(move); window.removeEventListener("pointermove", resize); resolvePanelCollisions(panel.dataset.panel); await savePreferences(); };
+        window.addEventListener("pointermove", resize);
         window.addEventListener("pointerup", finish, { once: true });
     });
-    panel.addEventListener("dragstart", () => { draggedPanel = panel; panel.classList.add("dragging"); });
-    panel.addEventListener("dragend", () => panel.classList.remove("dragging"));
-    panel.addEventListener("dragover", event => event.preventDefault());
-    panel.addEventListener("drop", async event => { event.preventDefault(); if (!draggedPanel || draggedPanel === panel) return; const a = preferences.panels[draggedPanel.dataset.panel]; const b = preferences.panels[panel.dataset.panel]; [a.column,b.column]=[b.column,a.column]; [a.row,b.row]=[b.row,a.row]; await savePreferences(); });
+    dragHandle.addEventListener("pointerdown", event => {
+        event.preventDefault();
+        draggedPanel = panel;
+        const startX = event.clientX, startY = event.clientY;
+        panel.classList.add("dragging");
+        panel.style.pointerEvents = "none";
+        const move = pointer => { panel.style.transform = `translate(${pointer.clientX - startX}px, ${pointer.clientY - startY}px)`; };
+        const finish = async pointer => {
+            window.removeEventListener("pointermove", move);
+            panel.style.transform = "";
+            panel.style.pointerEvents = "";
+            panel.classList.remove("dragging");
+            const target = document.elementFromPoint(pointer.clientX, pointer.clientY)?.closest(".panel");
+            if (target && target !== panel) {
+                const a = preferences.panels[panel.dataset.panel];
+                const b = preferences.panels[target.dataset.panel];
+                [a.column, b.column] = [b.column, a.column];
+                [a.row, b.row] = [b.row, a.row];
+                a.column = Math.min(a.column, 5 - a.width);
+                b.column = Math.min(b.column, 5 - b.width);
+                await savePreferences();
+            }
+            draggedPanel = null;
+        };
+        window.addEventListener("pointermove", move);
+        window.addEventListener("pointerup", finish, { once: true });
+    });
 });
 
 loadPreferences().catch(error => { document.getElementById("status").textContent = `Settings unavailable: ${error.message}`; });

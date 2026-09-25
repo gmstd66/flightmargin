@@ -5,8 +5,13 @@ This is an owner-led review of the internal Windows desktop build at version
 Record observations and decisions separately; this checklist deliberately does
 not prescribe a redesign.
 
-The current review build adds a compact 760×620 default window, dashboard
-Settings, grid drag-swap, bounded card resizing, panel visibility, and reset.
+The current review build uses a compact 600×450 default window (560×400
+minimum), a three-row schema-v3 dashboard, pointer-handle drag/snap, bounded
+direct card resizing, panel visibility, and reset. All six default panels must
+be visible without a scrollbar. The first owner review found stale stacked
+assets, immovable quota gauges, resize spill, and a visible console; the review
+build now revisions its local assets, keeps gauge cards at responsive minimums,
+and builds the release shell as a Windows GUI-subsystem executable.
 
 ## Launch
 

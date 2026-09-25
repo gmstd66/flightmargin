@@ -6,8 +6,17 @@ from pathlib import Path
 
 
 PANEL_IDS = ("five-hour", "weekly", "pace", "resets", "account", "history")
+LAYOUT_SCHEMA = 3
+PANEL_MINIMUMS = {
+    "five-hour": {"width": 2, "height": 1},
+    "weekly": {"width": 2, "height": 1},
+    "pace": {"width": 2, "height": 1},
+    "resets": {"width": 1, "height": 1},
+    "account": {"width": 1, "height": 1},
+    "history": {"width": 2, "height": 1},
+}
 DEFAULT_PREFERENCES = {
-    "layout_schema": 2,
+    "layout_schema": LAYOUT_SCHEMA,
     "tray_indicator": True,
     "panels": {
         "five-hour": {"visible": True, "column": 1, "row": 1, "width": 2, "height": 1},
@@ -15,7 +24,7 @@ DEFAULT_PREFERENCES = {
         "pace": {"visible": True, "column": 1, "row": 2, "width": 2, "height": 1},
         "resets": {"visible": True, "column": 3, "row": 2, "width": 1, "height": 1},
         "account": {"visible": True, "column": 4, "row": 2, "width": 1, "height": 1},
-        "history": {"visible": True, "column": 1, "row": 3, "width": 4, "height": 2},
+        "history": {"visible": True, "column": 1, "row": 3, "width": 4, "height": 1},
     },
 }
 
@@ -33,6 +42,8 @@ def _validated(value):
     if not isinstance(value, dict):
         return defaults
     defaults["tray_indicator"] = bool(value.get("tray_indicator", True))
+    if value.get("layout_schema") != LAYOUT_SCHEMA:
+        return defaults
     source_panels = value.get("panels", {})
     if not isinstance(source_panels, dict):
         return defaults
@@ -43,8 +54,10 @@ def _validated(value):
         panel["visible"] = bool(candidate.get("visible", panel["visible"]))
         for key, maximum in (("column", 4), ("row", 20), ("width", 4), ("height", 4)):
             value = candidate.get(key, panel[key])
-            if isinstance(value, int) and 1 <= value <= maximum:
+            minimum = PANEL_MINIMUMS[panel_id].get(key, 1)
+            if isinstance(value, int) and minimum <= value <= maximum:
                 panel[key] = value
+        panel["column"] = min(panel["column"], 5 - panel["width"])
     return defaults
 
 
