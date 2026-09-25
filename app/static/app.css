@@ -60,12 +60,30 @@ button:disabled {
 .dashboard-grid { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); grid-auto-flow:dense; gap:14px; }
 .panel { min-width:0; }
 .header-actions { display:flex; gap:8px; }
-#panelSettings { display:grid; gap:8px; margin:16px 0; } .setting-row { display:flex; align-items:center; justify-content:space-between; gap:8px; } .settings-actions { display:flex; justify-content:space-between; margin-top:18px; }
+#panelSettings { display:grid; gap:8px; margin:16px 0; } .setting-row { display:flex; align-items:center; justify-content:space-between; gap:8px; } .settings-actions { display:flex; justify-content:flex-end; margin-top:18px; }
 .settings-help { margin:8px 0 0; color:#9ca1a9; font-size:12px; line-height:1.35; }
 .settings-window { background:#181a1e; }
 .settings-surface { min-height:100vh; padding:18px; }
-.settings-surface h1 { margin:0 0 20px; }
+.settings-surface h1 { margin:0 0 14px; }
 .settings-surface h2 { margin:0; font-size:16px; }
+.settings-tabs { display:flex; gap:4px; margin:0 0 18px; padding-bottom:8px; border-bottom:1px solid #292c31; }
+.settings-tab { padding:6px 9px; font-size:12px; }
+.settings-tab.is-active { background:#30343a; border-color:#555b65; }
+.settings-section { min-height:230px; }
+.settings-section[hidden] { display:none; }
+.about-section { color:#d9dce1; font-size:13px; line-height:1.4; }
+.about-section p { margin:7px 0 13px; }
+.about-section h3 { margin:14px 0 4px; font-size:13px; }
+.about-identity { margin-bottom:12px; }
+.about-identity h2 { font-size:19px; }
+.about-version,.about-secondary { color:#9ca1a9; font-size:12px; }
+.technical-details { margin:14px 0; padding:10px; border:1px solid #292c31; border-radius:8px; }
+.technical-details summary { cursor:pointer; font-weight:600; }
+.technical-details dl { margin:10px 0; }
+.technical-details dl div { display:grid; grid-template-columns:120px minmax(0, 1fr); gap:8px; margin:5px 0; }
+.technical-details dt { color:#9ca1a9; }
+.technical-details dd { min-width:0; margin:0; overflow-wrap:anywhere; }
+.copy-diagnostics-row { display:flex; align-items:center; gap:10px; }
 
 .card {
     background: #181a1e;

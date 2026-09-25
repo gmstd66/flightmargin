@@ -39,6 +39,14 @@ The compact seven-segment renderer uses narrower digits and spacing for
 three-digit values so `100` fits completely within the standard 32x32 icon.
 Settings also explains that Windows may place quota indicators in the
 hidden-icons menu and that users can drag them from `^` to keep them visible.
+The same native Settings window includes an **About** tab. It reads the app
+version from the canonical Python version source, reports the already-discovered
+Codex CLI version when available, and shows OS, architecture, and friendly
+application-data/log paths. **Copy diagnostics** copies only those allowlisted
+fields; it excludes account identity, quota values, authentication data, and
+credentials. Public source, issue, and sponsor actions stay hidden until real
+public URLs exist. The precise open-source license and sponsorship integration
+remain launch decisions.
 At startup the shell creates the normal application tray first, logs the loaded
 indicator preference, and independently creates enabled informational icons in
 an unavailable state. Each icon creation/update reports its own failure without

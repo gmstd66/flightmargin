@@ -4,21 +4,76 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Codex Quota Monitor Settings</title>
-    <link rel="stylesheet" href="/static/app.css?v=11">
+    <link rel="stylesheet" href="/static/app.css?v=12">
 </head>
 <body class="settings-window">
     <main class="settings-surface">
         <h1>Settings</h1>
-        <h2>Dashboard panels</h2>
-        <div id="panelSettings"></div>
-        <label><input id="trayIndicator" type="checkbox"> Show quota indicators in the system tray</label>
-        <p class="settings-help">Windows may place quota indicators in the hidden-icons menu. Drag them from ^ to the system tray to keep them visible.</p>
+        <nav class="settings-tabs" aria-label="Settings sections">
+            <button class="settings-tab is-active" type="button" data-settings-tab="dashboard">Dashboard</button>
+            <button class="settings-tab" type="button" data-settings-tab="startup">Startup</button>
+            <button class="settings-tab" type="button" data-settings-tab="tray">System Tray</button>
+            <button class="settings-tab" type="button" data-settings-tab="about">About</button>
+        </nav>
+
+        <section class="settings-section" data-settings-section="dashboard">
+            <h2>Dashboard panels</h2>
+            <div id="panelSettings"></div>
+            <button id="showAllPanels" type="button">Show all panels</button>
+        </section>
+
+        <section class="settings-section" data-settings-section="startup" hidden>
+            <h2>Startup</h2>
+            <p class="settings-help">Start at login is available from the application tray menu.</p>
+        </section>
+
+        <section class="settings-section" data-settings-section="tray" hidden>
+            <h2>System Tray</h2>
+            <label><input id="trayIndicator" type="checkbox"> Show quota indicators in the system tray</label>
+            <p class="settings-help">Windows may place quota indicators in the hidden-icons menu. Drag them from ^ to the system tray to keep them visible.</p>
+        </section>
+
+        <section class="settings-section about-section" data-settings-section="about" hidden>
+            <div class="about-identity">
+                <h2>Codex Quota Monitor</h2>
+                <p id="aboutVersion" class="about-version">Version unavailable · Beta</p>
+            </div>
+            <p>A lightweight desktop monitor for Codex usage limits, reset windows, and purchased credits.</p>
+
+            <h3>Privacy</h3>
+            <p>Monitoring history, preferences, and logs are stored locally on this computer. Codex Quota Monitor uses your existing authenticated Codex CLI installation and does not manage your OpenAI credentials.</p>
+
+            <h3>Codex CLI</h3>
+            <p id="aboutCodex">Not detected</p>
+
+            <h3>Project</h3>
+            <p>Free and open-source software supported by voluntary sponsorship.</p>
+
+            <details class="technical-details">
+                <summary>Technical details</summary>
+                <dl>
+                    <div><dt>App version</dt><dd id="detailAppVersion">Unavailable</dd></div>
+                    <div><dt>Codex CLI version</dt><dd id="detailCodexVersion">Not detected</dd></div>
+                    <div><dt>Operating system</dt><dd id="detailOperatingSystem">Unavailable</dd></div>
+                    <div><dt>Architecture</dt><dd id="detailArchitecture">Unavailable</dd></div>
+                    <div><dt>Application data</dt><dd id="detailDataDirectory">Unavailable</dd></div>
+                    <div><dt>Logs</dt><dd id="detailLogDirectory">Unavailable</dd></div>
+                </dl>
+                <div class="copy-diagnostics-row">
+                    <button id="copyDiagnostics" type="button" disabled>Copy diagnostics</button>
+                    <span id="copyDiagnosticsStatus" class="settings-help" role="status" aria-live="polite"></span>
+                </div>
+            </details>
+
+            <p id="aboutCopyright" class="about-secondary">© 2026 Guy Champin</p>
+            <p class="about-secondary">Unofficial community tool. Not affiliated with or endorsed by OpenAI.</p>
+        </section>
+
         <p id="settingsStatus" class="settings-help" role="status" aria-live="polite"></p>
         <div class="settings-actions">
-            <button id="showAllPanels" type="button">Show all panels</button>
             <button id="closeSettings" type="button">Done</button>
         </div>
     </main>
-    <script src="/static/settings.js?v=1"></script>
+    <script src="/static/settings.js?v=2"></script>
 </body>
 </html>

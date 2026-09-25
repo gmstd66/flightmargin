@@ -17,6 +17,11 @@ from app.adapters.codex_stdio import (
     CodexAppServer,
 )
 
+from app.about import (
+    build_about_payload,
+    detected_codex_cli_version,
+)
+
 from app.core.config import (
     load_config,
 )
@@ -380,6 +385,20 @@ async def desktop_settings(
     return templates.TemplateResponse(
         request=request,
         name="settings.html",
+    )
+
+
+@app.get("/api/about")
+async def about():
+    codex_cli_version = await asyncio.to_thread(
+        detected_codex_cli_version,
+        codex.executable,
+    )
+    return build_about_payload(
+        app_version=__version__,
+        codex_cli_version=codex_cli_version,
+        data_directory=config.data_dir,
+        log_directory=config.data_dir / "logs",
     )
 
 

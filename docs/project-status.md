@@ -128,6 +128,12 @@ Git history records these completed capabilities:
   retained directly, enabled informational icons appear initially with neutral
   unavailable values, two-field sidecar samples still update Weekly/5-hour,
   and creation failures are logged per icon rather than suppressing the tray.
+- The native Settings window now includes a compact About tab with the
+  canonical application version, beta status, local-data privacy statement,
+  detected Codex CLI version, project model, attribution, independence
+  disclaimer, and sanitized copyable diagnostics. Public repository, issue,
+  and sponsor links remain hidden until launch; the exact GPL/AGPL-family
+  license choice and sponsorship setup remain undecided.
 
 ## Branch workflow, caveats, and next work
 

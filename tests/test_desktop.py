@@ -24,6 +24,7 @@ TAURI_CONFIG = PROJECT_ROOT / "desktop" / "src-tauri" / "tauri.conf.template.jso
 TAURI_CAPABILITY = PROJECT_ROOT / "desktop" / "src-tauri" / "capabilities" / "default.json"
 DESKTOP_JS = PROJECT_ROOT / "app" / "static" / "app.js"
 SETTINGS_JS = PROJECT_ROOT / "app" / "static" / "settings.js"
+SETTINGS_TEMPLATE = PROJECT_ROOT / "app" / "templates" / "settings.html"
 DESKTOP_CSS = PROJECT_ROOT / "app" / "static" / "app.css"
 
 
@@ -181,6 +182,29 @@ def test_settings_uses_one_native_window_with_loopback_ipc_and_tray_guidance():
     assert 'tauriInvoke("close_settings")' in settings_source
     assert "Windows may place quota indicators in the hidden-icons menu." in settings
     assert "Drag them from ^ to the system tray to keep them visible." in settings
+
+
+def test_native_settings_about_content_uses_dynamic_safe_metadata():
+    settings = SETTINGS_TEMPLATE.read_text(encoding="utf-8")
+    settings_source = SETTINGS_JS.read_text(encoding="utf-8")
+    backend = (PROJECT_ROOT / "app" / "main.py").read_text(encoding="utf-8")
+
+    assert 'data-settings-tab="about"' in settings
+    assert "A lightweight desktop monitor for Codex usage limits, reset windows, and purchased credits." in settings
+    assert "Monitoring history, preferences, and logs are stored locally on this computer." in settings
+    assert "Free and open-source software supported by voluntary sponsorship." in settings
+    assert "Unofficial community tool. Not affiliated with or endorsed by OpenAI." in settings
+    assert "Technical details" in settings
+    assert 'id="copyDiagnostics"' in settings
+    assert 'fetch("/api/about"' in settings_source
+    assert 'f"App version:' not in settings_source
+    assert __version__ not in settings
+    assert '@app.get("/api/about")' in backend
+    assert "Source Code" not in settings
+    assert "Report an Issue" not in settings
+    assert "Sponsor" not in settings
+    assert "github.com" not in settings.lower()
+    assert "<a " not in settings.lower()
 
 
 def test_credits_share_the_existing_tray_sample_and_preference_lifecycle():

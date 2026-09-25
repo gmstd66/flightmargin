@@ -15,6 +15,8 @@ Notable changes to Codex Quota Monitor are documented here. This file summarizes
 - Windows beta desktop lifecycle: tray controls, single-instance activation, opt-in start-at-login, bounded local shell logs, and a repeatable Windows beta checklist.
 - Owner GUI/product review walkthrough for the internal Windows desktop build.
 - Compact configurable Windows dashboard with persisted panel visibility and quota-state colors.
+- Native Settings About tab with canonical version, local-data privacy notes,
+  Codex CLI detection, attribution, and sanitized copyable diagnostics.
 
 ### Changed
 

@@ -48,6 +48,11 @@ not public-release artifacts and do not provide auto-update.
    disable either product or add exclusions to complete this checklist.
 10. Launch from both the Start menu and installed executable. The release shell
     and its windowless sidecar/Codex subprocess chain must not display a console.
+11. Open Settings **About** and confirm the canonical app version and detected
+    Codex CLI version. Expand **Technical details**, copy diagnostics, and
+    confirm the text contains only app/CLI versions, OS/architecture, and
+    `%LOCALAPPDATA%` application-data/log paths. It must not contain account,
+    quota, authentication, credential, or Windows-user details.
 
 ## Distribution gate
 
