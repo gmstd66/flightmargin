@@ -119,6 +119,11 @@ Git history records these completed capabilities:
   overlapped at `100`. Settings now has a dedicated native-window page with no
   dashboard overlay fallback, and the 32x32 tray renderer uses a non-overlapping
   compact three-digit layout.
+- The Windows tray model now adds a green purchased-Credits indicator to the
+  normal application, blue Weekly, and purple 5-hour icons. It floors positive
+  balances to whole credits, renders balances above 999 as `999+`, preserves
+  the exact whole balance in the tooltip, and shares the existing collector
+  sample and Settings lifecycle.
 
 ## Branch workflow, caveats, and next work
 

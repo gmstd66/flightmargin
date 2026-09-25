@@ -23,7 +23,11 @@ not public-release artifacts and do not provide auto-update.
    the remaining cards reflow; use **Show all panels** to restore the complete
    fixed dashboard.
 3. Close the dashboard window. Confirm monitoring remains available from the
-   tray; use **Open** to restore it and **Quit** to stop the sidecar tree.
+   tray; verify the blue Weekly, purple 5-hour, and green Credits numeric
+   indicators update without duplicates. Credits must be floored to a whole
+   number, use `999+` above 999, and retain the exact whole balance in its
+   tooltip. Use **Open** to restore the dashboard and **Quit** to stop the
+   sidecar tree.
 4. Toggle **Start at login** from the tray menu, verify it is disabled by
    default, and verify it is removed when toggled off or when the app is
    uninstalled.

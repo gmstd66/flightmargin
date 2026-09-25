@@ -165,10 +165,15 @@ async def collector_loop():
                     else None
                 )
 
+                credits = sample.get(
+                    "credits_balance"
+                )
+
                 print(
                     "Quota sample: "
                     f"5h={five_remaining}% "
-                    f"weekly={weekly_remaining}%",
+                    f"weekly={weekly_remaining}% "
+                    f"credits={credits if credits is not None else '--'}",
                     flush=True,
                 )
 

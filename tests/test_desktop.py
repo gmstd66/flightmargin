@@ -181,3 +181,14 @@ def test_settings_uses_one_native_window_with_loopback_ipc_and_tray_guidance():
     assert 'tauriInvoke("close_settings")' in settings_source
     assert "Windows may place quota indicators in the hidden-icons menu." in settings
     assert "Drag them from ^ to the system tray to keep them visible." in settings
+
+
+def test_credits_share_the_existing_tray_sample_and_preference_lifecycle():
+    backend = (PROJECT_ROOT / "app" / "main.py").read_text(encoding="utf-8")
+    rust = TAURI_MAIN.read_text(encoding="utf-8")
+
+    assert 'f"credits={credits if credits is not None else \'--\'}"' in backend
+    assert 'const CREDITS_INDICATOR_ID: &str = "credits-indicator";' in rust
+    assert "CREDITS_MARKER: [u8; 4] = [52, 211, 153, 255]" in rust
+    assert "sync_credits_indicator(app, credits);" in rust
+    assert "remove_tray_by_id(CREDITS_INDICATOR_ID)" in rust

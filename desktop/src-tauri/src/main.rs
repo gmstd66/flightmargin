@@ -31,6 +31,10 @@ const DATA_DIRECTORY_NAME: &str = "Codex Quota Monitor";
 const LOG_ROTATE_BYTES: u64 = 1_000_000;
 const WEEKLY_INDICATOR_ID: &str = "weekly-quota-indicator";
 const FIVE_HOUR_INDICATOR_ID: &str = "five-hour-quota-indicator";
+const CREDITS_INDICATOR_ID: &str = "credits-indicator";
+const WEEKLY_MARKER: [u8; 4] = [83, 150, 246, 255];
+const FIVE_HOUR_MARKER: [u8; 4] = [168, 85, 247, 255];
+const CREDITS_MARKER: [u8; 4] = [52, 211, 153, 255];
 const SETTINGS_WINDOW_LABEL: &str = "settings";
 const SETTINGS_WINDOW_WIDTH: f64 = 420.0;
 const SETTINGS_WINDOW_HEIGHT: f64 = 450.0;
@@ -251,7 +255,7 @@ fn tray_indicator_enabled() -> bool {
         .unwrap_or(true)
 }
 
-fn update_tray_quota(app: &tauri::AppHandle, five: &str, weekly: &str) {
+fn update_tray_quota(app: &tauri::AppHandle, five: &str, weekly: &str, credits: &str) {
     let tooltip = if tray_indicator_enabled() {
         format!("Codex Quota Monitor\nWeekly remaining: {weekly}\n5-hour remaining: {five}")
     } else {
@@ -260,7 +264,7 @@ fn update_tray_quota(app: &tauri::AppHandle, five: &str, weekly: &str) {
     if let Ok(state) = app.state::<TrayState>().0.lock() {
         if let Some(tray) = state.as_ref() { let _ = tray.set_tooltip(Some(&tooltip)); }
     }
-    sync_quota_indicators(app, five, weekly);
+    sync_quota_indicators(app, five, weekly, credits);
 }
 
 fn quota_color(value: Option<u8>) -> [u8; 4] {
@@ -282,16 +286,15 @@ fn digit_layout(character_count: usize) -> (usize, usize, usize, usize) {
     match character_count {
         0 | 1 => (10, 0, 8, 10),
         2 => (3, 14, 8, 10),
-        _ => (1, 10, 4, 6),
+        3 => (1, 10, 4, 6),
+        _ => (1, 7, 2, 4),
     }
 }
 
-fn quota_icon_pixels(value: Option<u8>, marker: [u8; 4]) -> Vec<u8> {
+fn numeric_icon_pixels(text: &str, marker: [u8; 4], color: [u8; 4]) -> Vec<u8> {
     let mut pixels = vec![0; 32 * 32 * 4];
     fill(&mut pixels, 0, 0, 32, 4, marker);
     let segments = [[1,1,1,1,1,1,0],[0,1,1,0,0,0,0],[1,1,0,1,1,0,1],[1,1,1,1,0,0,1],[0,1,1,0,0,1,1],[1,0,1,1,0,1,1],[1,0,1,1,1,1,1],[1,1,1,0,0,0,0],[1,1,1,1,1,1,1],[1,1,1,1,0,1,1]];
-    let text = value.map(|number| number.to_string()).unwrap_or_else(|| "--".to_string());
-    let color = quota_color(value);
     let (start, step, horizontal_width, right_offset) = digit_layout(text.len());
     for (position, character) in text.chars().enumerate() {
         if let Some(digit) = character.to_digit(10) { let x = start + position * step; let s = segments[digit as usize];
@@ -299,13 +302,21 @@ fn quota_icon_pixels(value: Option<u8>, marker: [u8; 4]) -> Vec<u8> {
             if s[2] == 1 { fill(&mut pixels,x+right_offset,18,2,8,color) } if s[3] == 1 { fill(&mut pixels,x+2,26,horizontal_width,2,color) }
             if s[4] == 1 { fill(&mut pixels,x,18,2,8,color) } if s[5] == 1 { fill(&mut pixels,x,9,2,8,color) }
             if s[6] == 1 { fill(&mut pixels,x+2,17,horizontal_width,2,color) }
-        } else { fill(&mut pixels, 4 + position * 14, 17, 8, 2, color); }
+        } else if character == '+' {
+            let x = start + position * step;
+            fill(&mut pixels, x, 17, right_offset + 2, 2, color);
+            fill(&mut pixels, x + (right_offset / 2), 12, 2, 12, color);
+        } else {
+            let x = start + position * step;
+            fill(&mut pixels, x, 17, right_offset + 2, 2, color);
+        }
     }
     pixels
 }
 
 fn quota_icon(value: Option<u8>, marker: [u8; 4]) -> tauri::image::Image<'static> {
-    tauri::image::Image::new_owned(quota_icon_pixels(value, marker), 32, 32)
+    let text = value.map(|number| number.to_string()).unwrap_or_else(|| "--".to_string());
+    tauri::image::Image::new_owned(numeric_icon_pixels(&text, marker, quota_color(value)), 32, 32)
 }
 
 fn sync_indicator(app: &tauri::AppHandle, id: &str, value: Option<u8>, marker: [u8; 4], label: &str) {
@@ -322,14 +333,66 @@ fn parse_percentage(value: &str) -> Option<u8> {
     Some(value.round() as u8)
 }
 
-fn sync_quota_indicators(app: &tauri::AppHandle, five: &str, weekly: &str) {
+fn parse_credits(value: &str) -> Option<u64> {
+    let value = value.parse::<f64>().ok()?;
+    if !value.is_finite() || value < 0.0 {
+        return None;
+    }
+    Some(value.trunc() as u64)
+}
+
+fn credits_display(value: Option<u64>) -> String {
+    match value {
+        Some(value) if value > 999 => "999+".to_string(),
+        Some(value) => value.to_string(),
+        None => "--".to_string(),
+    }
+}
+
+fn credits_color(value: Option<u64>) -> [u8; 4] {
+    match value {
+        Some(0) => [235, 75, 75, 255],
+        Some(_) => [225, 229, 235, 255],
+        None => [125, 130, 139, 255],
+    }
+}
+
+fn credits_tooltip(value: Option<u64>) -> String {
+    value
+        .map(|value| format!("Credits remaining: {value}"))
+        .unwrap_or_else(|| "Credits remaining: unavailable".to_string())
+}
+
+fn sync_credits_indicator(app: &tauri::AppHandle, raw_value: &str) {
+    let value = parse_credits(raw_value);
+    let display = credits_display(value);
+    let tooltip = credits_tooltip(value);
+    let icon = tauri::image::Image::new_owned(
+        numeric_icon_pixels(&display, CREDITS_MARKER, credits_color(value)),
+        32,
+        32,
+    );
+    if let Some(indicator) = app.tray_by_id(CREDITS_INDICATOR_ID) {
+        let _ = indicator.set_icon(Some(icon));
+        let _ = indicator.set_tooltip(Some(tooltip));
+        return;
+    }
+    let _ = TrayIconBuilder::with_id(CREDITS_INDICATOR_ID)
+        .icon(icon)
+        .tooltip(tooltip)
+        .build(app);
+}
+
+fn sync_quota_indicators(app: &tauri::AppHandle, five: &str, weekly: &str, credits: &str) {
     if !tray_indicator_enabled() {
         let _ = app.remove_tray_by_id(WEEKLY_INDICATOR_ID);
         let _ = app.remove_tray_by_id(FIVE_HOUR_INDICATOR_ID);
+        let _ = app.remove_tray_by_id(CREDITS_INDICATOR_ID);
         return;
     }
-    sync_indicator(app, WEEKLY_INDICATOR_ID, parse_percentage(weekly), [83, 150, 246, 255], "Weekly");
-    sync_indicator(app, FIVE_HOUR_INDICATOR_ID, parse_percentage(five), [168, 85, 247, 255], "5-hour");
+    sync_indicator(app, WEEKLY_INDICATOR_ID, parse_percentage(weekly), WEEKLY_MARKER, "Weekly");
+    sync_indicator(app, FIVE_HOUR_INDICATOR_ID, parse_percentage(five), FIVE_HOUR_MARKER, "5-hour");
+    sync_credits_indicator(app, credits);
 }
 
 fn wait_for_health(port: u16) -> Result<(), String> {
@@ -400,10 +463,11 @@ fn start_backend(app: tauri::AppHandle) -> Result<(), String> {
                         }
                     } else if let Some(values) = line.trim().strip_prefix("Quota sample: ") {
                         let parts: Vec<_> = values.split_whitespace().collect();
-                        if parts.len() >= 2 {
+                        if parts.len() >= 3 {
                             let five = parts[0].strip_prefix("5h=").unwrap_or("--");
                             let weekly = parts[1].strip_prefix("weekly=").unwrap_or("--");
-                            update_tray_quota(&error_app, five, weekly);
+                            let credits = parts[2].strip_prefix("credits=").unwrap_or("--");
+                            update_tray_quota(&error_app, five, weekly, credits);
                         }
                     }
                 }
@@ -552,8 +616,9 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::{
-        adjacent_window_position, digit_layout, parse_percentage, quota_color,
-        quota_icon_pixels, ScreenRect,
+        adjacent_window_position, credits_color, credits_display, credits_tooltip,
+        digit_layout, numeric_icon_pixels, parse_credits, parse_percentage, quota_color,
+        ScreenRect,
     };
 
     #[test]
@@ -578,7 +643,8 @@ mod tests {
     fn tray_renderer_handles_required_percentage_boundaries() {
         let marker = [83, 150, 246, 255];
         for value in [0, 9, 10, 25, 99, 100] {
-            let pixels = quota_icon_pixels(Some(value), marker);
+            let text = value.to_string();
+            let pixels = numeric_icon_pixels(&text, marker, quota_color(Some(value)));
             assert_eq!(pixels.len(), 32 * 32 * 4);
             assert!(pixels.chunks_exact(4).any(|pixel| pixel == quota_color(Some(value))));
         }
@@ -590,7 +656,7 @@ mod tests {
         let text = value.to_string();
         let (start, step, _horizontal_width, right_offset) = digit_layout(text.len());
         let digit_width = right_offset + 2;
-        let pixels = quota_icon_pixels(Some(value), [168, 85, 247, 255]);
+        let pixels = numeric_icon_pixels(&text, [168, 85, 247, 255], quota_color(Some(value)));
         let color = quota_color(Some(value));
 
         for position in 0..text.len() {
@@ -600,6 +666,50 @@ mod tests {
             assert!((7..28).any(|y| {
                 (left..right).any(|x| pixels[(y * 32 + x) * 4..(y * 32 + x + 1) * 4] == color)
             }), "digit {position} was not rendered");
+        }
+    }
+
+    #[test]
+    fn credits_are_truncated_to_whole_balances_without_rounding_up() {
+        assert_eq!(parse_credits("0"), Some(0));
+        assert_eq!(parse_credits("0.9"), Some(0));
+        assert_eq!(parse_credits("1.9"), Some(1));
+        assert_eq!(parse_credits("99.9"), Some(99));
+        assert_eq!(parse_credits("100.9"), Some(100));
+        assert_eq!(parse_credits("365.89305"), Some(365));
+        assert_eq!(parse_credits("999.9"), Some(999));
+        assert_eq!(parse_credits("--"), None);
+        assert_eq!(parse_credits("NaN"), None);
+    }
+
+    #[test]
+    fn credits_use_compact_overflow_and_neutral_unknown_representation() {
+        assert_eq!(credits_display(Some(999)), "999");
+        assert_eq!(credits_display(Some(1000)), "999+");
+        assert_eq!(credits_display(None), "--");
+        assert_eq!(credits_tooltip(Some(365)), "Credits remaining: 365");
+        assert_eq!(credits_tooltip(Some(1000)), "Credits remaining: 1000");
+        assert_eq!(credits_tooltip(None), "Credits remaining: unavailable");
+        assert_eq!(credits_color(Some(0)), [235, 75, 75, 255]);
+        assert_eq!(credits_color(Some(365)), [225, 229, 235, 255]);
+        assert_eq!(credits_color(None), [125, 130, 139, 255]);
+    }
+
+    #[test]
+    fn credits_three_digits_and_overflow_glyph_fit_inside_the_icon() {
+        for text in ["100", "365", "999", "999+"] {
+            let (start, step, _horizontal_width, right_offset) = digit_layout(text.len());
+            let glyph_width = right_offset + 2;
+            let pixels = numeric_icon_pixels(text, [52, 211, 153, 255], [225, 229, 235, 255]);
+            assert_eq!(pixels.len(), 32 * 32 * 4);
+            for position in 0..text.len() {
+                let left = start + position * step;
+                let right = left + glyph_width;
+                assert!(right <= 32, "{text} glyph {position} exceeds the icon bounds");
+                assert!((7..28).any(|y| {
+                    (left..right).any(|x| pixels[(y * 32 + x) * 4..(y * 32 + x + 1) * 4] == [225, 229, 235, 255])
+                }), "{text} glyph {position} was not rendered");
+            }
         }
     }
 

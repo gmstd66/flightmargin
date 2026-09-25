@@ -26,11 +26,15 @@ Remaining quota is neutral above 25%, warning at 25% or less, and critical red
 at 10% or less. The PyInstaller sidecar is built with `--noconsole` on Windows,
 and the release Tauri entry point uses the Windows GUI subsystem. Dashboard
 asset revisions prevent WebView2 from retaining an obsolete stacked layout.
-The normal Windows application tray icon is retained alongside the optional
-Weekly and 5-hour numeric indicator icons. After each existing collector
-sample, their tooltips identify the quota window and exact remaining value;
-the Settings tray preference removes the two numeric indicators while keeping
-the normal application tray and menu.
+The normal Windows application tray icon is retained alongside optional
+Weekly, 5-hour, and purchased-Credits numeric indicator icons. Weekly uses a
+blue marker, 5-hour uses purple, and Credits uses green. The Credits number is
+the positive balance truncated to a whole credit; balances above 999 render as
+`999+`, while the tooltip retains the actual whole balance. Unavailable credit
+data uses `--` and an `unavailable` tooltip. After each existing collector
+sample, all three indicators update from the same stream. The Settings tray
+preference removes all three numeric indicators while keeping the normal
+application tray and menu.
 The compact seven-segment renderer uses narrower digits and spacing for
 three-digit values so `100` fits completely within the standard 32x32 icon.
 Settings also explains that Windows may place quota indicators in the
