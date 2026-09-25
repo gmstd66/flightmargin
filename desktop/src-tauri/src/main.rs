@@ -14,7 +14,7 @@ use std::{
 use tauri::{
     menu::{CheckMenuItem, Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    Manager, RunEvent, WindowEvent,
+    LogicalSize, Manager, RunEvent, WindowEvent,
 };
 use tauri_plugin_autostart::ManagerExt as AutostartExt;
 use tauri_plugin_shell::{
@@ -144,8 +144,9 @@ fn quota_icon(value: Option<u8>, marker: [u8; 4]) -> tauri::image::Image<'static
     let segments = [[1,1,1,1,1,1,0],[0,1,1,0,0,0,0],[1,1,0,1,1,0,1],[1,1,1,1,0,0,1],[0,1,1,0,0,1,1],[1,0,1,1,0,1,1],[1,0,1,1,1,1,1],[1,1,1,0,0,0,0],[1,1,1,1,1,1,1],[1,1,1,1,0,1,1]];
     let text = value.map(|number| number.to_string()).unwrap_or_else(|| "--".to_string());
     let color = quota_color(value);
+    let (start, step) = if text.len() >= 3 { (0, 10) } else { (3, 14) };
     for (position, character) in text.chars().enumerate() {
-        if let Some(digit) = character.to_digit(10) { let x = 3 + position * 14; let s = segments[digit as usize];
+        if let Some(digit) = character.to_digit(10) { let x = start + position * step; let s = segments[digit as usize];
             if s[0] == 1 { fill(&mut pixels,x+2,7,8,2,color) } if s[1] == 1 { fill(&mut pixels,x+10,9,2,8,color) }
             if s[2] == 1 { fill(&mut pixels,x+10,18,2,8,color) } if s[3] == 1 { fill(&mut pixels,x+2,26,8,2,color) }
             if s[4] == 1 { fill(&mut pixels,x,18,2,8,color) } if s[5] == 1 { fill(&mut pixels,x,9,2,8,color) }
@@ -356,6 +357,12 @@ fn main() {
         .manage(DesktopLog::open())
         .manage(TrayState(Mutex::new(None)))
         .setup(|app| {
+            // Existing installations may have been created before the compact
+            // default. Apply it explicitly so an older native window geometry
+            // cannot override the current 600x450 product default.
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.set_size(LogicalSize::new(600.0, 450.0));
+            }
             setup_tray(app.handle())?;
             if let Err(error) = start_backend(app.handle().clone()) {
                 show_startup_error(app.handle(), &error);
