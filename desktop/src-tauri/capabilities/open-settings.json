@@ -1,0 +1,10 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "open-settings",
+  "description": "Allows only the main dashboard to open the native Settings window.",
+  "remote": {
+    "urls": ["http://127.0.0.1:*/*"]
+  },
+  "windows": ["main"],
+  "permissions": ["allow-open-settings"]
+}

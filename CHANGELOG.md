@@ -31,6 +31,9 @@ Notable changes to Codex Quota Monitor are documented here. This file summarizes
 - Removed the legacy in-dashboard Settings fallback in favor of a dedicated native-window page, and tightened three-digit tray rendering so `100` remains fully visible.
 - Added a green purchased-Credits tray indicator using floored whole balances, a `999+` overflow glyph, exact-value tooltips, and the existing tray preference and collector stream.
 - Restored resilient tray startup by creating unknown-state informational icons immediately, accepting both two-field and three-field sidecar samples, retaining the normal tray handle directly, and logging each icon failure independently.
+- Granted the native Settings commands through narrow Tauri 2 capabilities and
+  added tray **Settings...** and **About...** actions that reuse the adjacent
+  singleton Settings window.
 
 - Made `app.version.__version__` the canonical application version used by setuptools metadata, the CLI, API responses, and Codex app-server client identification.
 

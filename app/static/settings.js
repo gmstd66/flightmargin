@@ -57,6 +57,20 @@ function showSettingsSection(sectionName) {
     });
 }
 
+function openSettingsSection(sectionName) {
+    const availableSections = new Set(["dashboard", "startup", "tray", "about"]);
+    const targetSection = availableSections.has(sectionName) ? sectionName : "dashboard";
+    showSettingsSection(targetSection);
+    if (targetSection === "about" && !aboutInformation) {
+        loadAbout().catch(error => {
+            document.getElementById("settingsStatus").textContent =
+                `About information unavailable: ${error.message}`;
+        });
+    }
+}
+
+window.openSettingsSection = openSettingsSection;
+
 function renderAbout(information) {
     const codexVersion = information.codex_cli_version;
     document.getElementById("aboutVersion").textContent =
@@ -97,15 +111,11 @@ async function copyText(text) {
 
 document.querySelectorAll("[data-settings-tab]").forEach(button => {
     button.addEventListener("click", () => {
-        showSettingsSection(button.dataset.settingsTab);
-        if (button.dataset.settingsTab === "about" && !aboutInformation) {
-            loadAbout().catch(error => {
-                document.getElementById("settingsStatus").textContent =
-                    `About information unavailable: ${error.message}`;
-            });
-        }
+        openSettingsSection(button.dataset.settingsTab);
     });
 });
+
+openSettingsSection(new URLSearchParams(window.location.search).get("section"));
 
 document.getElementById("trayIndicator").addEventListener("change", async event => {
     preferences.tray_indicator = event.target.checked;

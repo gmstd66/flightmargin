@@ -134,6 +134,10 @@ Git history records these completed capabilities:
   disclaimer, and sanitized copyable diagnostics. Public repository, issue,
   and sponsor links remain hidden until launch; the exact GPL/AGPL-family
   license choice and sponsorship setup remain undecided.
+- Tauri's loopback remote-origin ACL now explicitly permits the main window's
+  `open_settings` command and the Settings window's `close_settings` command.
+  The tray menu exposes Settings and About actions through the same singleton,
+  adjacent native Settings-window path; About selects the existing About tab.
 
 ## Branch workflow, caveats, and next work
 

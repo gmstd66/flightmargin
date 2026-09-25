@@ -41,6 +41,21 @@ const SETTINGS_WINDOW_HEIGHT: f64 = 450.0;
 const SETTINGS_WINDOW_GAP: f64 = 16.0;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum SettingsSection {
+    Dashboard,
+    About,
+}
+
+impl SettingsSection {
+    fn name(self) -> &'static str {
+        match self {
+            Self::Dashboard => "dashboard",
+            Self::About => "about",
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 struct ScreenRect {
     x: i32,
     y: i32,
@@ -207,10 +222,18 @@ fn position_settings_window(
         .map_err(|error| error.to_string())
 }
 
-#[tauri::command]
-async fn open_settings(app: tauri::AppHandle) -> Result<(), String> {
+fn open_settings_window(
+    app: &tauri::AppHandle,
+    section: SettingsSection,
+) -> Result<(), String> {
     if let Some(settings) = app.get_webview_window(SETTINGS_WINDOW_LABEL) {
-        position_settings_window(&app, &settings)?;
+        position_settings_window(app, &settings)?;
+        settings
+            .eval(&format!(
+                "window.openSettingsSection?.({:?});",
+                section.name(),
+            ))
+            .map_err(|error| error.to_string())?;
         settings.show().map_err(|error| error.to_string())?;
         settings.unminimize().map_err(|error| error.to_string())?;
         settings.set_focus().map_err(|error| error.to_string())?;
@@ -222,9 +245,9 @@ async fn open_settings(app: tauri::AppHandle) -> Result<(), String> {
         .ok_or_else(|| "Main desktop window is unavailable".to_string())?;
     let mut url = main.url().map_err(|error| error.to_string())?;
     url.set_path("/settings");
-    url.set_query(None);
+    url.set_query(Some(&format!("section={}", section.name())));
     let settings = WebviewWindowBuilder::new(
-        &app,
+        app,
         SETTINGS_WINDOW_LABEL,
         WebviewUrl::External(url),
     )
@@ -234,9 +257,14 @@ async fn open_settings(app: tauri::AppHandle) -> Result<(), String> {
     .visible(false)
     .build()
     .map_err(|error| error.to_string())?;
-    position_settings_window(&app, &settings)?;
+    position_settings_window(app, &settings)?;
     settings.show().map_err(|error| error.to_string())?;
     settings.set_focus().map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+async fn open_settings(app: tauri::AppHandle) -> Result<(), String> {
+    open_settings_window(&app, SettingsSection::Dashboard)
 }
 
 #[tauri::command]
@@ -550,6 +578,8 @@ fn stop_backend(app: &tauri::AppHandle) {
 
 fn setup_tray(app: &tauri::AppHandle) -> tauri::Result<()> {
     let open = MenuItem::with_id(app, "open", "Open", true, None::<&str>)?;
+    let settings = MenuItem::with_id(app, "settings", "Settings...", true, None::<&str>)?;
+    let about = MenuItem::with_id(app, "about", "About...", true, None::<&str>)?;
     let autostart_enabled = app.autolaunch().is_enabled().unwrap_or(false);
     let autostart = CheckMenuItem::with_id(
         app,
@@ -560,7 +590,7 @@ fn setup_tray(app: &tauri::AppHandle) -> tauri::Result<()> {
         None::<&str>,
     )?;
     let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
-    let menu = Menu::with_items(app, &[&open, &autostart, &quit])?;
+    let menu = Menu::with_items(app, &[&open, &settings, &about, &autostart, &quit])?;
     let tray = TrayIconBuilder::with_id("main-tray")
         .icon(
             app.default_window_icon()
@@ -571,6 +601,16 @@ fn setup_tray(app: &tauri::AppHandle) -> tauri::Result<()> {
         .menu(&menu)
         .on_menu_event(|app, event| match event.id().as_ref() {
             "open" => show_main_window(app),
+            "settings" => {
+                if let Err(error) = open_settings_window(app, SettingsSection::Dashboard) {
+                    log_message(app, &format!("Unable to open Settings: {error}"));
+                }
+            }
+            "about" => {
+                if let Err(error) = open_settings_window(app, SettingsSection::About) {
+                    log_message(app, &format!("Unable to open About: {error}"));
+                }
+            }
             "autostart" => {
                 let result = if app.autolaunch().is_enabled().unwrap_or(false) {
                     app.autolaunch().disable()
@@ -659,9 +699,15 @@ mod tests {
     use super::{
         adjacent_window_position, credits_color, credits_display, credits_tooltip,
         digit_layout, numeric_icon_pixels, parse_credits, parse_percentage, quota_color,
-        tray_indicator_preference, ScreenRect, CREDITS_INDICATOR_ID,
+        tray_indicator_preference, ScreenRect, SettingsSection, CREDITS_INDICATOR_ID,
         FIVE_HOUR_INDICATOR_ID, WEEKLY_INDICATOR_ID,
     };
+
+    #[test]
+    fn settings_sections_route_to_one_native_settings_page() {
+        assert_eq!(SettingsSection::Dashboard.name(), "dashboard");
+        assert_eq!(SettingsSection::About.name(), "about");
+    }
 
     #[test]
     fn parses_integer_and_decimal_percentages() {

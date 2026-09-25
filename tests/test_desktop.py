@@ -1,4 +1,5 @@
 import importlib.util
+import json
 import socket
 import sys
 import types
@@ -22,6 +23,9 @@ PREPARE_SCRIPT = PROJECT_ROOT / "desktop" / "scripts" / "prepare-tauri-config.py
 TAURI_MAIN = PROJECT_ROOT / "desktop" / "src-tauri" / "src" / "main.rs"
 TAURI_CONFIG = PROJECT_ROOT / "desktop" / "src-tauri" / "tauri.conf.template.json"
 TAURI_CAPABILITY = PROJECT_ROOT / "desktop" / "src-tauri" / "capabilities" / "default.json"
+OPEN_SETTINGS_CAPABILITY = PROJECT_ROOT / "desktop" / "src-tauri" / "capabilities" / "open-settings.json"
+CLOSE_SETTINGS_CAPABILITY = PROJECT_ROOT / "desktop" / "src-tauri" / "capabilities" / "close-settings.json"
+TAURI_BUILD = PROJECT_ROOT / "desktop" / "src-tauri" / "build.rs"
 DESKTOP_JS = PROJECT_ROOT / "app" / "static" / "app.js"
 SETTINGS_JS = PROJECT_ROOT / "app" / "static" / "settings.js"
 SETTINGS_TEMPLATE = PROJECT_ROOT / "app" / "templates" / "settings.html"
@@ -205,6 +209,40 @@ def test_native_settings_about_content_uses_dynamic_safe_metadata():
     assert "Sponsor" not in settings
     assert "github.com" not in settings.lower()
     assert "<a " not in settings.lower()
+
+
+def test_settings_commands_have_narrow_tauri_acl_capabilities():
+    build_script = TAURI_BUILD.read_text(encoding="utf-8")
+    open_capability = json.loads(OPEN_SETTINGS_CAPABILITY.read_text(encoding="utf-8"))
+    close_capability = json.loads(CLOSE_SETTINGS_CAPABILITY.read_text(encoding="utf-8"))
+
+    assert '.commands(&["open_settings", "close_settings"])' in build_script
+    assert open_capability["windows"] == ["main"]
+    assert open_capability["permissions"] == ["allow-open-settings"]
+    assert close_capability["windows"] == ["settings"]
+    assert close_capability["permissions"] == ["allow-close-settings"]
+    assert open_capability["remote"]["urls"] == ["http://127.0.0.1:*/*"]
+    assert close_capability["remote"]["urls"] == ["http://127.0.0.1:*/*"]
+
+
+def test_tray_settings_and_about_reuse_the_native_settings_window():
+    rust = TAURI_MAIN.read_text(encoding="utf-8")
+    settings_source = SETTINGS_JS.read_text(encoding="utf-8")
+    dashboard = (PROJECT_ROOT / "app" / "templates" / "index.html").read_text(encoding="utf-8")
+
+    assert 'MenuItem::with_id(app, "settings", "Settings..."' in rust
+    assert 'MenuItem::with_id(app, "about", "About..."' in rust
+    assert 'open_settings_window(app, SettingsSection::Dashboard)' in rust
+    assert 'open_settings_window(app, SettingsSection::About)' in rust
+    assert 'get_webview_window(SETTINGS_WINDOW_LABEL)' in rust
+    assert rust.count('SETTINGS_WINDOW_LABEL,\n        WebviewUrl::External(url)') == 1
+    assert 'window.openSettingsSection?.' in rust
+    assert 'url.set_query(Some(&format!("section={}"' in rust
+    assert "window.openSettingsSection = openSettingsSection" in settings_source
+    assert 'new URLSearchParams(window.location.search).get("section")' in settings_source
+    assert '/static/settings.js?v=3' in SETTINGS_TEMPLATE.read_text(encoding="utf-8")
+    assert "settingsDialog" not in dashboard
+    assert "showModal" not in DESKTOP_JS.read_text(encoding="utf-8")
 
 
 def test_credits_share_the_existing_tray_sample_and_preference_lifecycle():

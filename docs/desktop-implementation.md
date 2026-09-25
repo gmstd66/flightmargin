@@ -22,6 +22,12 @@ clamps to the active monitor work area using its Windows DPI scale. Reopening
 Settings focuses and repositions the existing window. The native window loads
 the dedicated loopback `/settings` page; the dashboard contains no modal
 Settings markup or fallback overlay.
+The loopback-backed windows use Tauri 2's application-command ACL: the main
+window receives only `allow-open-settings`, while the Settings window receives
+only `allow-close-settings`. The normal tray menu provides **Settings...** and
+**About...** alongside Open, Start at login, and Quit. Both use the same native
+window helper; About selects the existing About tab, and repeated actions focus
+and reposition the single Settings window rather than creating another one.
 Remaining quota is neutral above 25%, warning at 25% or less, and critical red
 at 10% or less. The PyInstaller sidecar is built with `--noconsole` on Windows,
 and the release Tauri entry point uses the Windows GUI subsystem. Dashboard
