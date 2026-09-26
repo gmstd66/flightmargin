@@ -154,14 +154,17 @@ Git history records these completed capabilities:
   license audits, branding/license/signing gates, and a human-gated release
   checklist. `0.3.0-beta.1` remains a recommendation rather than a version
   change.
-- Milestone 6.20B implementation aligns the Linux/browser product surface with Windows while
+- Milestone 6.20B platform parity is complete. It aligns the Linux/browser product surface with Windows while
   preserving native platform mechanics. Both editions now share quota states,
   unavailable/credit behavior, fixed panel ordering and visibility,
   responsive History, and Settings/About data. Linux uses a browser surface,
   systemd, and journal/process logging; Windows retains Tauri, native windows,
   tray/startup integration, PyInstaller, and NSIS. The shared runtime and real
-  Codex collector passed an isolated browser smoke, but the Windows-only
-  milestone host could not execute the final native Linux/systemd smoke.
+  Codex collector passed an isolated browser smoke and the final native Linux
+  runtime/systemd validation: real authenticated collection, browser/API and
+  failure-state handling, temporary-service lifecycle, resource baselining,
+  and read-only production-isolation verification. The validation found and
+  fixed Windows About-path separator formatting when checked from Linux.
 
 ## Branch workflow, caveats, and next work
 

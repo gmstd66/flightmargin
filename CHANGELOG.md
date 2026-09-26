@@ -22,6 +22,9 @@ Notable changes to Codex Quota Monitor are documented here. This file summarizes
   and contributor documentation, signing/versioning plans, and release gates.
 - Linux/browser platform-parity matrix and browser-accessible Settings/About
   behavior using the same local preference and diagnostic APIs as Windows.
+- Native Linux runtime validation for platform parity: isolated authenticated
+  collection, browser/API and unavailable-Codex checks, temporary systemd
+  lifecycle, resource baseline, and production-isolation verification.
 
 ### Changed
 
@@ -55,6 +58,8 @@ Notable changes to Codex Quota Monitor are documented here. This file summarizes
   out of the Linux browser surface.
 - Recorded the owner selection of AGPLv3-or-later; applying the license file is
   intentionally deferred to the public identity milestone.
+- Fixed Windows-formatted About paths to retain backslash separators when
+  platform diagnostics are generated on a non-Windows host.
 
 - Made `app.version.__version__` the canonical application version used by setuptools metadata, the CLI, API responses, and Codex app-server client identification.
 
