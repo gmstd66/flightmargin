@@ -80,10 +80,13 @@ remote telemetry. See [Privacy](docs/privacy.md) for the complete data summary.
 ## Linux/headless edition
 
 The Linux/systemd edition remains available separately from the Windows beta.
-It has no application-level authentication and must remain on localhost, a
-trusted private network, or a private VPN. See
+It uses the same quota cards, thresholds, history, panel-visibility controls,
+and browser About/diagnostics as the Windows dashboard. Linux-native startup
+and logs remain systemd concerns; Windows tray and native-window behavior do
+not apply. The browser service has no application-level authentication and must
+remain on localhost, a trusted private network, or a private VPN. See
 [Linux installation](docs/installation-linux.md) and
-[Architecture](docs/architecture.md).
+[Platform parity](docs/platform-parity.md).
 
 ## Development
 
@@ -142,7 +145,8 @@ No `FUNDING.yml`, Sponsor link, or auto-updater is enabled yet.
 
 ## License
 
-The license is not yet selected. GPLv3 and AGPLv3 are under review; this
-repository must not be made public or accept external contributions until the
-owner selects and adds the license. See
+The owner has selected **AGPLv3-or-later**. The public-license transition is not
+complete: no `LICENSE` file is added in milestone 6.20B, and the repository must
+not accept external contributions until that file and contribution terms are
+approved in the public identity milestone. See
 [License decision](docs/license-decision.md).

@@ -132,8 +132,8 @@ Git history records these completed capabilities:
   canonical application version, beta status, local-data privacy statement,
   detected Codex CLI version, project model, attribution, independence
   disclaimer, and sanitized copyable diagnostics. Public repository, issue,
-  and sponsor links remain hidden until launch; the exact GPL/AGPL-family
-  license choice and sponsorship setup remain undecided.
+  and sponsor links remain hidden until launch; applying the selected
+  AGPLv3-or-later terms and sponsorship setup remain pending.
 - Tauri's loopback remote-origin ACL now explicitly permits the main window's
   `open_settings` command and the Settings window's `close_settings` command.
   The tray menu exposes Settings and About actions through the same singleton,
@@ -154,6 +154,14 @@ Git history records these completed capabilities:
   license audits, branding/license/signing gates, and a human-gated release
   checklist. `0.3.0-beta.1` remains a recommendation rather than a version
   change.
+- Milestone 6.20B implementation aligns the Linux/browser product surface with Windows while
+  preserving native platform mechanics. Both editions now share quota states,
+  unavailable/credit behavior, fixed panel ordering and visibility,
+  responsive History, and Settings/About data. Linux uses a browser surface,
+  systemd, and journal/process logging; Windows retains Tauri, native windows,
+  tray/startup integration, PyInstaller, and NSIS. The shared runtime and real
+  Codex collector passed an isolated browser smoke, but the Windows-only
+  milestone host could not execute the final native Linux/systemd smoke.
 
 ## Branch workflow, caveats, and next work
 
@@ -163,13 +171,13 @@ Routine work belongs on `dev/productization`, not `main`. Before editing, fetch 
 
 Codex Quota Monitor is intended to remain free to use and become open source. The planned sustainability model is voluntary donations and sponsorship only, initially through GitHub Sponsors; there will be no paywall or paid feature tier. Public installers and downloads are expected to be distributed through GitHub Releases when the project is ready for public release.
 
-The exact open-source license is intentionally unresolved. GPL, AGPL, or a related option are the current likely direction, but no license file or final license choice has been made. Before public distribution, pursue a free open-source Windows signing path such as SignPath Foundation if the project qualifies. Paid code-signing should be considered only if free signing is unavailable and the project justifies the expense.
+The owner selected AGPLv3-or-later. The public identity milestone must still add and review the actual `LICENSE` and contribution terms; milestone 6.20B records the decision without applying the repository license. Before public distribution, pursue a free open-source Windows signing path such as SignPath Foundation if the project qualifies. Paid code-signing should be considered only if free signing is unavailable and the project justifies the expense.
 
-The remaining product/distribution decisions are: the public product name; the exact license; whether historical author-email/private-infrastructure exposure is acceptable; the first public release version; repository visibility; SignPath eligibility/signing implementation; and final release approval. Tauri auto-update is deferred for the first public beta and may be evaluated only after the manual release process is stable. These decisions do not authorize making the repository public, creating a release, publishing installers, or changing runtime behavior.
+The remaining product/distribution decisions are: the public product name (current candidate: `CDXquota`); whether historical author-email/private-infrastructure exposure is acceptable; the first public release version; repository visibility; SignPath eligibility/signing implementation; and final release approval. Tauri auto-update is deferred for the first public beta and may be evaluated only after the manual release process is stable. These decisions do not authorize making the repository public, adding the license in this milestone, creating a release, publishing installers, or changing runtime behavior.
 
 Known caveats:
 
-- Linux/systemd remains a separate stable deployment model. Windows 11 x64 is the first planned public desktop target, but no public distribution exists yet; product-name approval, licensing, repository publication, signing, and final release validation remain pending. Docker remains deferred, and an iPhone companion remains future product work.
+- Linux/systemd remains a separate stable deployment model with the shared product dashboard. Windows 11 x64 is the first planned public desktop target, but no public distribution exists yet; product-name approval, license application, repository publication, signing, and final release validation remain pending. Docker remains deferred, and an iPhone companion remains future product work.
 - Codex CLI availability, its authenticated user context, and the app-server rate-limit response are external dependencies.
 - The dashboard has no built-in authentication and should remain local, trusted-LAN, or private-VPN only.
 - The service `WorkingDirectory` is the project root even though its executable is packaged; repository-based installation remains the documented workflow.

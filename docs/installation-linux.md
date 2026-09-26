@@ -88,6 +88,11 @@ cd codex-quota-monitor
 
 Replace the placeholder with the public repository URL after launch approval.
 
+The Linux browser dashboard uses the same quota panels, semantic thresholds,
+history graph, and panel-visibility preferences as the Windows edition. Its
+Settings page exposes Dashboard and About; Windows-only tray and start-at-login
+controls are intentionally omitted. See `platform-parity.md`.
+
 ---
 
 ## 4. Dry-run installation

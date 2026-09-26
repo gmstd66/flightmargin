@@ -62,3 +62,21 @@ def test_copy_diagnostics_is_allowlisted_and_excludes_sensitive_values():
         "account identity",
     ):
         assert sensitive_text.lower() not in diagnostics.lower()
+
+
+def test_linux_about_paths_do_not_expose_home_directory_identity():
+    payload = build_about_payload(
+        app_version=__version__,
+        codex_cli_version=None,
+        data_directory="/home/private-name/.local/share/codex-quota-monitor",
+        log_directory="systemd journal or process output",
+        system="Linux",
+        release="6.8.0",
+        machine="x86_64",
+        environ={"HOME": "/home/private-name"},
+    )
+
+    assert payload["data_directory"] == "~/.local/share/codex-quota-monitor"
+    assert payload["log_directory"] == "systemd journal or process output"
+    assert "private-name" not in payload["diagnostics"]
+    assert payload["operating_system"] == "Linux 6.8.0"

@@ -2,7 +2,7 @@
 
 Thank you for your interest in Codex Quota Monitor. The project is preparing
 for a public beta but is not yet open for outside contributions because the
-open-source license has not been selected.
+selected AGPLv3-or-later license has not yet been applied to the repository.
 
 After the repository and contribution process are opened:
 

@@ -22,6 +22,7 @@ class AppConfig:
     port: int
     sample_seconds: int
     codex_bin: str | None
+    desktop_mode: bool
 
 
 def _env_int(
@@ -229,4 +230,5 @@ def load_config():
         port=port,
         sample_seconds=sample_seconds,
         codex_bin=codex_bin,
+        desktop_mode=desktop_mode,
     )

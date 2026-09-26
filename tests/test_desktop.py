@@ -230,8 +230,8 @@ def test_nsis_upgrade_hook_prompts_for_clean_tray_quit_without_killing():
 
 def test_dashboard_assets_are_revisioned_for_desktop_webview_cache():
     template = (PROJECT_ROOT / "app" / "templates" / "index.html").read_text(encoding="utf-8")
-    assert '/static/app.css?v=13' in template
-    assert '/static/app.js?v=13' in template
+    assert '/static/app.css?v=14' in template
+    assert '/static/app.js?v=14' in template
 
 
 def test_compact_history_uses_smaller_y_axis_labels_without_changing_ticks():
@@ -274,7 +274,7 @@ def test_native_settings_about_content_uses_dynamic_safe_metadata():
     backend = (PROJECT_ROOT / "app" / "main.py").read_text(encoding="utf-8")
 
     assert 'data-settings-tab="about"' in settings
-    assert "A lightweight desktop monitor for Codex usage limits, reset windows, and purchased credits." in settings
+    assert "A lightweight monitor for Codex usage limits, reset windows, and purchased credits." in settings
     assert "Monitoring history, preferences, and logs are stored locally on this computer." in settings
     assert "Free and open-source software supported by voluntary sponsorship." in settings
     assert "Unofficial community tool. Not affiliated with or endorsed by OpenAI." in settings
@@ -320,7 +320,7 @@ def test_tray_settings_and_about_reuse_the_native_settings_window():
     assert 'url.set_query(Some(&format!("section={}"' in rust
     assert "window.openSettingsSection = openSettingsSection" in settings_source
     assert 'new URLSearchParams(window.location.search).get("section")' in settings_source
-    assert '/static/settings.js?v=3' in SETTINGS_TEMPLATE.read_text(encoding="utf-8")
+    assert '/static/settings.js?v=4' in SETTINGS_TEMPLATE.read_text(encoding="utf-8")
     assert "settingsDialog" not in dashboard
     assert "showModal" not in DESKTOP_JS.read_text(encoding="utf-8")
 

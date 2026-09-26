@@ -90,25 +90,33 @@ The current dashboard provides:
 - weekly pace indicator
 - projected exhaustion
 - available full reset credits
+- purchased credit balance
 - plan information
+- semantic normal/warning/critical remaining-quota state
+- persistent panel visibility
 - 7-day historical usage graph
 - daily X-axis divisions
 - 4-hour chart gridlines
 - manual refresh
 
-## Current portability limitations
+## Platform model
 
-The current prototype assumes:
+Both Windows and Linux use the same Python collector, normalized API, database,
+dashboard template, styles, and browser JavaScript. Platform-specific shells do
+not reimplement quota calculations.
+
+The shared application assumes:
 
 - Codex CLI is already installed
 - Codex CLI is already authenticated
 - Codex is discoverable as `codex`
-- Linux host
-- systemd for autostart
-- local browser/network access
 - SQLite filesystem access
 
-Runtime configuration is centralized in `app.core.config`; deployment-specific paths can be supplied through environment variables and the installer-generated systemd unit.
+Linux uses systemd and a browser/headless interface. Windows uses Tauri with a
+PyInstaller sidecar, native tray/startup integration, and NSIS. Runtime
+configuration is centralized in `app.core.config`; deployment-specific paths
+can be supplied through environment variables and the installer-generated
+systemd unit. See `platform-parity.md`.
 
 ## Security model
 

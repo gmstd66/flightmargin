@@ -4,7 +4,7 @@ import os
 import platform
 import re
 from functools import lru_cache
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 from app.core.environment import get_codex_version
 
@@ -47,6 +47,31 @@ def friendly_path(path, *, system=None, environ=None):
             pass
         else:
             return str(Path("%LOCALAPPDATA%") / relative)
+
+    if system == "linux":
+        xdg_data_home = environ.get("XDG_DATA_HOME")
+        if xdg_data_home:
+            try:
+                relative = path.resolve().relative_to(Path(xdg_data_home).resolve())
+            except (OSError, ValueError):
+                pass
+            else:
+                return str(
+                    PurePosixPath("$XDG_DATA_HOME")
+                    / PurePosixPath(relative.as_posix())
+                )
+
+        home = environ.get("HOME")
+        if home:
+            try:
+                relative = path.resolve().relative_to(Path(home).resolve())
+            except (OSError, ValueError):
+                pass
+            else:
+                return str(
+                    PurePosixPath("~")
+                    / PurePosixPath(relative.as_posix())
+                )
 
     return str(path)
 

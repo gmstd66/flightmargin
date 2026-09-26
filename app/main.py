@@ -15,6 +15,7 @@ from fastapi.templating import Jinja2Templates
 
 from app.adapters.codex_stdio import (
     CodexAppServer,
+    CodexNotFoundError,
 )
 
 from app.about import (
@@ -82,7 +83,20 @@ collector_status = {
     "running": False,
     "last_success": None,
     "last_error": None,
+    "message": None,
 }
+
+
+def collector_message(exc):
+    """Return a stable user-facing collection diagnostic."""
+    if isinstance(exc, (CodexNotFoundError, FileNotFoundError)):
+        return "Codex CLI was not found. Install Codex or set CODEX_BIN."
+
+    text = str(exc).lower()
+    if any(term in text for term in ("authentication", "not logged in", "unauthorized")):
+        return "Codex authentication is unavailable. Authenticate with Codex and retry."
+
+    return "Quota collection temporarily failed. Check About diagnostics and application logs."
 
 
 def collect_sync():
@@ -118,12 +132,20 @@ def collect_sync():
             "last_error"
         ] = None
 
+        collector_status[
+            "message"
+        ] = None
+
         return sample
 
     except Exception as exc:
         collector_status[
             "last_error"
         ] = str(exc)
+
+        collector_status[
+            "message"
+        ] = collector_message(exc)
 
         codex.stop()
 
@@ -300,7 +322,7 @@ async def quota():
             status_code=503,
             detail=(
                 collector_status[
-                    "last_error"
+                    "message"
                 ]
                 or "No quota sample available"
             ),
@@ -398,7 +420,11 @@ async def about():
         app_version=__version__,
         codex_cli_version=codex_cli_version,
         data_directory=config.data_dir,
-        log_directory=config.data_dir / "logs",
+        log_directory=(
+            config.data_dir / "logs"
+            if config.desktop_mode
+            else "systemd journal or process output"
+        ),
     )
 
 

@@ -17,6 +17,14 @@ contents, account identity, or raw quota payloads. **Copy diagnostics** exposes
 only allowlisted application, Codex CLI, operating-system, architecture, and
 friendly data/log-path information.
 
+## Data stored on Linux
+
+Linux stores the same SQLite history and panel-visibility preference in its
+configured data directory. Source checkouts default to `data/`; installed-user
+execution follows `XDG_DATA_HOME` or `~/.local/share/codex-quota-monitor`.
+Service diagnostics normally remain in the systemd journal or the server
+process output rather than the Windows desktop log directory.
+
 ## Codex authentication
 
 Codex Quota Monitor discovers and runs the user's existing Codex CLI. Codex
@@ -30,6 +38,9 @@ The Windows shell and its packaged FastAPI sidecar communicate over an
 ephemeral `127.0.0.1` port. The application contacts no project-operated
 telemetry or analytics service. Codex CLI communication with OpenAI remains
 subject to Codex/OpenAI behavior and policies outside this project's control.
+
+The Linux service binds to its configured address. It has no application-level
+authentication and should remain on localhost or a trusted private network.
 
 ## Uninstall and removal
 

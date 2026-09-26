@@ -20,6 +20,8 @@ Notable changes to Codex Quota Monitor are documented here. This file summarizes
 - Windows public-beta preparation: manual GitHub-hosted candidate workflow,
   checksummed unsigned NSIS artifacts, resolved dependency inputs, public user
   and contributor documentation, signing/versioning plans, and release gates.
+- Linux/browser platform-parity matrix and browser-accessible Settings/About
+  behavior using the same local preference and diagnostic APIs as Windows.
 
 ### Changed
 
@@ -47,6 +49,12 @@ Notable changes to Codex Quota Monitor are documented here. This file summarizes
   asking the user to Quit from the tray and Retry before files are copied.
 - Removed machine-specific private deployment details from the current public
   documentation while recording remaining Git-history privacy decisions.
+- Consolidated normal/warning/critical quota state in the shared Python API,
+  aligned unavailable and zero-credit display behavior, made narrow browser
+  layouts reflow without clipping, and kept Windows-only startup/tray controls
+  out of the Linux browser surface.
+- Recorded the owner selection of AGPLv3-or-later; applying the license file is
+  intentionally deferred to the public identity milestone.
 
 - Made `app.version.__version__` the canonical application version used by setuptools metadata, the CLI, API responses, and Codex app-server client identification.
 

@@ -21,9 +21,10 @@ among other things:
 - documented committer/reviewer/approver roles and manual signing approval;
 - a published code-signing policy and privacy statement.
 
-The repository is private, has no selected license, has no public release, and
-has not yet been accepted by SignPath. Those are hard prerequisites, not CI
-details that should be mocked.
+The repository is private, the selected AGPLv3-or-later license has not yet been
+applied through a `LICENSE` file, the project has no public release, and it has
+not been accepted by SignPath. Those are hard prerequisites, not CI details
+that should be mocked.
 
 ## Intended integration
 

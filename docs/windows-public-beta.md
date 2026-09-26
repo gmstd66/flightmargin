@@ -95,6 +95,6 @@ quota payloads. Security-sensitive reports follow `SECURITY.md`.
 - Windows 11 x64 is the only validated public desktop target;
 - user must install and authenticate Codex independently;
 - notification icons may be placed in Windows overflow;
-- the product name and open-source license remain launch gates.
+- the product name and application of the selected AGPLv3-or-later license remain launch gates.
 
 See [Privacy](privacy.md) for actual local-data and network behavior.

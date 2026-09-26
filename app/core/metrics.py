@@ -1,6 +1,21 @@
 import time
 
 
+QUOTA_WARNING_REMAINING = 25
+QUOTA_CRITICAL_REMAINING = 10
+
+
+def quota_state(remaining):
+    """Return the shared semantic state for a remaining-quota percentage."""
+    if remaining is None:
+        return "unavailable"
+    if remaining <= QUOTA_CRITICAL_REMAINING:
+        return "critical"
+    if remaining <= QUOTA_WARNING_REMAINING:
+        return "warning"
+    return "normal"
+
+
 def window_metrics(
     used,
     reset_at,
@@ -83,12 +98,15 @@ def window_metrics(
                     projected
                 )
 
+    rounded_remaining = round(
+        remaining,
+        2,
+    )
+
     return {
         "used": round(used, 2),
-        "remaining": round(
-            remaining,
-            2,
-        ),
+        "remaining": rounded_remaining,
+        "state": quota_state(rounded_remaining),
         "reset_at": reset_at,
         "start_at": int(start_at),
         "seconds_until_reset": int(

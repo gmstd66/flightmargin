@@ -25,6 +25,7 @@ def make_config():
         port=8093,
         sample_seconds=60,
         codex_bin=None,
+        desktop_mode=False,
     )
 
 

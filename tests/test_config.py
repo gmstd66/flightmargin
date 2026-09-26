@@ -72,6 +72,7 @@ def test_default_config(
     )
 
     assert config.codex_bin is None
+    assert config.desktop_mode is False
 
 
 def test_environment_overrides(
@@ -294,6 +295,7 @@ def test_desktop_mode_uses_desktop_data_directory(
 
     assert config.data_dir == default_desktop_data_dir()
     assert config.database_path == config.data_dir / "quota.db"
+    assert config.desktop_mode is True
 
     xdg_home = (
         tmp_path / "xdg-data"

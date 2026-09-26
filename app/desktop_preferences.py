@@ -1,4 +1,4 @@
-"""Small, durable desktop-only preference store kept out of quota history."""
+"""Small, durable dashboard preference store kept out of quota history."""
 
 import json
 from copy import deepcopy

@@ -87,3 +87,12 @@ def test_normalize_handles_missing_reset_credits():
     result = normalize_rate_limits(raw)
 
     assert result["reset_credits_available"] == 0
+
+
+def test_normalize_preserves_exact_and_unavailable_credit_balances():
+    raw = sample_response()
+    raw["limits"]["credits"]["balance"] = "365.8930500000"
+    assert normalize_rate_limits(raw)["credits_balance"] == "365.8930500000"
+
+    raw["limits"]["credits"] = None
+    assert normalize_rate_limits(raw)["credits_balance"] is None

@@ -1,4 +1,4 @@
-from app.core.metrics import window_metrics, enrich_sample
+from app.core.metrics import enrich_sample, quota_state, window_metrics
 
 
 def make_window(
@@ -36,6 +36,17 @@ def test_remaining_percentage():
 
     assert result["used"] == 26
     assert result["remaining"] == 74
+    assert result["state"] == "normal"
+
+
+def test_shared_quota_state_boundaries():
+    assert quota_state(None) == "unavailable"
+    assert quota_state(100) == "normal"
+    assert quota_state(25.01) == "normal"
+    assert quota_state(25) == "warning"
+    assert quota_state(10.01) == "warning"
+    assert quota_state(10) == "critical"
+    assert quota_state(0) == "critical"
 
 
 def test_safe_pace():

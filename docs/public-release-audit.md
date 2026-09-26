@@ -57,7 +57,7 @@ visibility and policy are approved.
   infrastructure exposure or authorize a separately planned history rewrite.
   This milestone does not rewrite or force-push history.
 - Product name must pass the branding gate in `branding-review.md`.
-- GPLv3 versus AGPLv3 must be selected and a `LICENSE` added.
+- The selected AGPLv3-or-later terms must be applied through a reviewed `LICENSE`.
 - The repository must be deliberately made public only after the final audit.
 - Public security contact/private vulnerability reporting must be enabled.
 - Signing, version, final artifact, and release approval gates remain open.

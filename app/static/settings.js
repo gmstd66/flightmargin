@@ -12,9 +12,14 @@ const preferenceChannel = "BroadcastChannel" in window
 let preferences = null;
 let aboutInformation = null;
 
+function nativeInvoke() {
+    return window.__TAURI__?.core?.invoke
+        ?? window.__TAURI_INTERNALS__?.invoke
+        ?? null;
+}
+
 function tauriInvoke(command) {
-    const invoke = window.__TAURI__?.core?.invoke
-        ?? window.__TAURI_INTERNALS__?.invoke;
+    const invoke = nativeInvoke();
     if (!invoke) throw new Error("Native Settings bridge is unavailable");
     return invoke(command);
 }
@@ -58,7 +63,11 @@ function showSettingsSection(sectionName) {
 }
 
 function openSettingsSection(sectionName) {
-    const availableSections = new Set(["dashboard", "startup", "tray", "about"]);
+    const availableSections = new Set(
+        nativeInvoke()
+            ? ["dashboard", "startup", "tray", "about"]
+            : ["dashboard", "about"]
+    );
     const targetSection = availableSections.has(sectionName) ? sectionName : "dashboard";
     showSettingsSection(targetSection);
     if (targetSection === "about" && !aboutInformation) {
@@ -70,6 +79,12 @@ function openSettingsSection(sectionName) {
 }
 
 window.openSettingsSection = openSettingsSection;
+
+if (!nativeInvoke()) {
+    document.querySelectorAll("[data-native-only]").forEach(element => {
+        element.hidden = true;
+    });
+}
 
 function renderAbout(information) {
     const codexVersion = information.codex_cli_version;
@@ -148,6 +163,10 @@ document.getElementById("copyDiagnostics").addEventListener("click", async () =>
 });
 
 document.getElementById("closeSettings").addEventListener("click", async () => {
+    if (!nativeInvoke()) {
+        window.location.assign("/");
+        return;
+    }
     try {
         await tauriInvoke("close_settings");
     } catch (error) {

@@ -1,8 +1,11 @@
-# GPLv3 versus AGPLv3 decision
+# GPLv3 versus AGPLv3 decision record
 
-No license has been selected. This document compares practical implications for
-Codex Quota Monitor and is not legal advice. The owner should review the final
-choice with qualified counsel if the distinction is material.
+**Owner decision: AGPLv3-or-later.** This document preserves the practical
+comparison that informed the decision. It is not legal advice.
+
+Milestone 6.20B records the decision but intentionally does not add `LICENSE`.
+Applying the license, contribution terms, and public repository identity remains
+part of the later public identity milestone.
 
 Authoritative references:
 
@@ -30,14 +33,13 @@ rights. The project currently has no contributor license agreement and should
 decide whether simple inbound-equals-outbound contribution terms are sufficient
 before accepting contributions.
 
-## Decision framing
+## Decision rationale
 
-- Choose **GPLv3** if the main priority is reciprocal source availability for
+- **GPLv3** would prioritize reciprocal source availability for
   distributed desktop/Linux binaries and lower adoption friction for users who
   may avoid AGPL dependencies.
-- Choose **AGPLv3** if preserving source access for a future modified hosted or
-  remotely accessible monitor is a core requirement.
+- **AGPLv3** also preserves source access for a future modified hosted or
+  remotely accessible monitor, which matches the selected direction.
 
-The choice should also specify `-only` versus `-or-later`; do not assume that
-decision. No `LICENSE` file should be added until the owner approves the exact
-license and version formulation.
+The owner selected the `-or-later` formulation. No `LICENSE` file is added in
+this milestone.

@@ -53,8 +53,25 @@ function formatDate(timestamp) {
 }
 
 
+function formatCredits(value) {
+    if (value === null || value === undefined || String(value).trim() === "") {
+        return "Credits: unavailable";
+    }
+    if (Number(value) === 0) {
+        return "Credits: 0 (depleted)";
+    }
+    return `Credits: ${value}`;
+}
+
+
 function updateWindow(prefix, data) {
     if (!data) {
+        document.getElementById(`${prefix}Remaining`).textContent = "Unavailable";
+        document.getElementById(`${prefix}Used`).textContent = "-- used";
+        document.getElementById(`${prefix}Reset`).textContent = "Reset unavailable";
+        document.getElementById(`${prefix}Bar`).style.width = "0%";
+        const unavailableCard = document.querySelector(`[data-panel="${prefix === "five" ? "five-hour" : prefix}"]`);
+        unavailableCard.classList.remove("quota-warning", "quota-critical");
         return;
     }
 
@@ -79,13 +96,11 @@ function updateWindow(prefix, data) {
         `${Math.max(0, Math.min(100, data.used))}%`;
 
     const card = document.querySelector(`[data-panel="${prefix === "five" ? "five-hour" : prefix}"]`);
-    const remaining = data.remaining;
     card.classList.remove("quota-warning", "quota-critical");
-    if (remaining !== null && remaining <= QUOTA_THRESHOLDS.critical) card.classList.add("quota-critical");
-    else if (remaining !== null && remaining <= QUOTA_THRESHOLDS.warning) card.classList.add("quota-warning");
+    if (data.state === "critical") card.classList.add("quota-critical");
+    else if (data.state === "warning") card.classList.add("quota-warning");
 }
 
-const QUOTA_THRESHOLDS = Object.freeze({ warning: 25, critical: 10 });
 const preferenceChannel = "BroadcastChannel" in window
     ? new BroadcastChannel("codex-quota-preferences")
     : null;
@@ -180,6 +195,12 @@ async function loadQuota() {
             ).textContent =
                 "At the current average pace, the quota should last through reset.";
         }
+    } else {
+        document.getElementById("paceStatus").textContent = "Unavailable";
+        document.getElementById("paceRatio").textContent = "--";
+        document.getElementById("paceDescription").textContent =
+            "Weekly quota data is not currently available.";
+        document.getElementById("exhaustion").textContent = "";
     }
 
 
@@ -200,17 +221,17 @@ async function loadQuota() {
     document.getElementById(
         "credits"
     ).textContent =
-        `Credits: ${data.credits_balance ?? "--"}`;
+        formatCredits(data.credits_balance);
 
 
     const captured = new Date(
         data.captured_at * 1000
     );
 
-    document.getElementById(
-        "status"
-    ).textContent =
-        `Last sample ${captured.toLocaleTimeString()}`;
+    const status = document.getElementById("status");
+    status.textContent = data.collector?.last_error
+        ? `Collection issue; showing sample from ${captured.toLocaleTimeString()}`
+        : `Last sample ${captured.toLocaleTimeString()}`;
 }
 
 
@@ -658,7 +679,7 @@ async function openSettings() {
     const invoke = window.__TAURI__?.core?.invoke
         ?? window.__TAURI_INTERNALS__?.invoke;
     if (!invoke) {
-        document.getElementById("status").textContent = "Native Settings bridge is unavailable";
+        window.location.assign("/settings");
         return;
     }
     try {

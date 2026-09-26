@@ -6,7 +6,7 @@ the exact release commit and artifact.
 ## Product and legal
 
 - [ ] Public product name approved after branding review
-- [ ] GPLv3 or AGPLv3 formulation selected and `LICENSE` added
+- [ ] Selected AGPLv3-or-later terms applied through a reviewed `LICENSE`
 - [ ] Contribution terms approved
 - [ ] Historical author-email/private-infrastructure exposure accepted or remediated
 - [ ] Repository audit rerun and clean

@@ -35,8 +35,8 @@ The resolved Cargo graph is predominantly MIT/Apache/BSD/Zlib/Unicode licensed.
 Five resolved CSS/parser packages are MPL-2.0; two `r-efi` versions offer a
 choice including MIT or Apache-2.0. No resolved Rust package declared GPL or
 AGPL as its only license. MPL-2.0 is file-level copyleft and should be reviewed
-again with the final GPLv3/AGPLv3 choice, but this audit found no obvious direct
-license blocker.
+again when the selected AGPLv3-or-later terms are applied, but this audit found
+no obvious direct license blocker.
 
 ## JavaScript and installer tooling
 
@@ -52,8 +52,8 @@ Codex CLI is discovered from the user's machine and is **not bundled**.
 
 ## Compatibility finding
 
-No direct dependency reviewed here presents an identified blocker to either
-GPLv3 or AGPLv3 distribution. Final license counsel/review should confirm:
+No direct dependency reviewed here presents an identified blocker to the
+selected AGPLv3-or-later distribution direction. Final review should confirm:
 
 - PyInstaller exception and required notices for the shipped bootloader;
 - MPL-2.0 notices/source obligations for relevant transitive files;
