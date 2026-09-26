@@ -121,7 +121,7 @@ npm run tauri:dev
 # or: npm run tauri:build
 ```
 
-`prepare` writes ignored `Cargo.toml` and `tauri.conf.json` files from committed templates, substituting the canonical `app.version.__version__`. This is the only desktop-manifest version flow; do not hand-edit generated files. The matching sidecar must exist under `src-tauri/binaries/` before packaging.
+`prepare` writes ignored `Cargo.toml` and `tauri.conf.json` files from committed templates, substituting the canonical `app.version.__version__`. This is the only desktop-manifest version flow; do not hand-edit generated files. `npm run tauri:build` first rebuilds the Windows sidecar with the repository `.venv`, preventing an older executable with stale embedded templates/static assets from entering the installer.
 
 ## Windows validation checklist
 
@@ -141,7 +141,7 @@ Milestone 6.16C was validated on Windows 11 Pro 10.0.26200 x64 with Python 3.14.
 
 1. Install Rust stable, Microsoft C++ Build Tools, Node.js LTS, and the Tauri prerequisites/WebView2 runtime.
 2. Install Python and PyInstaller in a dedicated build environment; run `python desktop/scripts/build-sidecar.py` and confirm `codex-quota-backend-x86_64-pc-windows-msvc.exe` is created.
-3. Run `npm install`, `npm run prepare`, and `npm run tauri:build` from `desktop/`; inspect the unsigned internal installer only, without publishing it.
+3. Run `npm install` and `npm run tauri:build` from `desktop/`; the build script rebuilds the sidecar and prepares the generated manifests before Tauri packages the unsigned internal installer. Inspect it locally without publishing it.
 4. Launch the installed app and confirm the Python sidecar reports an ephemeral loopback port, `/api/health` responds, and the existing dashboard renders with CSS/JS.
 5. Verify discovery through PATH and `%LOCALAPPDATA%\Programs\OpenAI\Codex\bin\codex.exe`; verify `CODEX_BIN` overrides either path.
 6. Using a pre-authenticated user Codex installation, verify quota collection; verify missing or expired authentication produces a useful diagnostic while historical data remains visible.

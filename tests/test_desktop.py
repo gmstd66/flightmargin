@@ -30,6 +30,7 @@ DESKTOP_JS = PROJECT_ROOT / "app" / "static" / "app.js"
 SETTINGS_JS = PROJECT_ROOT / "app" / "static" / "settings.js"
 SETTINGS_TEMPLATE = PROJECT_ROOT / "app" / "templates" / "settings.html"
 DESKTOP_CSS = PROJECT_ROOT / "app" / "static" / "app.css"
+DESKTOP_PACKAGE = PROJECT_ROOT / "desktop" / "package.json"
 
 
 def load_prepare_module():
@@ -166,16 +167,27 @@ def test_history_panel_fills_remaining_dashboard_height():
 
     assert grid_end < history_start
     assert "height:100vh" in styles
-    assert ".container > main { flex:1 1 auto; min-height:0; display:flex; flex-direction:column; gap:6px; }" in styles
-    assert ".history-card { flex:1 1 92px; min-height:92px; height:auto;" in styles
-    assert ".history-card canvas { flex:1 1 0; height:0; min-height:38px; }" in styles
+    assert ".container > main { flex:1 1 auto; min-height:0; display:grid; grid-template-rows:auto minmax(0, 1fr);" in styles
+    assert ".history-card { grid-column:1; }" in styles
+    assert ".history-card { min-height:0; height:100%;" in styles
+    assert ".history-card canvas { flex:1 1 auto; min-height:0; height:100%; }" in styles
     assert "height:clamp(92px,18vh,160px)" not in styles
+    assert "min-height:92px" not in styles
+    assert "min-height:38px" not in styles
+
+
+def test_tauri_release_build_rebuilds_embedded_dashboard_sidecar():
+    package = json.loads(DESKTOP_PACKAGE.read_text(encoding="utf-8"))
+    scripts = package["scripts"]
+
+    assert scripts["build:sidecar"] == "..\\.venv\\Scripts\\python.exe scripts/build-sidecar.py"
+    assert scripts["tauri:build"].startswith("npm run build:sidecar &&")
 
 
 def test_dashboard_assets_are_revisioned_for_desktop_webview_cache():
     template = (PROJECT_ROOT / "app" / "templates" / "index.html").read_text(encoding="utf-8")
-    assert '/static/app.css?v=12' in template
-    assert '/static/app.js?v=12' in template
+    assert '/static/app.css?v=13' in template
+    assert '/static/app.js?v=13' in template
 
 
 def test_compact_history_uses_smaller_y_axis_labels_without_changing_ticks():

@@ -138,6 +138,11 @@ Git history records these completed capabilities:
   `open_settings` command and the Settings window's `close_settings` command.
   The tray menu exposes Settings and About actions through the same singleton,
   adjacent native Settings-window path; About selects the existing About tab.
+- Weekly History now occupies the dashboard's bounded remaining-height grid row;
+  at a measured 600x450 CSS viewport the card is 182 px, its plot is 131 px,
+  and only the normal 7 px bottom padding remains. Owner review had exercised
+  an older PyInstaller sidecar whose embedded CSS fixed History at 92 px, so the
+  Tauri release command now rebuilds the sidecar before packaging.
 
 ## Branch workflow, caveats, and next work
 

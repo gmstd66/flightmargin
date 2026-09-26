@@ -36,8 +36,10 @@ Notable changes to Codex Quota Monitor are documented here. This file summarizes
   singleton Settings window.
 - Reduced compact Weekly History Y-axis labels to 8 px while retaining all five
   percentage ticks and the existing X-axis sizing.
-- Expanded Weekly History and its chart into the dashboard's remaining viewport
-  height instead of leaving unused space below a fixed shallow card.
+- Expanded Weekly History and its chart through a bounded viewport-height chain
+  instead of leaving unused space below a fixed shallow card. Windows Tauri
+  release builds now rebuild the PyInstaller sidecar first so current embedded
+  dashboard assets cannot be replaced by a stale sidecar executable.
 
 - Made `app.version.__version__` the canonical application version used by setuptools metadata, the CLI, API responses, and Codex app-server client identification.
 

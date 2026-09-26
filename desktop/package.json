@@ -5,8 +5,9 @@
   "description": "Tauri shell for the Codex Quota Monitor Python sidecar",
   "scripts": {
     "prepare": "python3 scripts/prepare-tauri-config.py",
+    "build:sidecar": "..\\.venv\\Scripts\\python.exe scripts/build-sidecar.py",
     "tauri:dev": "npm run prepare && tauri dev",
-    "tauri:build": "npm run prepare && tauri build"
+    "tauri:build": "npm run build:sidecar && npm run prepare && tauri build"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.0.0"

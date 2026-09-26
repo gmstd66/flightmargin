@@ -183,16 +183,16 @@ canvas {
 .quota-critical .card-heading strong { color: #ff6b6b; }
 
 /* Compact desktop utility defaults. */
-.container { width: min(1000px, calc(100% - 16px)); height:100vh; padding:7px 0; display:flex; flex-direction:column; overflow:hidden; }
-.container > main { flex:1 1 auto; min-height:0; display:flex; flex-direction:column; gap:6px; }
-header { margin-bottom: 6px; min-height: 36px; }
+.container { width: min(1000px, calc(100% - 16px)); height:100vh; min-height:0; padding:7px 0; display:flex; flex-direction:column; overflow:hidden; }
+.container > main { flex:1 1 auto; min-height:0; display:grid; grid-template-rows:auto minmax(0, 1fr); gap:6px; overflow:hidden; }
+header { flex:0 0 auto; margin-bottom:6px; min-height:36px; }
 h1 { font-size: 19px; line-height: 1.1; }
 header p { margin: 2px 0 0; font-size: 12px; }
 button { padding: 6px 10px; }
-.dashboard-grid { gap:6px; }
+.dashboard-grid { min-height:0; gap:6px; }
 .quota-card, .pace-card { grid-column:span 2; }
 .summary-card { grid-column:span 1; }
-.history-card { grid-column:span 4; }
+.history-card { grid-column:1; }
 .panel { min-height:0; overflow:visible; }
 .quota-card { height:88px; }
 .pace-card, .summary-card { height:110px; }
@@ -207,13 +207,13 @@ button { padding: 6px 10px; }
 .card p { margin:4px 0 0; line-height:1.15; font-size:10px; overflow-wrap:anywhere; }
 .pace { margin-top:4px; font-size:18px; line-height:1; }
 .pace-ratio { margin-top:2px; font-size:12px; line-height:1; }
-.history-card { flex:1 1 92px; min-height:92px; height:auto; margin-top:0; display:flex; flex-direction:column; }
-.history-heading { margin:0 0 2px; }
+.history-card { min-height:0; height:100%; margin-top:0; display:flex; flex-direction:column; }
+.history-heading { flex:0 0 auto; margin:0 0 2px; }
 .history-heading h2 { margin:0; font-size:12px; line-height:1.1; }
-.history-card canvas { flex:1 1 0; height:0; min-height:38px; }
+.history-card canvas { flex:1 1 auto; min-height:0; height:100%; }
 
 @media (max-width: 520px) {
     .dashboard-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
-    .quota-card, .pace-card, .history-card { grid-column:span 2; }
+    .quota-card, .pace-card { grid-column:span 2; }
     .summary-card { grid-column:span 1; }
 }
