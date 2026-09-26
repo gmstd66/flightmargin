@@ -36,5 +36,12 @@ Thumbs.db
 .vscode/
 .idea/
 
+# Local desktop/build artifacts
+.tmp-*
+node_modules/
+target/
+desktop/src-tauri/gen/
+desktop/src-tauri/permissions/
+
 # Pytest
 .pytest_cache/

@@ -31,6 +31,9 @@ SETTINGS_JS = PROJECT_ROOT / "app" / "static" / "settings.js"
 SETTINGS_TEMPLATE = PROJECT_ROOT / "app" / "templates" / "settings.html"
 DESKTOP_CSS = PROJECT_ROOT / "app" / "static" / "app.css"
 DESKTOP_PACKAGE = PROJECT_ROOT / "desktop" / "package.json"
+INSTALLER_HOOKS = PROJECT_ROOT / "desktop" / "src-tauri" / "windows" / "installer-hooks.nsh"
+WINDOWS_WORKFLOW = PROJECT_ROOT / ".github" / "workflows" / "windows-beta-build.yml"
+VERSION_CHECK = PROJECT_ROOT / "scripts" / "verify-desktop-version.py"
 
 
 def load_prepare_module():
@@ -182,6 +185,47 @@ def test_tauri_release_build_rebuilds_embedded_dashboard_sidecar():
 
     assert scripts["build:sidecar"] == "..\\.venv\\Scripts\\python.exe scripts/build-sidecar.py"
     assert scripts["tauri:build"].startswith("npm run build:sidecar &&")
+
+
+def test_windows_beta_workflow_is_manual_locked_and_nonpublishing():
+    workflow = WINDOWS_WORKFLOW.read_text(encoding="utf-8")
+
+    assert "workflow_dispatch:" in workflow
+    assert "permissions:\n  contents: read" in workflow
+    assert "npm ci" in workflow
+    assert "cargo check --locked" in workflow
+    assert "cargo test --locked" in workflow
+    assert "npm run tauri:build" in workflow
+    assert "Get-FileHash" in workflow
+    assert "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7" in workflow
+    assert "actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7" in workflow
+    assert "actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7" in workflow
+    assert "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4" in workflow
+    assert "release-artifacts/" in workflow
+    assert "release:" not in workflow
+    assert "SIGNPATH" not in workflow
+
+
+def test_desktop_version_check_uses_canonical_version():
+    source = VERSION_CHECK.read_text(encoding="utf-8")
+
+    assert "from app.version import __version__" in source
+    assert 'TAURI_ROOT / "Cargo.toml"' in source
+    assert 'TAURI_ROOT / "tauri.conf.json"' in source
+    assert "version != __version__" in source
+
+
+def test_nsis_upgrade_hook_prompts_for_clean_tray_quit_without_killing():
+    config = json.loads(TAURI_CONFIG.read_text(encoding="utf-8"))
+    hooks = INSTALLER_HOOKS.read_text(encoding="utf-8")
+
+    assert config["bundle"]["windows"]["nsis"]["installerHooks"] == "./windows/installer-hooks.nsh"
+    assert "NSIS_HOOK_PREINSTALL" in hooks
+    assert 'FindProcessCurrentUser "codex-quota-backend.exe"' in hooks
+    assert "Fully Quit it from the system tray" in hooks
+    assert "MB_RETRYCANCEL" in hooks
+    assert "KillProcess" not in hooks
+    assert "taskkill" not in hooks.lower()
 
 
 def test_dashboard_assets_are_revisioned_for_desktop_webview_cache():

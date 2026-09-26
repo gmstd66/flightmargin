@@ -3,6 +3,9 @@
 Codex Quota Monitor desktop builds are unsigned internal/beta builds. They are
 not public-release artifacts and do not provide auto-update.
 
+Public-facing preparation and release gates are documented in
+`windows-public-beta.md` and `public-beta-checklist.md`.
+
 ## User data and logs
 
 - Application data and SQLite history: `%LOCALAPPDATA%\Codex Quota Monitor\quota.db`

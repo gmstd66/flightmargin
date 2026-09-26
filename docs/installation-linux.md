@@ -86,15 +86,7 @@ git clone https://github.com/<owner>/<repository>.git
 cd codex-quota-monitor
 ```
 
-The repository is currently private.
-
-Until the project is made public, GitHub authentication is required to clone it.
-
-Possible authenticated Git workflows include:
-
-- GitHub CLI authentication
-- HTTPS credentials
-- SSH authentication
+Replace the placeholder with the public repository URL after launch approval.
 
 ---
 

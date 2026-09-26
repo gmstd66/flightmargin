@@ -115,13 +115,13 @@ Generate Tauri manifests before Tauri development or builds:
 
 ```bash
 cd desktop
-npm install
+npm ci
 npm run prepare
 npm run tauri:dev
 # or: npm run tauri:build
 ```
 
-`prepare` writes ignored `Cargo.toml` and `tauri.conf.json` files from committed templates, substituting the canonical `app.version.__version__`. This is the only desktop-manifest version flow; do not hand-edit generated files. `npm run tauri:build` first rebuilds the Windows sidecar with the repository `.venv`, preventing an older executable with stale embedded templates/static assets from entering the installer.
+`prepare` writes ignored `Cargo.toml` and `tauri.conf.json` files from committed templates, substituting the canonical `app.version.__version__`. This is the only desktop-manifest version flow; do not hand-edit generated files. `npm run tauri:build` first rebuilds the Windows sidecar with the repository `.venv`, preventing an older executable with stale embedded templates/static assets from entering the installer. Node and Rust release inputs are locked by committed lockfiles; the Windows candidate workflow installs the resolved Python build set from `requirements-windows-build.txt`.
 
 ## Windows validation checklist
 
@@ -141,7 +141,7 @@ Milestone 6.16C was validated on Windows 11 Pro 10.0.26200 x64 with Python 3.14.
 
 1. Install Rust stable, Microsoft C++ Build Tools, Node.js LTS, and the Tauri prerequisites/WebView2 runtime.
 2. Install Python and PyInstaller in a dedicated build environment; run `python desktop/scripts/build-sidecar.py` and confirm `codex-quota-backend-x86_64-pc-windows-msvc.exe` is created.
-3. Run `npm install` and `npm run tauri:build` from `desktop/`; the build script rebuilds the sidecar and prepares the generated manifests before Tauri packages the unsigned internal installer. Inspect it locally without publishing it.
+3. Run `npm ci` and `npm run tauri:build` from `desktop/`; the build script rebuilds the sidecar and prepares the generated manifests before Tauri packages the unsigned internal installer. Inspect it locally without publishing it.
 4. Launch the installed app and confirm the Python sidecar reports an ephemeral loopback port, `/api/health` responds, and the existing dashboard renders with CSS/JS.
 5. Verify discovery through PATH and `%LOCALAPPDATA%\Programs\OpenAI\Codex\bin\codex.exe`; verify `CODEX_BIN` overrides either path.
 6. Using a pre-authenticated user Codex installation, verify quota collection; verify missing or expired authentication produces a useful diagnostic while historical data remains visible.
@@ -154,6 +154,7 @@ Milestone 6.16C was validated on Windows 11 Pro 10.0.26200 x64 with Python 3.14.
 
 - Tray lifecycle, single-instance handling, opt-in start-at-login, and bounded local desktop logging are implemented for the Windows beta. An unexpected sidecar exit presents a controlled diagnostic; reopening the application starts a fresh sidecar.
 - The primary internal beta installer is current-user NSIS. It preserves `%LOCALAPPDATA%\Codex Quota Monitor` on ordinary uninstall and upgrade. MSI output is no longer a primary beta path.
+- The NSIS preinstall hook checks for the packaged backend. If it is still active, the installer asks the user to fully Quit from the tray and Retry; it does not kill the process or proceed to a raw locked-file error.
 - Shell logs are `%LOCALAPPDATA%\Codex Quota Monitor\logs\desktop.log`, rotate at 1 MB, and keep one prior file. They must never contain credentials, authentication-file content, or quota payloads.
 - Auto-update, native notifications, signed/public distribution, and broad Windows compatibility validation remain pending.
 - Linux desktop shell compilation remains unverified.

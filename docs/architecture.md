@@ -4,7 +4,7 @@
 
 Codex Quota Monitor is a local-first browser dashboard for monitoring OpenAI Codex usage limits.
 
-The current implementation is the original Linux/server prototype running on the <private-host> host.
+The implementation began as a Linux/server prototype and now also includes a Windows-first desktop shell.
 
 ## Data source
 

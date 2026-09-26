@@ -17,6 +17,9 @@ Notable changes to Codex Quota Monitor are documented here. This file summarizes
 - Compact configurable Windows dashboard with persisted panel visibility and quota-state colors.
 - Native Settings About tab with canonical version, local-data privacy notes,
   Codex CLI detection, attribution, and sanitized copyable diagnostics.
+- Windows public-beta preparation: manual GitHub-hosted candidate workflow,
+  checksummed unsigned NSIS artifacts, resolved dependency inputs, public user
+  and contributor documentation, signing/versioning plans, and release gates.
 
 ### Changed
 
@@ -40,6 +43,10 @@ Notable changes to Codex Quota Monitor are documented here. This file summarizes
   instead of leaving unused space below a fixed shallow card. Windows Tauri
   release builds now rebuild the PyInstaller sidecar first so current embedded
   dashboard assets cannot be replaced by a stale sidecar executable.
+- Hardened NSIS upgrades by detecting a still-running packaged backend and
+  asking the user to Quit from the tray and Retry before files are copied.
+- Removed machine-specific private deployment details from the current public
+  documentation while recording remaining Git-history privacy decisions.
 
 - Made `app.version.__version__` the canonical application version used by setuptools metadata, the CLI, API responses, and Codex app-server client identification.
 

@@ -6,7 +6,7 @@ This is the primary continuity and handoff document for future Codex sessions. R
 
 Codex Quota Monitor is a local-first browser dashboard and CLI for monitoring OpenAI Codex quota usage through the locally authenticated Codex CLI. It reads `account/rateLimits/read` from `codex app-server --stdio`, persists local history, and serves a FastAPI dashboard.
 
-The current package version is `0.2.0`, canonically defined by `app/version.py`. Setuptools reads that value dynamically for project metadata, and the CLI, API, and Codex app-server client use the same source. The project has moved beyond the original <private-host> prototype into a Linux-installable Python package with a generated systemd service. It is not an officially published package or release: do not tag, publish, or create a GitHub release without explicit approval.
+The current package version is `0.2.0`, canonically defined by `app/version.py`. Setuptools reads that value dynamically for project metadata, and the CLI, API, and Codex app-server client use the same source. The project has moved beyond its original private Linux prototype into a Linux-installable Python package and a Windows desktop beta. It is not an officially published package or release: do not tag, publish, or create a GitHub release without explicit approval.
 
 ## Architecture and modules
 
@@ -56,7 +56,7 @@ SQLite creates `quota_samples`, containing capture time; 5-hour and weekly usage
 
 Linux support currently requires systemd, Python 3 with `venv`, an installed and authenticated Codex CLI, Git, and `sudo` for service installation. `scripts/install-linux.sh` validates the environment, can bootstrap a venv, installs the package, generates and validates a service unit, and on `--apply` enables, starts, and health-checks it. It defaults to dry run and localhost binding. `scripts/uninstall-linux.sh` defaults to dry run and preserves the repository, venv, data, Codex CLI, and Codex authentication unless explicit cleanup flags are used.
 
-Verified production deployment facts (read-only unless explicitly approved):
+Protected production deployment facts (read-only unless explicitly approved):
 
 - Checkout: `/opt/codex-quota`
 - Service: `codex-quota.service`
@@ -65,9 +65,9 @@ Verified production deployment facts (read-only unless explicitly approved):
 - Runtime command: installed `codex-quota` CLI
 - Service hardening: `NoNewPrivileges=true` and `PrivateTmp=true`
 
-The production <private-host> deployment binds to its configured LAN address and is protected by the existing firewall rules described in `docs/private-deployment-record.md`. It has no application-level authentication; do not expose it to the public internet. Production changes, including the service, database, port, firewall, credentials, authentication state, or checkout, require explicit human approval.
+The private production deployment binds to a private network address and is protected by host firewall rules. Machine-specific details are intentionally excluded from public documentation; see `docs/deployment-private.md` for the boundary. It has no application-level authentication and must not be exposed to the public internet. Production changes, including the service, database, port, firewall, credentials, authentication state, or checkout, require explicit human approval.
 
-For development, prefer `<private-development-path>/`, use temporary ports in `18000-18999`, and never use `8093` for a test instance. Temporary systemd services must begin `codex-quota-test-`; do not install them from `/tmp`, because `PrivateTmp=true` prevents the service from seeing host `/tmp` executables.
+For Linux development, prefer a separate checkout such as `/home/<user>/codex-quota-dev/`, use temporary ports in `18000-18999`, and never use `8093` for a test instance. Temporary systemd services must begin `codex-quota-test-`; do not install them from `/tmp`, because `PrivateTmp=true` prevents the service from seeing host `/tmp` executables.
 
 ## Codex CLI integration
 
@@ -79,7 +79,7 @@ The application does not store ChatGPT passwords or use a separately configured 
 
 Git history records these completed capabilities:
 
-- Initial known-working <private-host> baseline, documented and tagged `v0.1-baseline` before portability work.
+- Initial known-working private Linux baseline, documented and tagged `v0.1-baseline` before portability work.
 - Core architecture extraction/refactoring plus baseline quota and metric tests.
 - Environment doctor and user-facing CLI.
 - Centralized configuration and portable systemd-unit generator.
@@ -143,6 +143,17 @@ Git history records these completed capabilities:
   and only the normal 7 px bottom padding remains. Owner review had exercised
   an older PyInstaller sidecar whose embedded CSS fixed History at 92 px, so the
   Tauri release command now rebuilds the sidecar before packaging.
+- Milestone 6.19 completes the owner-directed Windows desktop UI/UX cycle: the
+  compact fixed dashboard, visibility controls, native Settings/About,
+  windowless subprocess chain, tray indicators, lifecycle, and remaining-height
+  History layout are implemented and covered by native/test evidence.
+- Milestone 6.20A prepares, but does not publish, the first Windows public beta.
+  It adds a manual GitHub-hosted Windows candidate workflow, locked Node/Rust
+  inputs and resolved Windows Python build requirements, unsigned NSIS artifact
+  checksums, public-facing documentation, repository/privacy and third-party
+  license audits, branding/license/signing gates, and a human-gated release
+  checklist. `0.3.0-beta.1` remains a recommendation rather than a version
+  change.
 
 ## Branch workflow, caveats, and next work
 
@@ -154,11 +165,11 @@ Codex Quota Monitor is intended to remain free to use and become open source. Th
 
 The exact open-source license is intentionally unresolved. GPL, AGPL, or a related option are the current likely direction, but no license file or final license choice has been made. Before public distribution, pursue a free open-source Windows signing path such as SignPath Foundation if the project qualifies. Paid code-signing should be considered only if free signing is unavailable and the project justifies the expense.
 
-The remaining product/distribution decisions are: the exact license; the first public release version; final GUI and product review; whether and when to enable Tauri auto-update; and the final code-signing implementation once repository and public-license status are ready. Tauri auto-update remains optional and deferred until after GUI/product review. These decisions do not authorize making the repository public, creating a release, publishing installers, or changing runtime behavior.
+The remaining product/distribution decisions are: the public product name; the exact license; whether historical author-email/private-infrastructure exposure is acceptable; the first public release version; repository visibility; SignPath eligibility/signing implementation; and final release approval. Tauri auto-update is deferred for the first public beta and may be evaluated only after the manual release process is stable. These decisions do not authorize making the repository public, creating a release, publishing installers, or changing runtime behavior.
 
 Known caveats:
 
-- Linux/systemd is the currently supported deployment model. The Windows-first desktop application is internal/beta ready but not a supported public distribution; signing, auto-update, public release packaging, and broad Windows compatibility validation remain pending. Docker feasibility was investigated in milestone 6.15 and self-contained Docker remains deferred; see `docs/docker-feasibility.md`.
+- Linux/systemd remains a separate stable deployment model. Windows 11 x64 is the first planned public desktop target, but no public distribution exists yet; product-name approval, licensing, repository publication, signing, and final release validation remain pending. Docker remains deferred, and an iPhone companion remains future product work.
 - Codex CLI availability, its authenticated user context, and the app-server rate-limit response are external dependencies.
 - The dashboard has no built-in authentication and should remain local, trusted-LAN, or private-VPN only.
 - The service `WorkingDirectory` is the project root even though its executable is packaged; repository-based installation remains the documented workflow.

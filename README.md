@@ -1,299 +1,148 @@
 # Codex Quota Monitor
 
-Codex Quota Monitor is a local-first browser dashboard for monitoring OpenAI Codex usage limits.
+Codex Quota Monitor is a lightweight, local-first monitor for Codex usage
+limits, reset windows, purchased credits, and recent usage history. The first
+planned public desktop target is Windows.
 
-It reads structured quota information from the locally authenticated Codex CLI and stores historical usage locally in SQLite.
+> **Public beta status:** release preparation is in progress. The repository is
+> still private, the current Windows artifacts are unsigned internal builds,
+> and no public installer has been released.
+
+Unofficial community tool. Not affiliated with or endorsed by OpenAI.
+
+## Screenshot
+
+The public screenshot will be added after the product name and branding review
+are approved. Screenshots must not contain account identity, private paths, or
+other personal information.
 
 ## Features
 
-- 5-hour Codex quota monitoring
-- Weekly quota monitoring
-- Exact reset times
-- Sustainable usage pace calculation
-- Projected quota exhaustion
-- Full-reset credit display
-- 60-second backend sampling
-- Manual refresh
-- SQLite history
-- Rolling 7-day graph
-- Daily chart divisions
-- 4-hour chart gridlines
-- Local browser dashboard
-- Environment diagnostics
-- Command-line status view
-- Portable systemd service generation
-- Linux installer
-- Fresh-machine Python virtual environment bootstrap
+- 5-hour and weekly quota gauges with reset timing
+- Weekly pace and projected exhaustion information
+- Purchased-credit and full-reset information
+- Local SQLite history with a compact seven-day graph
+- Windows tray indicators for weekly, 5-hour, and purchased-credit values
+- Optional start at login, close to tray, and single-instance behavior
+- Local Settings, About information, and sanitized copyable diagnostics
+- Linux/headless CLI, FastAPI dashboard, and systemd installation tools
 
 ## How it works
 
-Codex Quota Monitor uses the locally authenticated Codex CLI:
+The application discovers the user's existing Codex CLI and asks its local
+`app-server` for structured rate-limit information:
 
 ```text
-codex app-server --stdio
+Codex Quota Monitor -> codex app-server --stdio -> account/rateLimits/read
+                    -> local SQLite history -> dashboard and tray
 ```
 
-It requests:
+Codex is not bundled. Users must install and authenticate Codex independently.
+The desktop sidecar listens only on an ephemeral `127.0.0.1` port.
 
-```text
-account/rateLimits/read
-```
+## Windows beta requirements
 
-Quota windows are identified by duration:
+Only the following public-beta target has been validated:
 
-```text
-300 minutes   = 5-hour window
-10080 minutes = weekly window
-```
+- Windows x64
+- Windows 11
+- Microsoft Edge WebView2 Runtime
+- an existing Codex CLI installation
+- an existing authenticated Codex/ChatGPT session available to that CLI
 
-The application does not require a separately managed OpenAI API key.
+Windows 10 has not yet been validated and is not currently claimed as
+supported. See [Windows public beta](docs/windows-public-beta.md) for
+installation, usage, update, uninstall, troubleshooting, and limitations.
 
-## Requirements
+## Windows installation
 
-Current Linux support requires:
+Once a public beta is approved, download the NSIS `-setup.exe` and its SHA-256
+file from the matching GitHub prerelease. Verify the checksum, fully Quit any
+running Codex Quota Monitor instance from the tray, and run the installer.
 
-- Linux with systemd
-- Python 3
-- Python `venv` support
-- OpenAI Codex CLI installed
-- Codex CLI already authenticated
-- `sudo` access for systemd installation
-
-The installer creates the application virtual environment and installs Python dependencies when needed.
-
-## Quick start
-
-Clone the repository:
-
-```bash
-git clone https://github.com/<owner>/<repository>.git
-cd codex-quota-monitor
-```
-
-Because the repository is currently private, GitHub authentication is required.
-
-Confirm Codex works:
-
-```bash
-codex --version
-codex
-```
-
-If necessary, complete the normal Codex authentication flow before installing Codex Quota Monitor.
-
-Run an installation dry run:
-
-```bash
-scripts/install-linux.sh --dry-run
-```
-
-Install a local-only dashboard:
-
-```bash
-scripts/install-linux.sh --apply
-```
-
-The default dashboard address is:
-
-```text
-http://127.0.0.1:8093
-```
-
-For LAN access, bind to an appropriate address on the machine:
-
-```bash
-scripts/install-linux.sh \
-  --host 192.168.1.50 \
-  --port 8093 \
-  --apply
-```
-
-Do not expose the dashboard directly to the public internet. It currently has no application-level authentication.
-
-## Diagnostics
-
-Run:
-
-```bash
-venv/bin/python -m app.cli doctor
-```
-
-or:
-
-```bash
-venv/bin/python -m app.doctor
-```
-
-A healthy installation should finish with:
-
-```text
-Ready.
-```
-
-## Current quota
-
-```bash
-venv/bin/python -m app.cli status
-```
-
-## Service management
-
-Check status:
-
-```bash
-systemctl status codex-quota
-```
-
-Restart:
-
-```bash
-sudo systemctl restart codex-quota
-```
-
-Follow logs:
-
-```bash
-journalctl -u codex-quota -f
-```
-
-## Upgrade
-
-From the repository:
-
-```bash
-git pull
-scripts/install-linux.sh --apply
-```
-
-The installer updates Python dependencies, creates a timestamped backup of the existing systemd unit, regenerates the service definition, restarts the service, and verifies the health endpoint.
-
-## Uninstall
-
-Run:
-
-```bash
-scripts/uninstall-linux.sh
-```
-
-The uninstall script defaults to a dry run.
-
-To remove the systemd service:
-
-```bash
-scripts/uninstall-linux.sh --apply
-```
-
-Runtime data and the repository are preserved by default.
-
-See:
-
-```text
-docs/installation-linux.md
-```
-
-for the complete installation, upgrade, uninstall, and troubleshooting guide.
+The first beta will use manual downloads. Tauri auto-update is intentionally
+deferred. Until code signing is available, Windows may show an unidentified
+publisher or SmartScreen warning; do not install an artifact from any location
+other than the project's eventual GitHub Releases page.
 
 ## Data and privacy
 
-Quota history is stored locally in:
+On Windows, history, preferences, and logs stay under:
 
 ```text
-data/quota.db
+%LOCALAPPDATA%\Codex Quota Monitor
 ```
 
-The database is excluded from Git.
+Codex Quota Monitor reuses the authentication already managed by Codex. It does
+not manage or store OpenAI passwords, tokens, or `auth.json` content. It has no
+remote telemetry. See [Privacy](docs/privacy.md) for the complete data summary.
 
-Codex Quota Monitor does not store ChatGPT passwords or require a separately configured API credential. It relies on the authentication already used by the Codex CLI.
+## Linux/headless edition
 
-## Security
-
-The dashboard currently has no built-in authentication.
-
-Recommended deployment:
-
-- localhost, or
-- a trusted private LAN, or
-- a private VPN
-
-Do not directly port-forward the dashboard to the public internet.
+The Linux/systemd edition remains available separately from the Windows beta.
+It has no application-level authentication and must remain on localhost, a
+trusted private network, or a private VPN. See
+[Linux installation](docs/installation-linux.md) and
+[Architecture](docs/architecture.md).
 
 ## Development
 
-Run tests:
+The canonical version is defined in `app/version.py`. The current internal
+development line remains `0.2.0`; `0.3.0-beta.1` is only a proposed first public
+version until the owner approves a version change.
 
-```bash
-source venv/bin/activate
-pytest -v
+Run the Python suite:
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest -v
 ```
 
-### Local release-artifact check
+Prepare and check the Windows shell:
 
-The canonical application version is defined in:
-
-```text
-app/version.py
+```powershell
+Set-Location desktop
+npm ci
+npm run prepare
+cargo check --locked --manifest-path src-tauri\Cargo.toml
+cargo test --locked --manifest-path src-tauri\Cargo.toml
 ```
 
-Build one local wheel without publishing it:
+Build an unsigned local Windows installer:
 
-```bash
-PYTHON=venv/bin/python scripts/build-release.sh
+```powershell
+Set-Location desktop
+npm run tauri:build
 ```
 
-Verify its metadata, console entry point, and packaged dashboard resources:
+The build command rebuilds the PyInstaller sidecar before Tauri packages NSIS,
+so current dashboard assets are always embedded. It does not publish anything.
+See [Desktop implementation](docs/desktop-implementation.md) for prerequisites
+and architecture details.
 
-```bash
-venv/bin/python scripts/verify-release.py dist
-```
+## Contributing and security
 
-Run the complete release check (tests, wheel build, artifact verification, and an isolated installed-wheel runtime check):
+- [Contributing](CONTRIBUTING.md)
+- [Security policy](SECURITY.md)
+- [Public beta checklist](docs/public-beta-checklist.md)
+- [Third-party license inventory](docs/third-party-licenses.md)
 
-```bash
-PYTHON=venv/bin/python scripts/check-release.sh
-```
+Outside contributions must wait until the repository is public and the project
+license is selected. Security reports should use the private process described
+in `SECURITY.md`, not a public issue containing exploit details.
 
-The complete check uses a disposable virtual environment and isolated application-data directory, runs the real Codex `doctor` and `status` checks, and starts the installed server on port `18097` by default. Override the development port with `CODEX_QUOTA_RELEASE_PORT` in the `18000-18999` range. The resulting local wheel is retained in `dist/`; nothing is tagged or published.
+## Distribution model
 
-Current architecture documentation:
+The project is intended to remain free and open source, with no paid feature
+tier. Voluntary sponsorship through GitHub Sponsors is planned after a real
+sponsorship destination exists. Public Windows installers are expected to use
+GitHub Releases, with free OSS code signing pursued through SignPath Foundation
+if the project qualifies.
 
-```text
-docs/architecture.md
-```
-
-<private-host> deployment documentation:
-
-```text
-docs/private-deployment-record.md
-```
-
-## Roadmap
-
-Planned work includes:
-
-- Docker deployment
-- desktop application
-- tray/menu-bar quota display
-- Windows support
-- macOS support
-
-Docker deployment feasibility, including Codex authentication and sandbox constraints, is documented in:
-
-```text
-docs/docker-feasibility.md
-```
-
-Native desktop feasibility, including the proposed Windows-first architecture, is documented in:
-
-```text
-docs/desktop-feasibility.md
-```
-
-The internal desktop prototype structure, local sidecar build instructions, and required Windows validation checklist are documented in:
-
-```text
-docs/desktop-implementation.md
-```
+No `FUNDING.yml`, Sponsor link, or auto-updater is enabled yet.
 
 ## License
 
-A license will be selected before public release.
+The license is not yet selected. GPLv3 and AGPLv3 are under review; this
+repository must not be made public or accept external contributions until the
+owner selects and adds the license. See
+[License decision](docs/license-decision.md).

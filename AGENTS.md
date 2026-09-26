@@ -64,7 +64,7 @@ Reading these resources for diagnostics is allowed when non-destructive.
 
 Prefer development work under:
 
-`<private-development-path>/`
+`/home/<user>/codex-quota-dev/`
 
 Temporary test ports should normally use:
 
