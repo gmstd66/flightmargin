@@ -65,7 +65,7 @@ def status_command():
             )
         )
 
-        print("Codex Quota Monitor")
+        print("FlightMargin")
         print()
 
         print(
@@ -164,7 +164,7 @@ def build_parser():
     config = load_config()
 
     parser = argparse.ArgumentParser(
-        prog="codex-quota",
+        prog="flightmargin",
         description=(
             "Local-first Codex usage "
             "and quota monitor."
@@ -175,7 +175,7 @@ def build_parser():
         "--version",
         action="version",
         version=(
-            "codex-quota-monitor "
+            "flightmargin "
             + __version__
         ),
     )
@@ -191,7 +191,7 @@ def build_parser():
         "doctor",
         help=(
             "Check whether this machine "
-            "can run Codex Quota Monitor."
+            "can run FlightMargin."
         ),
     )
 
@@ -297,7 +297,7 @@ def build_parser():
         "--cli-executable",
         default=None,
         help=(
-            "Installed codex-quota "
+            "Installed FlightMargin CLI "
             "executable used by systemd."
         ),
     )

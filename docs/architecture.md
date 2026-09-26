@@ -1,8 +1,10 @@
-# Codex Quota Monitor — Current Architecture
+# FlightMargin — Current Architecture
 
 ## Purpose
 
-Codex Quota Monitor is a local-first browser dashboard for monitoring OpenAI Codex usage limits.
+FlightMargin is a local-first browser dashboard and Windows desktop shell for
+monitoring OpenAI Codex usage limits. The architecture predates and is retained
+through the public identity migration.
 
 The implementation began as a Linux/server prototype and now also includes a Windows-first desktop shell.
 

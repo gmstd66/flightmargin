@@ -1,8 +1,9 @@
 [package]
-name = "codex-quota-monitor-desktop"
+name = "flightmargin-desktop"
 version = "__APP_VERSION__"
-description = "Codex Quota Monitor desktop shell"
-authors = ["Codex Quota Monitor contributors"]
+description = "FlightMargin desktop shell"
+authors = ["FlightMargin contributors"]
+license = "AGPL-3.0-or-later"
 edition = "2021"
 
 [build-dependencies]

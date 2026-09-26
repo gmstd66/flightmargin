@@ -14,7 +14,7 @@ PROJECT_DIR="$(
 
 PYTHON_EXECUTABLE="${PYTHON:-python3}"
 PORT="${CODEX_QUOTA_RELEASE_PORT:-18097}"
-WORK_DIR="$(mktemp -d "${TMPDIR:-/tmp}/codex-quota-release.XXXXXX")"
+WORK_DIR="$(mktemp -d "${TMPDIR:-/tmp}/flightmargin-release.XXXXXX")"
 VENV_DIR="${WORK_DIR}/venv"
 DATA_DIR="${WORK_DIR}/data"
 SERVER_LOG="${WORK_DIR}/server.log"
@@ -67,10 +67,10 @@ expected_version="$(
 
 actual_version="$(
     cd "${WORK_DIR}"
-    "${VENV_DIR}/bin/codex-quota" --version
+    "${VENV_DIR}/bin/flightmargin" --version
 )"
 
-[[ "${actual_version}" == "codex-quota-monitor ${expected_version}" ]] \
+[[ "${actual_version}" == "flightmargin ${expected_version}" ]] \
     || { echo "ERROR: unexpected CLI version: ${actual_version}" >&2; exit 1; }
 
 export CODEX_QUOTA_DATA_DIR="${DATA_DIR}"
@@ -80,16 +80,16 @@ export CODEX_QUOTA_PORT="${PORT}"
 
 (
     cd "${WORK_DIR}"
-    "${VENV_DIR}/bin/codex-quota" doctor
+    "${VENV_DIR}/bin/flightmargin" doctor
 )
 (
     cd "${WORK_DIR}"
-    "${VENV_DIR}/bin/codex-quota" status
+    "${VENV_DIR}/bin/flightmargin" status
 )
 
 (
     cd "${WORK_DIR}"
-    "${VENV_DIR}/bin/codex-quota" serve >"${SERVER_LOG}" 2>&1
+    "${VENV_DIR}/bin/flightmargin" serve >"${SERVER_LOG}" 2>&1
 ) &
 SERVER_PID="$!"
 

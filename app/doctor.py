@@ -30,7 +30,7 @@ def main():
     config = load_config()
 
     print(
-        "Codex Quota Monitor — Doctor"
+        "FlightMargin — Doctor"
     )
     print()
 

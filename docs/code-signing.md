@@ -2,7 +2,7 @@
 
 Target: SignPath Foundation open-source code signing, if the project qualifies.
 No application, account, credential, or signing job is created by milestone
-6.20A.
+6.20D.1; signing remains the following protected phase.
 
 ## Eligibility dependencies
 
@@ -21,10 +21,10 @@ among other things:
 - documented committer/reviewer/approver roles and manual signing approval;
 - a published code-signing policy and privacy statement.
 
-The repository is private, the selected AGPLv3-or-later license has not yet been
-applied through a `LICENSE` file, the project has no public release, and it has
-not been accepted by SignPath. Those are hard prerequisites, not CI details
-that should be mocked.
+The repository is private and has no public release or SignPath acceptance.
+The AGPLv3-or-later license is now applied through `LICENSE`; public project
+history and the other eligibility conditions remain prerequisites, not CI
+details that should be mocked.
 
 ## Intended integration
 
@@ -60,7 +60,7 @@ authentication token or approved GitHub integration. Store credentials in a
 protected GitHub release environment with required human reviewers and minimum
 workflow permissions.
 
-Before enabling signing, publish a **Code signing policy** containing the text
+Before enabling signing, publish a **FlightMargin code signing policy** containing the text
 and roles required by SignPath, link the privacy policy, protect release
 branches/tags, require review of workflow/build changes, and verify artifact
 metadata consistently uses the approved product name and version.

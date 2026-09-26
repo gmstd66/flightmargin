@@ -9,7 +9,7 @@ from pathlib import Path, PurePosixPath, PureWindowsPath
 from app.core.environment import get_codex_version
 
 
-APP_NAME = "Codex Quota Monitor"
+APP_NAME = "FlightMargin"
 APP_STATUS = "Beta"
 COPYRIGHT_YEAR = 2026
 COPYRIGHT_OWNER = "Guy Champin"

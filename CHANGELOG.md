@@ -1,10 +1,20 @@
 # Changelog
 
-Notable changes to Codex Quota Monitor are documented here. This file summarizes product-facing history; Git retains the detailed engineering history.
+Notable changes to FlightMargin are documented here. This file summarizes product-facing history; Git retains the detailed engineering history.
 
 ## Unreleased
 
 ### Added
+
+- Adopted the FlightMargin public identity across the Windows application,
+  NSIS metadata, browser dashboard, Linux CLI/service defaults, packaging,
+  release artifacts, About content, and current documentation.
+- Added copy-only, idempotent migration of legacy Windows/Linux history and
+  preferences into FlightMargin data directories while preserving legacy data.
+- Added the standard GNU Affero General Public License v3 text and
+  `AGPL-3.0-or-later` package metadata.
+- Added the canonical `flightmargin` CLI while retaining `codex-quota` as a
+  beta compatibility alias.
 
 - Project continuity and milestone-handoff documentation.
 - Reproducible local wheel build, artifact verification, and isolated installed-wheel release check scripts.
@@ -27,6 +37,11 @@ Notable changes to Codex Quota Monitor are documented here. This file summarizes
   lifecycle, resource baseline, and production-isolation verification.
 
 ### Changed
+
+- Advanced the single canonical version to `0.3.0-beta.1` and synchronized
+  generated Tauri/Cargo metadata and release validation.
+- Froze the Beta 1 feature set; only bug, security, release-blocker, and
+  migration fixes remain in scope before publication review.
 
 - Completed the measurement-driven lean runtime review: reduced the Windows
   installer by 9.2%, reduced app-owned steady RSS by 21.3% for the measured npm
@@ -64,8 +79,8 @@ Notable changes to Codex Quota Monitor are documented here. This file summarizes
   aligned unavailable and zero-credit display behavior, made narrow browser
   layouts reflow without clipping, and kept Windows-only startup/tray controls
   out of the Linux browser surface.
-- Recorded the owner selection of AGPLv3-or-later; applying the license file is
-  intentionally deferred to the public identity milestone.
+- Recorded the owner selection of AGPLv3-or-later; the license was subsequently
+  applied in the FlightMargin public identity milestone.
 - Fixed Windows-formatted About paths to retain backslash separators when
   platform diagnostics are generated on a non-Windows host.
 

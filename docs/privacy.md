@@ -1,49 +1,51 @@
 # Privacy and local data
 
-Codex Quota Monitor is local-first and currently implements no remote
-telemetry.
+FlightMargin is local-first and implements no telemetry or analytics.
 
-## Data stored on Windows
+## Windows
 
-The desktop application stores the following beneath
-`%LOCALAPPDATA%\Codex Quota Monitor`:
+The desktop application stores these files beneath
+`%LOCALAPPDATA%\FlightMargin`:
 
 - `quota.db`: locally collected quota history;
-- `desktop-preferences.json`: panel visibility and desktop preferences;
-- `logs\`: bounded diagnostic logs.
+- `desktop-preferences.json`: panel and tray preferences;
+- `logs\`: bounded local diagnostics.
 
-Logs rotate locally and must not contain credentials, authentication-file
-contents, account identity, or raw quota payloads. **Copy diagnostics** exposes
-only allowlisted application, Codex CLI, operating-system, architecture, and
-friendly data/log-path information.
+At the first renamed launch, FlightMargin copies `quota.db` and
+`desktop-preferences.json` from `%LOCALAPPDATA%\Codex Quota Monitor` only when
+the new directory does not exist. It does not move or delete the legacy
+directory and does not migrate old logs or caches. Repeated launches do not
+overwrite new data.
 
-## Data stored on Linux
+The Tauri shell and packaged FastAPI sidecar communicate over an ephemeral
+`127.0.0.1` port. The log rotates at 1 MB and retains one prior file.
 
-Linux stores the same SQLite history and panel-visibility preference in its
-configured data directory. Source checkouts default to `data/`; installed-user
-execution follows `XDG_DATA_HOME` or `~/.local/share/codex-quota-monitor`.
-Service diagnostics normally remain in the systemd journal or the server
-process output rather than the Windows desktop log directory.
+## Linux
 
-## Codex authentication
+Source checkouts continue to use their local `data/` directory. New installed
+user execution uses `$XDG_DATA_HOME/flightmargin` or
+`~/.local/share/flightmargin`. If the new location is absent, persistent files
+from the legacy `codex-quota-monitor` directory are copied once and the legacy
+directory is preserved. Explicit `CODEX_QUOTA_DATA_DIR` and `CODEX_QUOTA_DB`
+values are never migrated automatically.
 
-Codex Quota Monitor discovers and runs the user's existing Codex CLI. Codex
-itself manages its authentication. This application does not ask for, manage,
-store, or transmit the user's OpenAI password, API token, or `auth.json`
-contents.
+Systemd diagnostics normally remain in the journal or process output. The
+browser service has no application-level authentication and must remain on
+localhost or a trusted private network.
 
-## Network behavior
+## Codex authentication and network behavior
 
-The Windows shell and its packaged FastAPI sidecar communicate over an
-ephemeral `127.0.0.1` port. The application contacts no project-operated
-telemetry or analytics service. Codex CLI communication with OpenAI remains
-subject to Codex/OpenAI behavior and policies outside this project's control.
+FlightMargin discovers and runs the user's existing Codex CLI. Codex manages
+its own authentication. FlightMargin does not ask for, manage, store, or
+transmit OpenAI passwords, API tokens, API keys, or `auth.json` contents.
 
-The Linux service binds to its configured address. It has no application-level
-authentication and should remain on localhost or a trusted private network.
+FlightMargin contacts no project-operated service. Codex CLI communication
+with OpenAI remains subject to Codex/OpenAI behavior and policies outside this
+project's control.
 
-## Uninstall and removal
+## Uninstall
 
-A normal Windows uninstall preserves `%LOCALAPPDATA%\Codex Quota Monitor` so
-history and preferences survive upgrades. Users who want complete local-data
-removal can delete that directory after quitting and uninstalling the app.
+A normal Windows uninstall preserves the FlightMargin data directory. Users
+who want complete removal can delete it after quitting and uninstalling. The
+legacy internal directory is likewise preserved unless the user explicitly
+removes it. Neither action removes Codex CLI or its authentication.

@@ -133,7 +133,7 @@ def render_systemd_unit(
 
     lines = [
         "[Unit]",
-        "Description=Codex Quota Monitor",
+        "Description=FlightMargin",
         "After=network-online.target",
         "Wants=network-online.target",
         "",

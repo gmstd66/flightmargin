@@ -1,3 +1,3 @@
-"""Canonical application version for Codex Quota Monitor."""
+"""Canonical application version for FlightMargin."""
 
-__version__ = "0.2.0"
+__version__ = "0.3.0-beta.1"

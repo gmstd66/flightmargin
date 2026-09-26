@@ -92,16 +92,18 @@ jobs:
           }
           New-Item -ItemType Directory -Path release-artifacts | Out-Null
           $installer = $installers[0]
-          $destination = Join-Path release-artifacts $installer.Name
+          $version = .\.venv\Scripts\python.exe -c "from app.version import __version__; print(__version__)"
+          $destinationName = "FlightMargin-$version-Windows-x64.exe"
+          $destination = Join-Path release-artifacts $destinationName
           Copy-Item -LiteralPath $installer.FullName -Destination $destination
           $checksum = Get-FileHash -LiteralPath $destination -Algorithm SHA256
-          "$($checksum.Hash.ToLowerInvariant())  $($installer.Name)" |
+          "$($checksum.Hash.ToLowerInvariant())  $destinationName" |
             Set-Content -LiteralPath "$destination.sha256" -Encoding ascii
 
       - name: Upload unsigned release candidate
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: codex-quota-monitor-windows-unsigned-${{ github.sha }}
+          name: flightmargin-windows-unsigned-${{ github.sha }}
           path: release-artifacts/
           if-no-files-found: error
           retention-days: 14

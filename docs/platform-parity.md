@@ -1,5 +1,14 @@
 # Linux and Windows functional parity
 
+Current public identity: FlightMargin `0.3.0-beta.1`. Older validation evidence
+may refer to the same implementation by its internal Codex Quota Monitor name.
+
+The shared Python behavior, Linux browser branding, new/legacy CLI metadata,
+data migration, and systemd rendering are tested from Windows. A native Linux
+follow-up should run the renamed wheel, installer dry run, generated
+`flightmargin.service`, explicit legacy `codex-quota.service` path, and browser
+smoke from `<private-development-path>`; no production resource is required.
+
 Milestone 6.20B treats the Windows product experience as the user-facing
 reference while retaining native platform mechanics. Both editions run the
 same Python collector, normalization, metrics, API, SQLite store, Jinja

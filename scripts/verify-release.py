@@ -14,8 +14,8 @@ sys.path.insert(0, str(PROJECT_DIR))
 from app.version import __version__
 
 
-PROJECT_NAME = "codex-quota-monitor"
-WHEEL_PREFIX = "codex_quota_monitor-"
+PROJECT_NAME = "flightmargin"
+WHEEL_PREFIX = "flightmargin-"
 REQUIRED_FILES = {
     "app/templates/index.html",
     "app/static/app.css",
@@ -34,7 +34,8 @@ def find_wheel(directory: Path) -> Path:
         fail(f"expected exactly one wheel in {directory}, found {len(wheels)}")
 
     wheel = wheels[0]
-    expected_name = f"{WHEEL_PREFIX}{__version__}-py3-none-any.whl"
+    package_version = __version__.replace("-beta.", "b")
+    expected_name = f"{WHEEL_PREFIX}{package_version}-py3-none-any.whl"
 
     if wheel.name != expected_name:
         fail(f"expected {expected_name}, found {wheel.name}")
@@ -63,8 +64,21 @@ def verify_wheel(wheel: Path) -> None:
         )
         if metadata["Name"] != PROJECT_NAME:
             fail(f"metadata Name is {metadata['Name']!r}")
-        if metadata["Version"] != __version__:
+        if metadata["Version"] != __version__.replace("-beta.", "b"):
             fail(f"metadata Version is {metadata['Version']!r}")
+        if metadata["License-Expression"] != "AGPL-3.0-or-later":
+            fail(f"metadata License-Expression is {metadata['License-Expression']!r}")
+
+        license_paths = [
+            name
+            for name in names
+            if name.endswith(".dist-info/licenses/LICENSE")
+        ]
+        if len(license_paths) != 1:
+            fail("wheel must contain exactly one LICENSE file")
+        license_text = archive.read(license_paths[0]).decode("utf-8")
+        if "GNU AFFERO GENERAL PUBLIC LICENSE" not in license_text:
+            fail("wheel LICENSE is not GNU AGPL v3")
 
         entry_point_paths = [
             name
@@ -75,6 +89,8 @@ def verify_wheel(wheel: Path) -> None:
             fail("wheel must contain exactly one entry_points.txt file")
 
         entry_points = archive.read(entry_point_paths[0]).decode("utf-8")
+        if "flightmargin = app.cli:main" not in entry_points:
+            fail("wheel console entry point flightmargin is missing")
         if "codex-quota = app.cli:main" not in entry_points:
             fail("wheel console entry point codex-quota is missing")
 

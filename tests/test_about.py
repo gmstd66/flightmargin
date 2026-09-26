@@ -10,8 +10,8 @@ def build_windows_payload(codex_cli_version="0.156.1"):
     return build_about_payload(
         app_version=__version__,
         codex_cli_version=codex_cli_version,
-        data_directory="C:/Users/private-name/AppData/Local/Codex Quota Monitor",
-        log_directory="C:/Users/private-name/AppData/Local/Codex Quota Monitor/logs",
+        data_directory="C:/Users/private-name/AppData/Local/FlightMargin",
+        log_directory="C:/Users/private-name/AppData/Local/FlightMargin/logs",
         system="Windows",
         release="11",
         machine="AMD64",
@@ -24,8 +24,8 @@ def test_about_uses_canonical_version_and_safe_windows_paths():
 
     assert payload["app_name"] == APP_NAME
     assert payload["app_version"] == __version__
-    assert payload["data_directory"] == "%LOCALAPPDATA%\\Codex Quota Monitor"
-    assert payload["log_directory"] == "%LOCALAPPDATA%\\Codex Quota Monitor\\logs"
+    assert payload["data_directory"] == "%LOCALAPPDATA%\\FlightMargin"
+    assert payload["log_directory"] == "%LOCALAPPDATA%\\FlightMargin\\logs"
     assert payload["operating_system"] == "Windows 11"
     assert payload["architecture"] == "x64"
 
@@ -44,13 +44,13 @@ def test_copy_diagnostics_is_allowlisted_and_excludes_sensitive_values():
 
     assert diagnostics == "\n".join(
         (
-            "Codex Quota Monitor",
+            "FlightMargin",
             f"App version: {__version__}",
             "Status: Beta",
             "Codex CLI: 0.156.1",
             "OS: Windows 11 x64",
-            "Data directory: %LOCALAPPDATA%\\Codex Quota Monitor",
-            "Log directory: %LOCALAPPDATA%\\Codex Quota Monitor\\logs",
+            "Data directory: %LOCALAPPDATA%\\FlightMargin",
+            "Log directory: %LOCALAPPDATA%\\FlightMargin\\logs",
         )
     )
     for sensitive_text in (
@@ -68,7 +68,7 @@ def test_linux_about_paths_do_not_expose_home_directory_identity():
     payload = build_about_payload(
         app_version=__version__,
         codex_cli_version=None,
-        data_directory="/home/private-name/.local/share/codex-quota-monitor",
+        data_directory="/home/private-name/.local/share/flightmargin",
         log_directory="systemd journal or process output",
         system="Linux",
         release="6.8.0",
@@ -76,7 +76,7 @@ def test_linux_about_paths_do_not_expose_home_directory_identity():
         environ={"HOME": "/home/private-name"},
     )
 
-    assert payload["data_directory"] == "~/.local/share/codex-quota-monitor"
+    assert payload["data_directory"] == "~/.local/share/flightmargin"
     assert payload["log_directory"] == "systemd journal or process output"
     assert "private-name" not in payload["diagnostics"]
     assert payload["operating_system"] == "Linux 6.8.0"

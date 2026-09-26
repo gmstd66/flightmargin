@@ -1,4 +1,4 @@
-# Codex Quota Monitor — Development Autonomy Policy
+# FlightMargin — Development Autonomy Policy
 
 ## Purpose
 

@@ -1,8 +1,9 @@
 {
-  "name": "codex-quota-monitor-desktop",
+  "name": "flightmargin-desktop",
   "private": true,
   "version": "0.0.0-development-only",
-  "description": "Tauri shell for the Codex Quota Monitor Python sidecar",
+  "description": "Tauri shell for the FlightMargin Python sidecar",
+  "license": "AGPL-3.0-or-later",
   "scripts": {
     "prepare": "..\\.venv\\Scripts\\python.exe scripts/prepare-tauri-config.py",
     "build:sidecar": "..\\.venv\\Scripts\\python.exe scripts/build-sidecar.py",

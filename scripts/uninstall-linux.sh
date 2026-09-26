@@ -3,7 +3,7 @@
 set -euo pipefail
 
 
-DEFAULT_SERVICE_NAME="codex-quota"
+DEFAULT_SERVICE_NAME="flightmargin"
 SERVICE_NAME="${DEFAULT_SERVICE_NAME}"
 
 SERVICE_PATH="/etc/systemd/system/${SERVICE_NAME}.service"
@@ -29,7 +29,7 @@ REMOVE_DATA=0
 
 usage() {
     cat <<EOF
-Codex Quota Monitor Linux uninstaller
+FlightMargin Linux uninstaller
 
 Usage:
   scripts/uninstall-linux.sh [options]
@@ -159,7 +159,7 @@ fi
 
 
 if (( APPLY == 0 )); then
-    echo "Codex Quota Monitor uninstall dry run"
+    echo "FlightMargin uninstall dry run"
     echo
     echo "Service:"
     echo "  ${SERVICE_NAME}"
@@ -273,7 +273,7 @@ fi
 
 
 echo
-echo "Codex Quota Monitor service removed."
+echo "FlightMargin service removed."
 echo
 echo "Service:"
 echo "  ${SERVICE_NAME}"

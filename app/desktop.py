@@ -30,7 +30,7 @@ def create_loopback_socket(port=0):
 
 def parse_args(argv=None):
     parser = argparse.ArgumentParser(
-        description="Run the Codex Quota Monitor desktop backend."
+        description="Run the FlightMargin desktop backend."
     )
     parser.add_argument(
         "--port",

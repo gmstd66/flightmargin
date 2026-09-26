@@ -3,9 +3,9 @@
 **Owner decision: AGPLv3-or-later.** This document preserves the practical
 comparison that informed the decision. It is not legal advice.
 
-Milestone 6.20B records the decision but intentionally does not add `LICENSE`.
-Applying the license, contribution terms, and public repository identity remains
-part of the later public identity milestone.
+Milestone 6.20B recorded the decision. Milestone 6.20D.1 applied it by adding
+the standard GNU AGPL v3 text as `LICENSE` and using the SPDX expression
+`AGPL-3.0-or-later` in project metadata.
 
 Authoritative references:
 
@@ -41,5 +41,5 @@ before accepting contributions.
 - **AGPLv3** also preserves source access for a future modified hosted or
   remotely accessible monitor, which matches the selected direction.
 
-The owner selected the `-or-later` formulation. No `LICENSE` file is added in
-this milestone.
+The owner selected the `-or-later` formulation. The repository license is now
+applied; third-party dependency licenses remain separately inventoried.

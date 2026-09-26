@@ -6,8 +6,8 @@ automation.
 ## Human-gated flow
 
 ```text
-owner approves product name, license, version, and release
-  -> version bump on an approved branch
+approved FlightMargin name, AGPL license, and version
+  -> reviewed release commit on an approved branch
   -> reviewed merge to main
   -> signed version tag
   -> manually approved GitHub Actions candidate build
@@ -25,7 +25,7 @@ a tag or release and does not sign anything.
 
 ## First beta update policy
 
-`0.3.0-beta.1` is the recommended first version, pending approval. Users update
+`0.3.0-beta.1` is the approved first beta version. Users update
 manually from GitHub Releases and must fully Quit the app before upgrade. Tauri
 auto-update is deferred until the manual build/sign/publish process is stable.
 Future updater private keys are separate sensitive release credentials and must

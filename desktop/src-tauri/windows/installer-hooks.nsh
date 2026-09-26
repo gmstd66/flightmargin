@@ -10,7 +10,7 @@
     Pop $R0
     ${If} $R0 = 0
       MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION \
-        "Codex Quota Monitor is still running.$\n$\nFully Quit it from the system tray, then click Retry." \
+        "FlightMargin or an internal predecessor is still running.$\n$\nFully Quit it from the system tray, then click Retry." \
         IDRETRY cqm_check_backend IDCANCEL cqm_cancel_install
     ${EndIf}
     Goto cqm_backend_stopped

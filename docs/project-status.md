@@ -1,207 +1,180 @@
-# Codex Quota Monitor — Project Status
+# FlightMargin — Project Status
 
-This is the primary continuity and handoff document for future Codex sessions. Read it with `AGENTS.md`, then verify its summary against the current working tree, `git status`, `git log`, and the relevant implementation before changing the project. Git is the detailed engineering history; this document and `CHANGELOG.md` summarize it rather than replacing it.
+Updated: 2026-09-26
 
-## Purpose and current product state
+Branch: `dev/productization`
 
-Codex Quota Monitor is a local-first browser dashboard and CLI for monitoring OpenAI Codex quota usage through the locally authenticated Codex CLI. It reads `account/rateLimits/read` from `codex app-server --stdio`, persists local history, and serves a FastAPI dashboard.
+This is the primary continuity record. Read it with `AGENTS.md` and verify it
+against the working tree and Git history before making changes.
 
-The current package version is `0.2.0`, canonically defined by `app/version.py`. Setuptools reads that value dynamically for project metadata, and the CLI, API, and Codex app-server client use the same source. The project has moved beyond its original private Linux prototype into a Linux-installable Python package and a Windows desktop beta. It is not an officially published package or release: do not tag, publish, or create a GitHub release without explicit approval.
+## Product state
 
-## Architecture and modules
+FlightMargin is a lightweight, local-first monitor for OpenAI Codex usage
+limits, pacing, resets, purchased credits, and history. It is the public
+identity adopted in milestone 6.20D.1; the prior internal identity was Codex
+Quota Monitor.
 
-Runtime flow:
+The canonical version is `0.3.0-beta.1` in `app/version.py`. Generated Cargo
+and Tauri versions match it. Python distribution metadata uses the equivalent
+PEP 440 form `0.3.0b1`. The beta feature set is frozen.
+
+The repository remains private. The beta has not been tagged, published,
+signed, or released. Auto-update is deferred. Source, issue, and Sponsor links
+remain hidden until real public destinations exist.
+
+FlightMargin is licensed `AGPL-3.0-or-later`; the standard GNU AGPL v3 text is
+present in `LICENSE`. Third-party license notices remain separately inventoried.
+
+Unofficial community tool. Not affiliated with or endorsed by OpenAI.
+
+## Architecture
+
+The approved architecture is unchanged:
 
 ```text
-browser / CLI → FastAPI or CLI commands → Codex app-server JSON-RPC
-                                        → quota normalization and metrics
-                                        → SQLite history → dashboard API
+browser / CLI -> FastAPI or CLI -> Codex app-server JSON-RPC
+                              -> normalization and metrics
+                              -> SQLite history -> dashboard and tray
 ```
 
-- `app/main.py`: FastAPI application, dashboard/API routes, lifecycle, and 60-second collector loop by default.
-- `app/adapters/codex_stdio.py`: persistent `codex app-server --stdio` JSON-RPC adapter.
-- `app/core/quota.py` and `app/core/metrics.py`: rate-limit normalization and derived dashboard metrics.
-- `app/core/config.py`: centralized environment-driven configuration.
-- `app/storage/sqlite_store.py`: SQLite schema and sample queries.
-- `app/cli.py`: installed `codex-quota` CLI (`doctor`, `status`, `serve`, `service-unit`).
-- `app/systemd.py`: portable systemd unit rendering.
-- `scripts/install-linux.sh` and `scripts/uninstall-linux.sh`: dry-run-first Linux lifecycle tooling.
+- `app/main.py`: FastAPI app, API routes, and collector lifecycle.
+- `app/adapters/codex_stdio.py`: persistent `codex app-server --stdio` client.
+- `app/core`: configuration, environment discovery, quota normalization, and
+  derived pacing metrics.
+- `app/storage/sqlite_store.py`: local SQLite history.
+- `app/cli.py`: `flightmargin` CLI and legacy `codex-quota` alias.
+- `app/systemd.py`: systemd unit rendering.
+- `desktop/`: Tauri 2 shell, PyInstaller sidecar build, tray/startup behavior,
+  and current-user NSIS packaging.
 
-Web templates and static files are package-relative (`app/templates`, `app/static`) so they remain available after installation.
+The Windows shell communicates with its sidecar on an OS-assigned loopback
+port. The Linux browser deployment has no application-level authentication and
+must stay on localhost or a trusted private network.
 
-## Packaging, configuration, and storage
+## Public identity and compatibility
 
-`pyproject.toml` defines the `codex-quota-monitor` Python project and dynamically obtains its version from `app.version.__version__`; it also defines the `codex-quota` console script. Runtime dependencies are FastAPI, Uvicorn, and Jinja2. The Linux installer installs the project into its selected virtual environment and systemd starts the installed `codex-quota` CLI.
+- Browser, Settings/About, tray, installer, Start Menu, CLI output, workflow
+  artifacts, and current documentation use FlightMargin.
+- Tauri product name is `FlightMargin`; bundle identifier is
+  `io.github.gmstd66.flightmargin`; the Rust package/main executable is
+  `flightmargin-desktop`.
+- Python distribution name is `flightmargin`; Python imports remain under
+  `app` to avoid a cosmetic module rewrite.
+- New Linux installs default to CLI `flightmargin` and service
+  `flightmargin.service`. The `codex-quota` command remains an alias, and
+  explicit legacy service/CLI configurations remain supported.
+- Existing `CODEX_QUOTA_*` configuration variables, the
+  `codex-quota-backend` sidecar name, internal browser channel names, and the
+  sidecar readiness protocol remain stable compatibility identifiers.
+- The private GitHub repository retains its current name. `flightmargin` is
+  the intended publication-time repository name if it remains available and
+  is separately approved.
 
-Local release-artifact workflow (no publication):
+See `docs/flightmargin-rename.md` for the complete classified inventory.
 
-- `scripts/build-release.sh` cleans `dist/`, builds exactly one local wheel with `python -m pip wheel`, and prints its path.
-- `scripts/verify-release.py dist` confirms the expected normalized wheel name/version, wheel metadata, `codex-quota` entry point, and required template/static files.
-- `scripts/check-release.sh` runs the test suite, build, verification, and a temporary out-of-tree virtual-environment check. It verifies imports are from `site-packages`, the CLI version, real Codex `doctor`/`status`, isolated storage, server health, dashboard HTML, and static resources on a configurable `18000-18999` port (default `18097`). The temporary environment and test data are removed on completion; `dist/` retains the local artifact.
+## Storage and migration
 
-Supported configuration variables are:
+Source checkouts still default to `<repo>/data`. New installed-user defaults:
 
-| Variable | Meaning | Default |
+| Platform | New default | Recognized legacy source |
 | --- | --- | --- |
-| `CODEX_QUOTA_DATA_DIR` | Runtime data directory | source checkout: `<repo>/data`; installed package: `$XDG_DATA_HOME/codex-quota-monitor` or `~/.local/share/codex-quota-monitor` |
-| `CODEX_QUOTA_DB` | SQLite database path | `<data-dir>/quota.db` |
-| `CODEX_QUOTA_HOST` | Dashboard bind address | `127.0.0.1` |
-| `CODEX_QUOTA_PORT` | Dashboard TCP port | `8093` |
-| `CODEX_QUOTA_SAMPLE_SECONDS` | Sampling interval; minimum 10 | `60` |
-| `CODEX_BIN` | Explicit Codex CLI executable | discovered as `codex` on `PATH` |
+| Windows desktop | `%LOCALAPPDATA%\FlightMargin` | `%LOCALAPPDATA%\Codex Quota Monitor` |
+| Linux installed user | `$XDG_DATA_HOME/flightmargin` or `~/.local/share/flightmargin` | corresponding `codex-quota-monitor` directory |
 
-SQLite creates `quota_samples`, containing capture time; 5-hour and weekly usage/reset values; plan; reset-credit and balance data; and rate-limit/spend-control state. The database is local runtime data and excluded from Git.
+When the new directory is absent and the recognized legacy directory exists,
+FlightMargin copies only `quota.db` and `desktop-preferences.json` through a
+staging directory. It never deletes the legacy directory, copies logs/caches,
+or overwrites an existing new directory. Explicit data/database overrides are
+not migrated. Python and Rust tests cover copy behavior and idempotence.
 
-## Linux installation and production facts
+## Linux production protection
 
-Linux support currently requires systemd, Python 3 with `venv`, an installed and authenticated Codex CLI, Git, and `sudo` for service installation. `scripts/install-linux.sh` validates the environment, can bootstrap a venv, installs the package, generates and validates a service unit, and on `--apply` enables, starts, and health-checks it. It defaults to dry run and localhost binding. `scripts/uninstall-linux.sh` defaults to dry run and preserves the repository, venv, data, Codex CLI, and Codex authentication unless explicit cleanup flags are used.
+The existing production deployment remains protected and unchanged:
 
-Protected production deployment facts (read-only unless explicitly approved):
+- checkout `/opt/codex-quota`;
+- service `codex-quota.service`;
+- port `8093`;
+- database `/opt/codex-quota/data/quota.db`;
+- production configuration, firewall, service user, permissions, Codex
+  authentication, and credentials.
 
-- Checkout: `/opt/codex-quota`
-- Service: `codex-quota.service`
-- Port: `8093`
-- Database: `/opt/codex-quota/data/quota.db`
-- Runtime command: installed `codex-quota` CLI
-- Service hardening: `NoNewPrivileges=true` and `PrivateTmp=true`
+No 6.20D.1 action may migrate or alter those resources. Linux development uses
+an isolated checkout, ports `18000-18999`, and temporary service names beginning
+`codex-quota-test-`.
 
-The private production deployment binds to a private network address and is protected by host firewall rules. Machine-specific details are intentionally excluded from public documentation; see `docs/deployment-private.md` for the boundary. It has no application-level authentication and must not be exposed to the public internet. Production changes, including the service, database, port, firewall, credentials, authentication state, or checkout, require explicit human approval.
+## Windows beta and packaging
 
-For Linux development, prefer a separate checkout such as `/home/<user>/codex-quota-dev/`, use temporary ports in `18000-18999`, and never use `8093` for a test instance. Temporary systemd services must begin `codex-quota-test-`; do not install them from `/tmp`, because `PrivateTmp=true` prevents the service from seeing host `/tmp` executables.
+The first public desktop target is Windows 11 x64. WebView2 and an installed,
+authenticated Codex CLI are prerequisites. Windows 10 remains unvalidated.
 
-## Codex CLI integration
+`npm run tauri:build` is the canonical package command and rebuilds the
+PyInstaller sidecar before Tauri creates NSIS. The manual GitHub Actions
+workflow tests Python/Rust/JavaScript, builds an unsigned installer, and stages:
 
-The application does not store ChatGPT passwords or use a separately configured OpenAI API key. It relies on the authentication available to the service user's Codex CLI. The adapter starts `codex app-server --stdio`, initializes JSON-RPC, and calls `account/rateLimits/read`. Quota windows are recognized by duration: 300 minutes (5-hour) and 10,080 minutes (weekly). `codex-quota doctor` verifies platform, Python, Codex discovery/version, writable data storage, app-server access, rate-limit access, plan, and both quota windows.
+```text
+FlightMargin-0.3.0-beta.1-Windows-x64.exe
+FlightMargin-0.3.0-beta.1-Windows-x64.exe.sha256
+```
 
-## Tests and completed work
+It has read-only contents permission and does not sign, publish, create a tag,
+or create a GitHub Release.
 
-`pytest` is configured to run the `tests/` suite. Desktop coverage includes platform data/log paths, Codex discovery, loopback socket/readiness behavior, canonical version templates, and the existing dashboard/API behavior. Run `pytest -v` after changes; release-facing work should also run `scripts/check-release.sh` and `git diff --check`.
+The new bundle identifier intentionally distinguishes FlightMargin from the
+internal 0.2.0 application, so an old build may need explicit uninstall and may
+temporarily coexist. The user-data copy prevents silent loss of history and
+preferences.
 
-Git history records these completed capabilities:
+## About, privacy, and security
 
-- Initial known-working private Linux baseline, documented and tagged `v0.1-baseline` before portability work.
-- Core architecture extraction/refactoring plus baseline quota and metric tests.
-- Environment doctor and user-facing CLI.
-- Centralized configuration and portable systemd-unit generator.
-- Linux installer, fresh-machine venv bootstrap, lifecycle documentation, and conservative uninstaller.
-- Alternate systemd service names and isolated fresh-install-oriented deployment support.
-- Package-relative templates/static resources, Python wheel/package metadata, and correct installed-package user data-directory behavior.
-- Systemd execution through the packaged `codex-quota` CLI.
-- Bounded-autonomy development policy.
-- Milestone 6.14: single-source versioning and a reproducible local wheel build, artifact verification, and isolated installed-artifact validation workflow.
-- Milestone 6.15: Docker feasibility and approved deferral of self-contained Docker distribution.
-- Milestone 6.16: native desktop feasibility, approved Windows-first Tauri/PyInstaller/FastAPI-sidecar prototype, platform-specific data paths, Codex discovery fallbacks, dynamic loopback readiness, Linux sidecar validation, and first Windows-native validation. On Windows 11, the built and installed unsigned Tauri artifact started the PyInstaller sidecar on an ephemeral loopback port, discovered authenticated host Codex through the npm wrapper, served quota/dashboard resources, persisted `%LOCALAPPDATA%\Codex Quota Monitor\quota.db`, and exited without sidecar residue. See `docs/desktop-implementation.md`.
-- Milestone 6.17: Windows beta polish adds tray/background lifecycle, single-instance activation, opt-in start-at-login, controlled startup/crash diagnostics, bounded local shell logs, a current-user NSIS beta installer preference, and `docs/windows-beta.md` for repeatable validation. Public signing, update distribution, and release approval remain separate gates.
-- Milestone 6.18: prepares the current Windows desktop beta for owner GUI/product review, with a documented UI inventory and review walkthrough. Public release, license, signing, and auto-update decisions remain deferred.
-- Milestone 6.19D: owner-review corrections targeted a 600×450 desktop window,
-  introduced direct pointer movement/resizing and schema-3 geometry, invalidated
-  stale WebView assets, and marked the release Tauri executable as a Windows
-  GUI-subsystem application. Subsequent owner testing rejected the dynamic
-  layout because it remained unstable and disproportionately complex.
-- Milestone 6.19E: owner testing deliberately simplified the dashboard to a
-  fixed compact responsive layout. Drag/reorder, arbitrary panel resizing, and
-  stored geometry were removed because their complexity and unstable layouts
-  outweighed their usefulness. Schema 4 retains only stable panel visibility,
-  restores all panels for schema-2/schema-3 users, and preserves unrelated
-  desktop preferences such as the tray-indicator choice.
-- Milestone 6.19F native validation confirmed the fixed 600×450 dashboard,
-  schema-4 visibility persistence, dense panel reflow, and windowless startup.
-  It also found two localized defects: restoring Weekly History did not redraw
-  its hidden canvas, and decimal sidecar percentages made numeric tray icons
-  remain unavailable. Source fixes and regression tests are complete; a fresh
-  Windows artifact must still be built and visually revalidated.
-- Final desktop UX refinement: Settings now opens as a single native window
-  adjacent to the dashboard, with DPI-aware right/left placement and monitor
-  work-area clamping. Its quota-indicator option includes concise Windows
-  hidden-icons guidance; Windows remains responsible for icon placement.
-- Owner validation found that the retained modal fallback could mask an
-  unavailable global Tauri bridge and that the original three-digit tray glyphs
-  overlapped at `100`. Settings now has a dedicated native-window page with no
-  dashboard overlay fallback, and the 32x32 tray renderer uses a non-overlapping
-  compact three-digit layout.
-- The Windows tray model now adds a green purchased-Credits indicator to the
-  normal application, blue Weekly, and purple 5-hour icons. It floors positive
-  balances to whole credits, renders balances above 999 as `999+`, preserves
-  the exact whole balance in the tooltip, and shares the existing collector
-  sample and Settings lifecycle.
-- Tray startup is failure-isolated and backward-compatible: the normal icon is
-  retained directly, enabled informational icons appear initially with neutral
-  unavailable values, two-field sidecar samples still update Weekly/5-hour,
-  and creation failures are logged per icon rather than suppressing the tray.
-- The native Settings window now includes a compact About tab with the
-  canonical application version, beta status, local-data privacy statement,
-  detected Codex CLI version, project model, attribution, independence
-  disclaimer, and sanitized copyable diagnostics. Public repository, issue,
-  and sponsor links remain hidden until launch; applying the selected
-  AGPLv3-or-later terms and sponsorship setup remain pending.
-- Tauri's loopback remote-origin ACL now explicitly permits the main window's
-  `open_settings` command and the Settings window's `close_settings` command.
-  The tray menu exposes Settings and About actions through the same singleton,
-  adjacent native Settings-window path; About selects the existing About tab.
-- Weekly History now occupies the dashboard's bounded remaining-height grid row;
-  at a measured 600x450 CSS viewport the card is 182 px, its plot is 131 px,
-  and only the normal 7 px bottom padding remains. Owner review had exercised
-  an older PyInstaller sidecar whose embedded CSS fixed History at 92 px, so the
-  Tauri release command now rebuilds the sidecar before packaging.
-- Milestone 6.19 completes the owner-directed Windows desktop UI/UX cycle: the
-  compact fixed dashboard, visibility controls, native Settings/About,
-  windowless subprocess chain, tray indicators, lifecycle, and remaining-height
-  History layout are implemented and covered by native/test evidence.
-- Milestone 6.20A prepares, but does not publish, the first Windows public beta.
-  It adds a manual GitHub-hosted Windows candidate workflow, locked Node/Rust
-  inputs and resolved Windows Python build requirements, unsigned NSIS artifact
-  checksums, public-facing documentation, repository/privacy and third-party
-  license audits, branding/license/signing gates, and a human-gated release
-  checklist. `0.3.0-beta.1` remains a recommendation rather than a version
-  change.
-- Milestone 6.20B platform parity is complete. It aligns the Linux/browser product surface with Windows while
-  preserving native platform mechanics. Both editions now share quota states,
-  unavailable/credit behavior, fixed panel ordering and visibility,
-  responsive History, and Settings/About data. Linux uses a browser surface,
-  systemd, and journal/process logging; Windows retains Tauri, native windows,
-  tray/startup integration, PyInstaller, and NSIS. The shared runtime and real
-  Codex collector passed an isolated browser smoke and the final native Linux
-  runtime/systemd validation: real authenticated collection, browser/API and
-  failure-state handling, temporary-service lifecycle, resource baselining,
-  and read-only production-isolation verification. The validation found and
-  fixed Windows About-path separator formatting when checked from Linux.
-- Milestone 6.20C completes the pre-beta lean runtime review. The measured
-  Windows NSIS installer is 16.835 MiB (down 9.20%), its installed runtime is
-  25.464 MiB (down 8.21%), and app-owned RSS on the measured official npm Codex
-  installation is 225.55 MiB (down 21.33%, excluding WebView2). Optional
-  Setuptools/PyYAML sidecar content was excluded, safe Cargo thin-LTO/strip
-  settings were added, recognized official npm shims now use native Codex with
-  fallback, and duplicate startup collection was removed. The required
-  sidecar-rebuilding NSIS command and real authenticated runtime smoke pass.
-  See `docs/lean-runtime-review.md` for the breakdown and growth projections.
+About reports FlightMargin, canonical version, Beta status, detected Codex CLI
+version, OS, architecture, and sanitized data/log paths. It states that local
+history/preferences/logs are stored locally, the existing authenticated Codex
+CLI is used, credentials are not managed or stored, telemetry is absent, the
+license is AGPLv3-or-later, and the app is unofficial. Public action links stay
+hidden.
 
-## Branch workflow, caveats, and next work
+Logs contain concise lifecycle/errors only, rotate at 1 MB, and retain one
+prior file. Diagnostics exclude account identity, quota payloads, credentials,
+and raw authentication content.
 
-Routine work belongs on `dev/productization`, not `main`. Before editing, fetch `origin`, ensure the local branch is synchronized with `origin/dev/productization`, and inspect the working tree. Complete milestones with tests, relevant documentation, a meaningful commit, a push to `origin/dev/productization`, and remote verification. Stop for a protected gate: merging to `main`, tagging or releasing, publication, production changes, destructive Git actions, or other decisions identified in `AGENTS.md`.
+## Feature freeze
 
-## Product and distribution direction
+Beta 1 adds no multi-provider support, Claude/Gemini/Cursor integrations,
+session transcript analytics, token-cost accounting, notifications, mobile
+companion, remote monitoring, or auto-update. Those remain possible post-beta
+work based on demand. Bug, security, release-blocker, and migration fixes are
+allowed.
 
-Codex Quota Monitor is intended to remain free to use and become open source. The planned sustainability model is voluntary donations and sponsorship only, initially through GitHub Sponsors; there will be no paywall or paid feature tier. Public installers and downloads are expected to be distributed through GitHub Releases when the project is ready for public release.
+## Prior validation baseline
 
-The owner selected AGPLv3-or-later. The public identity milestone must still add and review the actual `LICENSE` and contribution terms; milestone 6.20B records the decision without applying the repository license. Before public distribution, pursue a free open-source Windows signing path such as SignPath Foundation if the project qualifies. Paid code-signing should be considered only if free signing is unavailable and the project justifies the expense.
+Milestones through integrated commit `381b8e5` established Windows/Linux feature
+parity and a lean Windows build. The retained 6.20C baseline measured a
+16.835 MiB NSIS installer, 25.464 MiB installed runtime, and no material idle
+regression; see `docs/lean-runtime-review.md`. Native Ubuntu validation at
+commit `11d94cf` covered authenticated collection, browser/API behavior,
+temporary systemd lifecycle, and production isolation.
 
-The remaining product/distribution decisions are: the public product name (current candidate: `CDXquota`); whether historical author-email/private-infrastructure exposure is acceptable; the first public release version; repository visibility; SignPath eligibility/signing implementation; and final release approval. Tauri auto-update is deferred for the first public beta and may be evaluated only after the manual release process is stable. These decisions do not authorize making the repository public, adding the license in this milestone, creating a release, publishing installers, or changing runtime behavior.
+6.20D.1 must rerun the complete Python suite, locked Cargo check/tests,
+JavaScript syntax checks, version/release verification, native Windows NSIS
+build, local installer inspection, and `git diff --check`. A native Linux
+follow-up is required only for host-specific installer/systemd execution that
+cannot be performed from Windows; shared behavior is covered here.
 
-Known caveats:
+6.20D.1 Windows validation produced a 17,661,083-byte (16.843 MiB) unsigned
+NSIS installer, installed FlightMargin beside the internal 0.2.0 build,
+verified copy-only migration against an isolated legacy fixture, and confirmed
+normal uninstall removes application integration while preserving user data.
+The rename added no runtime dependency and increased the installer by only
+8,305 bytes (0.047%) from the lean baseline.
 
-- Linux/systemd remains a separate stable deployment model with the shared product dashboard. Windows 11 x64 is the first planned public desktop target, but no public distribution exists yet; product-name approval, license application, repository publication, signing, and final release validation remain pending. Docker remains deferred, and an iPhone companion remains future product work.
-- Codex CLI availability, its authenticated user context, and the app-server rate-limit response are external dependencies.
-- The dashboard has no built-in authentication and should remain local, trusted-LAN, or private-VPN only.
-- The service `WorkingDirectory` is the project root even though its executable is packaged; repository-based installation remains the documented workflow.
+## Remaining publication gates
 
-Docker decision: self-contained Docker distribution is deferred because the current Codex app-server sandbox is not container-friendly under the tested Docker security profile. A host-bridge architecture is not currently justified. Native systemd remains the Linux/headless deployment model. Revisit Docker only if Codex gains a supported container-friendly execution model. See `docs/docker-feasibility.md` for the evidence.
+- human review of this identity/migration milestone;
+- separate history-sanitation milestone and force-push approval;
+- public repository rename/visibility approval and final privacy scan;
+- code-signing implementation and signed-artifact validation;
+- public tag, package/installer publication, and GitHub Release approval;
+- real public source, issue-reporting, security-contact, and Sponsor URLs.
 
-Desktop decision status: milestone 6.16 approved and implemented a Windows-first Tauri 2 shell with a PyInstaller-packaged Python sidecar and loopback FastAPI, preserving the current dashboard and Codex integration. Native Windows validation now covers the sidecar, Tauri compilation, unsigned MSI/NSIS artifacts, installed-app launch, authenticated Codex quota reads, app-data persistence, failure diagnostics, and sidecar-tree shutdown. See `docs/desktop-feasibility.md` and `docs/desktop-implementation.md`. The README roadmap also identifies tray/menu-bar enhancements, macOS, and other future support; selecting a release or package-publication plan likewise requires the appropriate human decision gate first.
-
-## Instructions for future Codex sessions
-
-1. Read `AGENTS.md`, this document, `CHANGELOG.md`, README, and the relevant technical documentation.
-2. Verify branch, remote synchronization, package version, paths, commands, and tests from the current repository; do not treat this summary as proof when code disagrees.
-3. Preserve protected production resources and use isolated development ports/services.
-4. For release-facing work, use `scripts/check-release.sh` with a development port, inspect `dist/`, and remember that a verified local wheel is not a tagged, published, or GitHub release.
-5. Update this document, the changelog, and any affected docs in the same milestone whenever practical; commit and push the completed milestone to `origin/dev/productization`.
+No merge to `main`, production deployment, tag, release, public visibility
+change, signing submission, or history rewrite is authorized yet.

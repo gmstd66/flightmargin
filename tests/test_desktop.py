@@ -147,7 +147,7 @@ def test_windows_desktop_logs_share_the_application_data_root():
         system="Windows",
         environ={"LOCALAPPDATA": str(local_app_data)},
         home="C:/Users/test",
-    ) == local_app_data / "Codex Quota Monitor" / "logs"
+    ) == local_app_data / "FlightMargin" / "logs"
 
 
 def test_release_tauri_binary_uses_windows_gui_subsystem():
@@ -296,9 +296,11 @@ def test_native_settings_about_content_uses_dynamic_safe_metadata():
     backend = (PROJECT_ROOT / "app" / "main.py").read_text(encoding="utf-8")
 
     assert 'data-settings-tab="about"' in settings
-    assert "A lightweight monitor for Codex usage limits, reset windows, and purchased credits." in settings
-    assert "Monitoring history, preferences, and logs are stored locally on this computer." in settings
-    assert "Free and open-source software supported by voluntary sponsorship." in settings
+    assert "Monitor Codex capacity, pace, resets, and credits at a glance." in settings
+    assert "History, preferences, and logs are stored locally on this computer." in settings
+    assert "does not manage or store your OpenAI credentials" in settings
+    assert "It includes no telemetry." in settings
+    assert "AGPLv3-or-later" in settings
     assert "Unofficial community tool. Not affiliated with or endorsed by OpenAI." in settings
     assert "Technical details" in settings
     assert 'id="copyDiagnostics"' in settings
@@ -337,7 +339,7 @@ def test_tray_settings_and_about_reuse_the_native_settings_window():
     assert 'open_settings_window(app, SettingsSection::Dashboard)' in rust
     assert 'open_settings_window(app, SettingsSection::About)' in rust
     assert 'get_webview_window(SETTINGS_WINDOW_LABEL)' in rust
-    assert rust.count('SETTINGS_WINDOW_LABEL,\n        WebviewUrl::External(url)') == 1
+    assert rust.count("WebviewWindowBuilder::new(") == 1
     assert 'window.openSettingsSection?.' in rust
     assert 'url.set_query(Some(&format!("section={}"' in rust
     assert "window.openSettingsSection = openSettingsSection" in settings_source

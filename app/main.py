@@ -278,7 +278,7 @@ async def lifespan(
 
 
 app = FastAPI(
-    title="Codex Quota Monitor",
+    title="FlightMargin",
     version=__version__,
     lifespan=lifespan,
 )

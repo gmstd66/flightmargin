@@ -1,6 +1,6 @@
 # Windows beta checklist
 
-Codex Quota Monitor desktop builds are unsigned internal/beta builds. They are
+FlightMargin desktop builds are unsigned internal/beta builds. They are
 not public-release artifacts and do not provide auto-update.
 
 Public-facing preparation and release gates are documented in
@@ -8,8 +8,8 @@ Public-facing preparation and release gates are documented in
 
 ## User data and logs
 
-- Application data and SQLite history: `%LOCALAPPDATA%\Codex Quota Monitor\quota.db`
-- Desktop-shell logs: `%LOCALAPPDATA%\Codex Quota Monitor\logs\desktop.log`
+- Application data and SQLite history: `%LOCALAPPDATA%\FlightMargin\quota.db`
+- Desktop-shell logs: `%LOCALAPPDATA%\FlightMargin\logs\desktop.log`
 - The log is rotated at 1 MB and retains one previous file. Do not add tokens,
   auth-file content, or quota payloads to these logs.
 - Normal uninstalls preserve this directory. An upgrade must preserve it too.
@@ -31,7 +31,7 @@ Public-facing preparation and release gates are documented in
    number, use `999+` above 999, and retain the exact whole balance in its
    tooltip. Use **Open** to restore the dashboard and **Quit** to stop the
    sidecar tree.
-   Confirm `%LOCALAPPDATA%\Codex Quota Monitor\logs\desktop.log` records the
+   Confirm `%LOCALAPPDATA%\FlightMargin\logs\desktop.log` records the
    loaded tray preference and each icon's creation, with any failure isolated
    to the named indicator.
 4. Toggle **Start at login** from the tray menu, verify it is disabled by
@@ -41,7 +41,7 @@ Public-facing preparation and release gates are documented in
    and does not create another tray icon, sidecar, or SQLite writer.
 6. Restart after a quota sample exists. Confirm history survives and the new
    sidecar uses a new ephemeral `127.0.0.1` port.
-7. Install a newer internal build over the existing installation. Confirm the
+7. Install a newer FlightMargin build over the existing installation. Confirm the
    Start menu has one entry, application files update, and history/preferences
    remain intact. Uninstall and confirm user data remains intact.
 8. In an isolated environment, test missing Codex and unavailable Codex
@@ -56,6 +56,10 @@ Public-facing preparation and release gates are documented in
     confirm the text contains only app/CLI versions, OS/architecture, and
     `%LOCALAPPDATA%` application-data/log paths. It must not contain account,
     quota, authentication, credential, or Windows-user details.
+12. With `%LOCALAPPDATA%\FlightMargin` absent and a legacy internal
+    `%LOCALAPPDATA%\Codex Quota Monitor` fixture present, launch FlightMargin.
+    Confirm history/preferences are copied, logs are not copied, the legacy
+    directory remains, and a repeat launch does not overwrite new data.
 
 ## Distribution gate
 

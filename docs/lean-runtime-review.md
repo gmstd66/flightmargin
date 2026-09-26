@@ -1,5 +1,10 @@
 # Lean runtime review
 
+Identity note: the measurements below describe the integrated pre-rename
+runtime baseline. Milestone 6.20D.1 changes product/version strings and
+migration code without adding runtime dependencies; its renamed NSIS size is
+recorded in the milestone completion section below.
+
 Milestone 6.20C reviewed current HEAD `0284459` before changes and the retained
 optimized build on Windows 11 x64 on 2026-09-26. Sizes use binary MiB. Runtime
 measurements used a clean data directory, the same authenticated Codex
@@ -185,6 +190,11 @@ three processes, about 175 MiB RSS, about 0.10% idle CPU, 16 KiB initial DB,
 about 3.3 KiB temporary journal output, and the same 40.64 MiB/year projection.
 
 ## Validation summary
+
+Milestone 6.20D.1 produced
+`FlightMargin_0.3.0-beta.1_x64-setup.exe` at 17,661,083 bytes (16.843 MiB).
+That is 8,305 bytes (0.047%) above the retained 16.835 MiB baseline, consistent
+with identity strings and migration code and not a material inflation.
 
 - Required `npm run tauri:build`: passed; sidecar rebuilt and unsigned NSIS
   created without publication.

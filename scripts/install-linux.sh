@@ -3,7 +3,7 @@
 set -euo pipefail
 
 
-DEFAULT_SERVICE_NAME="codex-quota"
+DEFAULT_SERVICE_NAME="flightmargin"
 SERVICE_NAME="${DEFAULT_SERVICE_NAME}"
 SERVICE_PATH_EXPLICIT=0
 
@@ -28,7 +28,7 @@ SERVICE_HOME="${HOME}"
 VENV_DIR="${PROJECT_DIR}/venv"
 
 DEFAULT_RUNTIME_PYTHON="${VENV_DIR}/bin/python"
-DEFAULT_RUNTIME_CLI="${VENV_DIR}/bin/codex-quota"
+DEFAULT_RUNTIME_CLI="${VENV_DIR}/bin/flightmargin"
 
 PYTHON_EXECUTABLE="${DEFAULT_RUNTIME_PYTHON}"
 PYTHON_EXPLICIT=0
@@ -52,7 +52,7 @@ INSTALL_DEV=0
 
 usage() {
     cat <<EOF
-Codex Quota Monitor Linux installer
+FlightMargin Linux installer
 
 Usage:
   scripts/install-linux.sh [options]
@@ -100,7 +100,7 @@ Options:
       does not exist, --apply creates it.
 
   --cli PATH
-      Installed codex-quota executable used
+      Installed flightmargin executable used
       by systemd.
 
       Default:
@@ -108,7 +108,7 @@ Options:
 
       When --python is supplied and --cli is
       omitted, the CLI defaults to a sibling
-      named codex-quota in the same bin
+      named flightmargin in the same bin
       directory as that Python executable.
 
   --bootstrap-python PATH
@@ -141,7 +141,7 @@ Options:
 
   --apply
       Create the virtual environment if needed,
-      install Codex Quota Monitor as a Python
+      install FlightMargin as a Python
       package, and install/reinstall the service.
 
   --dry-run
@@ -270,7 +270,7 @@ while [[ $# -gt 0 ]]; do
             if (( CLI_EXPLICIT == 0 )); then
                 CLI_EXECUTABLE="$(
                     dirname -- "${PYTHON_EXECUTABLE}"
-                )/codex-quota"
+                )/flightmargin"
             fi
 
             shift 2
@@ -309,7 +309,7 @@ while [[ $# -gt 0 ]]; do
                     && PYTHON_EXPLICIT == 0
                 ))
             ); then
-                CLI_EXECUTABLE="${VENV_DIR}/bin/codex-quota"
+                CLI_EXECUTABLE="${VENV_DIR}/bin/flightmargin"
             fi
 
             shift 2
@@ -455,8 +455,8 @@ if (( NEEDS_BOOTSTRAP == 1 )); then
         echo "On --apply the installer would:"
         echo "  1. Create the virtual environment"
         echo "  2. Upgrade pip"
-        echo "  3. Install Codex Quota Monitor"
-        echo "  4. Create the codex-quota executable"
+        echo "  3. Install FlightMargin"
+        echo "  4. Create the flightmargin executable"
         echo
     else
         info "Creating virtual environment"
@@ -479,7 +479,7 @@ if (( NEEDS_BOOTSTRAP == 1 )); then
         PYTHON_EXECUTABLE="${VENV_DIR}/bin/python"
 
         if (( CLI_EXPLICIT == 0 )); then
-            CLI_EXECUTABLE="${VENV_DIR}/bin/codex-quota"
+            CLI_EXECUTABLE="${VENV_DIR}/bin/flightmargin"
         fi
     fi
 fi
@@ -513,7 +513,7 @@ if (( APPLY == 1 )); then
     ok "pip upgraded"
 
 
-    info "Installing Codex Quota Monitor package"
+    info "Installing FlightMargin package"
 
     "${PYTHON_EXECUTABLE}" \
         -m pip \
@@ -521,7 +521,7 @@ if (( APPLY == 1 )); then
         --upgrade \
         "${PROJECT_DIR}"
 
-    ok "Codex Quota Monitor package installed"
+    ok "FlightMargin package installed"
 
 
     if (( INSTALL_DEV == 1 )); then
@@ -797,7 +797,7 @@ ok "Health endpoint responded successfully"
 
 
 echo
-echo "Codex Quota Monitor installed successfully."
+echo "FlightMargin installed successfully."
 echo
 echo "Dashboard:"
 echo "  http://${HEALTH_HOST}:${PORT}"

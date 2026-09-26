@@ -4,7 +4,7 @@ use std::{
     fs::{self, File, OpenOptions},
     io::{Read, Write},
     net::{SocketAddr, TcpStream},
-    path::PathBuf,
+    path::{Path, PathBuf},
     sync::{
         atomic::{AtomicBool, Ordering},
         Mutex,
@@ -27,7 +27,9 @@ use tauri_plugin_shell::{
 use url::Url;
 
 const READY_PREFIX: &str = "CODEX_QUOTA_DESKTOP_PORT=";
-const DATA_DIRECTORY_NAME: &str = "Codex Quota Monitor";
+const DATA_DIRECTORY_NAME: &str = "FlightMargin";
+const LEGACY_DATA_DIRECTORY_NAME: &str = "Codex Quota Monitor";
+const MIGRATED_USER_FILES: [&str; 2] = ["quota.db", "desktop-preferences.json"];
 const LOG_ROTATE_BYTES: u64 = 1_000_000;
 const WEEKLY_INDICATOR_ID: &str = "weekly-quota-indicator";
 const FIVE_HOUR_INDICATOR_ID: &str = "five-hour-quota-indicator";
@@ -82,10 +84,58 @@ fn desktop_data_dir() -> PathBuf {
     }
 }
 
+fn migrate_legacy_data_at(base: &Path) -> std::io::Result<bool> {
+    let destination = base.join(DATA_DIRECTORY_NAME);
+    let legacy = base.join(LEGACY_DATA_DIRECTORY_NAME);
+    if destination.exists() || !legacy.is_dir() {
+        return Ok(false);
+    }
+    let sources: Vec<_> = MIGRATED_USER_FILES
+        .iter()
+        .map(|name| (legacy.join(name), *name))
+        .filter(|(path, _)| path.is_file())
+        .collect();
+    if sources.is_empty() {
+        return Ok(false);
+    }
+    fs::create_dir_all(base)?;
+    let nonce = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|duration| duration.as_nanos())
+        .unwrap_or(0);
+    let staging = base.join(format!(".flightmargin-migration-{}-{nonce}", std::process::id()));
+    fs::create_dir(&staging)?;
+    let result = (|| {
+        for (source, name) in sources {
+            fs::copy(source, staging.join(name))?;
+        }
+        match fs::rename(&staging, &destination) {
+            Ok(()) => Ok(true),
+            Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => Ok(false),
+            Err(error) => Err(error),
+        }
+    })();
+    if staging.exists() {
+        let _ = fs::remove_dir_all(staging);
+    }
+    result
+}
+
+fn migrate_legacy_desktop_data() -> std::io::Result<bool> {
+    desktop_data_dir()
+        .parent()
+        .map(migrate_legacy_data_at)
+        .unwrap_or(Ok(false))
+}
+
 impl DesktopLog {
-    fn open() -> Self {
+    fn closed() -> Self {
+        Self(Mutex::new(None))
+    }
+
+    fn open(&self) -> std::io::Result<()> {
         let log_dir = desktop_data_dir().join("logs");
-        let _ = fs::create_dir_all(&log_dir);
+        fs::create_dir_all(&log_dir)?;
         let log_path = log_dir.join("desktop.log");
         if log_path
             .metadata()
@@ -97,13 +147,12 @@ impl DesktopLog {
             let _ = fs::remove_file(&previous);
             let _ = fs::rename(&log_path, previous);
         }
-        Self(Mutex::new(
-            OpenOptions::new()
-                .create(true)
-                .append(true)
-                .open(log_path)
-                .ok(),
-        ))
+        let file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(log_path)?;
+        *self.0.lock().expect("desktop log state lock") = Some(file);
+        Ok(())
     }
 }
 
@@ -124,7 +173,7 @@ fn show_startup_error(app: &tauri::AppHandle, error: &str) {
     log_message(app, error);
     if let Some(window) = app.get_webview_window("main") {
         let message = format!("{error:?}");
-        let script = format!("document.querySelector('h1').textContent = 'Codex Quota Monitor needs attention'; document.getElementById('error').textContent = {message};");
+        let script = format!("document.querySelector('h1').textContent = 'FlightMargin needs attention'; document.getElementById('error').textContent = {message};");
         let _ = window.eval(script);
     }
 }
@@ -251,7 +300,7 @@ fn open_settings_window(
         SETTINGS_WINDOW_LABEL,
         WebviewUrl::External(url),
     )
-    .title("Codex Quota Monitor Settings")
+    .title("FlightMargin Settings")
     .inner_size(SETTINGS_WINDOW_WIDTH, SETTINGS_WINDOW_HEIGHT)
     .min_inner_size(360.0, 360.0)
     .visible(false)
@@ -290,9 +339,9 @@ fn tray_indicator_preference(contents: Option<&str>) -> bool {
 
 fn update_tray_quota(app: &tauri::AppHandle, five: &str, weekly: &str, credits: &str) {
     let tooltip = if tray_indicator_enabled() {
-        format!("Codex Quota Monitor\nWeekly remaining: {weekly}\n5-hour remaining: {five}")
+        format!("FlightMargin\nWeekly remaining: {weekly}\n5-hour remaining: {five}")
     } else {
-        "Codex Quota Monitor - monitoring".to_string()
+        "FlightMargin - monitoring".to_string()
     };
     if let Ok(state) = app.state::<TrayState>().0.lock() {
         if let Some(tray) = state.as_ref() { let _ = tray.set_tooltip(Some(&tooltip)); }
@@ -597,7 +646,7 @@ fn setup_tray(app: &tauri::AppHandle) -> tauri::Result<()> {
                 .expect("application icon missing")
                 .clone(),
         )
-        .tooltip("Codex Quota Monitor - monitoring")
+        .tooltip("FlightMargin - monitoring")
         .menu(&menu)
         .on_menu_event(|app, event| match event.id().as_ref() {
             "open" => show_main_window(app),
@@ -648,6 +697,7 @@ fn setup_tray(app: &tauri::AppHandle) -> tauri::Result<()> {
 }
 
 fn main() {
+    let migration = migrate_legacy_desktop_data();
     let app = tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![open_settings, close_settings])
         .plugin(tauri_plugin_shell::init())
@@ -660,9 +710,23 @@ fn main() {
         }))
         .manage(BackendChild(Mutex::new(None)))
         .manage(QuitState(AtomicBool::new(false)))
-        .manage(DesktopLog::open())
+        .manage(DesktopLog::closed())
         .manage(TrayState(Mutex::new(None)))
-        .setup(|app| {
+        .setup(move |app| {
+            let migrated = match &migration {
+                Ok(migrated) => *migrated,
+                Err(error) => {
+                    show_startup_error(app.handle(), &format!("Unable to migrate legacy user data: {error}"));
+                    return Ok(());
+                }
+            };
+            if let Err(error) = app.state::<DesktopLog>().open() {
+                show_startup_error(app.handle(), &format!("Unable to open FlightMargin logs: {error}"));
+                return Ok(());
+            }
+            if migrated {
+                log_message(app.handle(), "Legacy user data copied to FlightMargin");
+            }
             // Existing installations may have been created before the compact
             // default. Apply it explicitly so an older native window geometry
             // cannot override the current 600x450 product default.
@@ -676,7 +740,7 @@ fn main() {
             Ok(())
         })
         .build(tauri::generate_context!())
-        .expect("error while building Codex Quota Monitor desktop shell");
+        .expect("error while building FlightMargin desktop shell");
     app.run(|app_handle, event| match event {
         RunEvent::WindowEvent {
             label,
@@ -698,10 +762,44 @@ fn main() {
 mod tests {
     use super::{
         adjacent_window_position, credits_color, credits_display, credits_tooltip,
-        digit_layout, numeric_icon_pixels, parse_credits, parse_percentage, quota_color,
+        digit_layout, migrate_legacy_data_at, numeric_icon_pixels, parse_credits,
+        parse_percentage, quota_color,
         tray_indicator_preference, ScreenRect, SettingsSection, CREDITS_INDICATOR_ID,
         FIVE_HOUR_INDICATOR_ID, WEEKLY_INDICATOR_ID,
     };
+
+    #[test]
+    fn legacy_data_migration_is_copy_only_and_idempotent() {
+        let root = std::env::temp_dir().join(format!(
+            "flightmargin-rust-migration-test-{}",
+            std::process::id()
+        ));
+        let _ = std::fs::remove_dir_all(&root);
+        let legacy = root.join("Codex Quota Monitor");
+        std::fs::create_dir_all(legacy.join("logs")).expect("create legacy fixture");
+        std::fs::write(legacy.join("quota.db"), b"history").expect("write database fixture");
+        std::fs::write(legacy.join("desktop-preferences.json"), b"preferences")
+            .expect("write preferences fixture");
+        std::fs::write(legacy.join("logs").join("desktop.log"), b"legacy log")
+            .expect("write log fixture");
+
+        assert!(migrate_legacy_data_at(&root).expect("first migration"));
+        assert_eq!(
+            std::fs::read(root.join("FlightMargin").join("quota.db")).expect("migrated database"),
+            b"history"
+        );
+        assert!(root.join("Codex Quota Monitor").join("quota.db").is_file());
+        assert!(!root.join("FlightMargin").join("logs").exists());
+
+        std::fs::write(root.join("FlightMargin").join("quota.db"), b"new history")
+            .expect("update new database");
+        assert!(!migrate_legacy_data_at(&root).expect("repeat migration"));
+        assert_eq!(
+            std::fs::read(root.join("FlightMargin").join("quota.db")).expect("preserved database"),
+            b"new history"
+        );
+        std::fs::remove_dir_all(root).expect("remove migration fixture");
+    }
 
     #[test]
     fn settings_sections_route_to_one_native_settings_page() {

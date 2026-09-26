@@ -7,12 +7,13 @@ build-backend = "setuptools.build_meta"
 
 
 [project]
-name = "codex-quota-monitor"
+name = "flightmargin"
 dynamic = [
     "version",
 ]
-description = "Local-first OpenAI Codex usage and quota monitor"
+description = "Lightweight, local-first monitor for OpenAI Codex usage limits, pacing, resets, credits, and history"
 readme = "README.md"
+license = "AGPL-3.0-or-later"
 requires-python = ">=3.10"
 dependencies = [
     "fastapi",
@@ -22,6 +23,7 @@ dependencies = [
 
 
 [project.scripts]
+flightmargin = "app.cli:main"
 codex-quota = "app.cli:main"
 
 

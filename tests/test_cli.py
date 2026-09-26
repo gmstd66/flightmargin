@@ -72,7 +72,7 @@ def test_version_uses_canonical_application_version(
 
     assert (
         capsys.readouterr().out
-        == f"codex-quota-monitor {__version__}\n"
+        == f"flightmargin {__version__}\n"
     )
 
 

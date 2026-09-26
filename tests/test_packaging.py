@@ -33,7 +33,7 @@ def test_project_metadata():
 
     assert (
         data["project"]["name"]
-        == "codex-quota-monitor"
+        == "flightmargin"
     )
 
     assert (
@@ -58,17 +58,20 @@ def test_canonical_version_is_valid():
         r"[0-9]+(?:\.[0-9]+)+(?:[a-zA-Z0-9.+-]+)?",
         __version__,
     )
+    assert __version__ == "0.3.0-beta.1"
 
 
 def test_console_script():
     data = load_pyproject()
 
-    assert (
-        data["project"]["scripts"][
-            "codex-quota"
-        ]
-        == "app.cli:main"
-    )
+    assert data["project"]["scripts"] == {
+        "flightmargin": "app.cli:main",
+        "codex-quota": "app.cli:main",
+    }
+
+
+def test_project_license():
+    assert load_pyproject()["project"]["license"] == "AGPL-3.0-or-later"
 
 
 def test_runtime_dependencies():

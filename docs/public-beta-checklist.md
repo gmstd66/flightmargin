@@ -5,9 +5,9 @@ the exact release commit and artifact.
 
 ## Product and legal
 
-- [ ] Public product name approved after branding review
-- [ ] Selected AGPLv3-or-later terms applied through a reviewed `LICENSE`
-- [ ] Contribution terms approved
+- [x] FlightMargin public product name approved; ReserveLight retained as fallback
+- [x] Selected AGPLv3-or-later terms applied through a reviewed `LICENSE`
+- [x] Contribution terms set to the project `AGPL-3.0-or-later` license
 - [ ] Historical author-email/private-infrastructure exposure accepted or remediated
 - [ ] Repository audit rerun and clean
 - [ ] Public security reporting channel enabled
@@ -15,8 +15,8 @@ the exact release commit and artifact.
 
 ## Version and source
 
-- [ ] Public version approved (`0.3.0-beta.1` recommended)
-- [ ] Canonical version updated once and synchronized across generated manifests
+- [x] Public version approved as `0.3.0-beta.1`
+- [x] Canonical version updated once and synchronized across generated manifests
 - [ ] Release branch/main state reviewed and approved
 - [ ] Signed tag `v0.3.0-beta.1` approved and created
 - [ ] Source corresponding exactly to the binary is publicly available
@@ -42,6 +42,7 @@ the exact release commit and artifact.
 - [ ] Settings, About, and sanitized Copy diagnostics pass
 - [ ] Close-to-tray, single-instance, relaunch, and Quit cleanup pass
 - [ ] Upgrade from the previous public beta preserves data/preferences
+- [ ] Transition from the internal 0.2.0 build copies legacy data without loss
 - [ ] Running-app installer prompt/Retry behavior passes
 - [ ] Uninstall succeeds and documented user-data preservation is accurate
 - [ ] SmartScreen behavior recorded

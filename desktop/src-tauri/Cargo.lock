@@ -483,19 +483,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "codex-quota-monitor-desktop"
-version = "0.2.0"
-dependencies = [
- "serde_json",
- "tauri",
- "tauri-build",
- "tauri-plugin-autostart",
- "tauri-plugin-shell",
- "tauri-plugin-single-instance",
- "url",
-]
-
-[[package]]
 name = "combine"
 version = "4.6.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1069,6 +1056,19 @@ dependencies = [
  "crc32fast",
  "miniz_oxide 0.9.1",
  "zlib-rs",
+]
+
+[[package]]
+name = "flightmargin-desktop"
+version = "0.3.0-beta.1"
+dependencies = [
+ "serde_json",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-autostart",
+ "tauri-plugin-shell",
+ "tauri-plugin-single-instance",
+ "url",
 ]
 
 [[package]]

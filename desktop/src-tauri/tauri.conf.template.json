@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Codex Quota Monitor",
+  "productName": "FlightMargin",
   "version": "__APP_VERSION__",
-  "identifier": "com.codexquotamonitor.desktop",
+  "identifier": "io.github.gmstd66.flightmargin",
   "build": {
     "frontendDist": "../frontend"
   },
@@ -11,7 +11,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "Codex Quota Monitor",
+        "title": "FlightMargin",
         "width": 600,
         "height": 450,
         "minWidth": 560,
@@ -25,6 +25,7 @@
   },
   "bundle": {
     "active": true,
+    "publisher": "FlightMargin contributors",
     "targets": ["nsis"],
     "icon": [
       "icons/icon.ico"
@@ -35,7 +36,7 @@
     "windows": {
       "nsis": {
         "installMode": "currentUser",
-        "startMenuFolder": "Codex Quota Monitor",
+        "startMenuFolder": "FlightMargin",
         "installerHooks": "./windows/installer-hooks.nsh"
       }
     }

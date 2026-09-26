@@ -10,7 +10,9 @@ from app.core.config import (
     default_data_dir,
     default_desktop_data_dir,
     default_user_data_dir,
+    legacy_desktop_data_dir,
     load_config,
+    migrate_legacy_data_dir,
 )
 
 
@@ -258,7 +260,7 @@ def test_desktop_data_directories_are_platform_specific(
             environ={"LOCALAPPDATA": str(tmp_path / "local")},
             home=home,
         )
-        == tmp_path / "local" / "Codex Quota Monitor"
+        == tmp_path / "local" / "FlightMargin"
     )
 
     assert (
@@ -270,7 +272,7 @@ def test_desktop_data_directories_are_platform_specific(
         == home
         / "Library"
         / "Application Support"
-        / "Codex Quota Monitor"
+        / "FlightMargin"
     )
 
     assert (
@@ -290,6 +292,7 @@ def test_desktop_mode_uses_desktop_data_directory(
     clear_config_environment(monkeypatch)
     monkeypatch.setenv("CODEX_QUOTA_DESKTOP", "1")
     monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "xdg"))
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path / "local"))
 
     config = load_config()
 
@@ -331,6 +334,32 @@ def test_invalid_port(
         ValueError
     ):
         load_config()
+
+
+def test_windows_legacy_data_migration_is_copy_only_and_idempotent(tmp_path):
+    local_app_data = tmp_path / "local"
+    legacy = legacy_desktop_data_dir(
+        system="Windows",
+        environ={"LOCALAPPDATA": str(local_app_data)},
+        home=tmp_path / "home",
+    )
+    destination = local_app_data / "FlightMargin"
+    (legacy / "logs").mkdir(parents=True)
+    (legacy / "quota.db").write_bytes(b"history")
+    (legacy / "desktop-preferences.json").write_text("preferences", encoding="utf-8")
+    (legacy / "logs" / "desktop.log").write_text("old log", encoding="utf-8")
+    (legacy / "cache.bin").write_bytes(b"cache")
+
+    assert migrate_legacy_data_dir(destination, legacy) is True
+    assert (destination / "quota.db").read_bytes() == b"history"
+    assert (destination / "desktop-preferences.json").read_text(encoding="utf-8") == "preferences"
+    assert not (destination / "logs").exists()
+    assert not (destination / "cache.bin").exists()
+    assert (legacy / "quota.db").is_file()
+
+    (destination / "quota.db").write_bytes(b"new history")
+    assert migrate_legacy_data_dir(destination, legacy) is False
+    assert (destination / "quota.db").read_bytes() == b"new history"
 
 
 def test_invalid_sample_interval(

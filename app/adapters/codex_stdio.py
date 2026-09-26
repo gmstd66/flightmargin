@@ -153,7 +153,7 @@ class CodexAppServer:
             {
                 "clientInfo": {
                     "name":
-                        "codex-quota-monitor",
+                        "flightmargin",
                     "version":
                         __version__,
                 }

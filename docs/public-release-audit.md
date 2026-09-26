@@ -1,6 +1,6 @@
 # Public repository release audit
 
-Audit date: 2026-09-25
+Audit date: 2026-09-25; identity status updated 2026-09-26
 
 Scope: current tracked files, all 47 reachable commits, tracked file history,
 Git metadata, and the local working tree relevant to a future public release.
@@ -56,8 +56,11 @@ visibility and policy are approved.
 - Owner must decide whether to accept the historical author-email and private
   infrastructure exposure or authorize a separately planned history rewrite.
   This milestone does not rewrite or force-push history.
-- Product name must pass the branding gate in `branding-review.md`.
-- The selected AGPLv3-or-later terms must be applied through a reviewed `LICENSE`.
+- FlightMargin naming and AGPLv3-or-later application are complete; a final
+  current-tree audit must confirm the renamed artifacts and notices.
 - The repository must be deliberately made public only after the final audit.
 - Public security contact/private vulnerability reporting must be enabled.
-- Signing, version, final artifact, and release approval gates remain open.
+- Signing, final artifact, and release approval gates remain open. Version
+  `0.3.0-beta.1` is approved but no tag or release is authorized.
+- The intended future repository rename to `flightmargin` remains subject to
+  availability and explicit publication approval.

@@ -21,7 +21,7 @@ After launch approval:
 1. Open the matching GitHub prerelease.
 2. Download the NSIS `-setup.exe` and adjacent `.sha256` file.
 3. Verify the installer's SHA-256 value.
-4. Fully Quit an older Codex Quota Monitor version from its tray menu.
+4. Fully Quit FlightMargin or an older internal Codex Quota Monitor build from its tray menu.
 5. Run the current-user installer and launch the Start menu shortcut.
 
 The first public beta has no automatic updater. Until code signing is active,
@@ -64,10 +64,13 @@ Uninstall through **Settings > Apps > Installed apps**. Ordinary uninstall
 removes the application but preserves:
 
 ```text
-%LOCALAPPDATA%\Codex Quota Monitor
+%LOCALAPPDATA%\FlightMargin
 ```
 
-That directory contains `quota.db`, preferences, and logs. After uninstalling,
+That directory contains `quota.db`, preferences, and logs. On the first renamed
+launch, persistent data is copied from the legacy internal
+`%LOCALAPPDATA%\Codex Quota Monitor` directory only if the new directory is
+absent; the legacy directory remains untouched. After uninstalling,
 users who also want to erase local history can delete the directory manually.
 This does not remove Codex CLI or its authentication.
 
@@ -95,6 +98,6 @@ quota payloads. Security-sensitive reports follow `SECURITY.md`.
 - Windows 11 x64 is the only validated public desktop target;
 - user must install and authenticate Codex independently;
 - notification icons may be placed in Windows overflow;
-- the product name and application of the selected AGPLv3-or-later license remain launch gates.
+- code signing, public repository readiness, and final release approval remain launch gates.
 
 See [Privacy](privacy.md) for actual local-data and network behavior.

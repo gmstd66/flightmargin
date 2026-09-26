@@ -1,5 +1,7 @@
 import os
 import platform
+import shutil
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -7,8 +9,13 @@ from pathlib import Path
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8093
 DEFAULT_SAMPLE_SECONDS = 60
-DEFAULT_APP_DATA_NAME = (
-    "codex-quota-monitor"
+DEFAULT_APP_DATA_NAME = "flightmargin"
+LEGACY_APP_DATA_NAME = "codex-quota-monitor"
+DESKTOP_APP_DATA_NAME = "FlightMargin"
+LEGACY_DESKTOP_APP_DATA_NAME = "Codex Quota Monitor"
+MIGRATED_USER_FILES = (
+    "quota.db",
+    "desktop-preferences.json",
 )
 DESKTOP_ENVIRONMENT_FLAG = "CODEX_QUOTA_DESKTOP"
 
@@ -82,6 +89,18 @@ def default_user_data_dir():
     )
 
 
+def legacy_user_data_dir_from(
+    environ,
+    home,
+):
+    xdg_data_home = environ.get("XDG_DATA_HOME")
+
+    if xdg_data_home:
+        return Path(xdg_data_home).expanduser() / LEGACY_APP_DATA_NAME
+
+    return home / ".local" / "share" / LEGACY_APP_DATA_NAME
+
+
 def default_desktop_data_dir(
     system=None,
     environ=None,
@@ -100,15 +119,15 @@ def default_desktop_data_dir(
     if system == "windows":
         local_app_data = environ.get("LOCALAPPDATA")
         if local_app_data:
-            return Path(local_app_data) / "Codex Quota Monitor"
-        return home / "AppData" / "Local" / "Codex Quota Monitor"
+            return Path(local_app_data) / DESKTOP_APP_DATA_NAME
+        return home / "AppData" / "Local" / DESKTOP_APP_DATA_NAME
 
     if system == "darwin":
         return (
             home
             / "Library"
             / "Application Support"
-            / "Codex Quota Monitor"
+            / DESKTOP_APP_DATA_NAME
         )
 
     return default_user_data_dir_from(
@@ -128,6 +147,72 @@ def default_user_data_dir_from(
         return Path(xdg_data_home).expanduser() / DEFAULT_APP_DATA_NAME
 
     return home / ".local" / "share" / DEFAULT_APP_DATA_NAME
+
+
+def legacy_desktop_data_dir(
+    system=None,
+    environ=None,
+    home=None,
+):
+    """Return the recognized pre-FlightMargin desktop data directory."""
+    environ = os.environ if environ is None else environ
+    system = (system or platform.system()).lower()
+    home = Path(home) if home is not None else Path.home()
+
+    if system == "windows":
+        local_app_data = environ.get("LOCALAPPDATA")
+        if local_app_data:
+            return Path(local_app_data) / LEGACY_DESKTOP_APP_DATA_NAME
+        return home / "AppData" / "Local" / LEGACY_DESKTOP_APP_DATA_NAME
+
+    if system == "darwin":
+        return (
+            home
+            / "Library"
+            / "Application Support"
+            / LEGACY_DESKTOP_APP_DATA_NAME
+        )
+
+    return legacy_user_data_dir_from(environ, home)
+
+
+def migrate_legacy_data_dir(
+    destination,
+    legacy,
+):
+    """Copy persistent user files once without removing the legacy directory."""
+    destination = Path(destination)
+    legacy = Path(legacy)
+
+    if destination.exists() or not legacy.is_dir():
+        return False
+
+    sources = [
+        (legacy / name, name)
+        for name in MIGRATED_USER_FILES
+        if (legacy / name).is_file()
+    ]
+    if not sources:
+        return False
+
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    staging = Path(
+        tempfile.mkdtemp(
+            prefix=".flightmargin-migration-",
+            dir=destination.parent,
+        )
+    )
+    try:
+        for source, name in sources:
+            shutil.copy2(source, staging / name)
+        try:
+            staging.rename(destination)
+        except FileExistsError:
+            return False
+        return True
+    finally:
+        if staging.exists():
+            shutil.rmtree(staging)
 
 
 def default_desktop_log_dir(
@@ -179,6 +264,18 @@ def load_config():
         if desktop_mode
         else default_data_dir(app_root)
     )
+
+    is_source_checkout = (app_root / "pyproject.toml").is_file()
+    if (
+        "CODEX_QUOTA_DATA_DIR" not in os.environ
+        and (desktop_mode or not is_source_checkout)
+    ):
+        legacy_directory = (
+            legacy_desktop_data_dir()
+            if desktop_mode
+            else legacy_user_data_dir_from(os.environ, Path.home())
+        )
+        migrate_legacy_data_dir(default_directory, legacy_directory)
 
     data_dir = Path(
         os.environ.get(

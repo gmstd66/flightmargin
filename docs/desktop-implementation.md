@@ -15,7 +15,7 @@ resizing were removed after owner testing because their complexity and unstable
 layout behavior outweighed their usefulness. Layout schema 4 discards obsolete
 schema-2/schema-3 geometry, restores all panels once during migration, and
 preserves unrelated desktop preferences.
-Preferences are stored in `%LOCALAPPDATA%\Codex Quota Monitor\desktop-preferences.json`.
+Preferences are stored in `%LOCALAPPDATA%\FlightMargin\desktop-preferences.json`.
 Settings opens in one native Tauri window beside the dashboard. It prefers a
 16-logical-pixel gap on the right, falls back to the left when needed, and
 clamps to the active monitor work area using its Windows DPI scale. Reopening
@@ -92,9 +92,9 @@ Desktop mode stores mutable data independently of a source checkout or Linux pro
 
 | Platform | Default data root |
 | --- | --- |
-| Windows | `%LOCALAPPDATA%\Codex Quota Monitor` |
-| macOS | `~/Library/Application Support/Codex Quota Monitor` |
-| Linux | `$XDG_DATA_HOME/codex-quota-monitor` or `~/.local/share/codex-quota-monitor` |
+| Windows | `%LOCALAPPDATA%\FlightMargin` |
+| macOS | `~/Library/Application Support/FlightMargin` |
+| Linux | `$XDG_DATA_HOME/flightmargin` or `~/.local/share/flightmargin` |
 
 `CODEX_QUOTA_DATA_DIR` still overrides this path. `quota.db` is stored beneath it unless `CODEX_QUOTA_DB` is explicitly set.
 
@@ -145,7 +145,7 @@ Milestone 6.16C was validated on Windows 11 Pro 10.0.26200 x64 with Python 3.14.
 4. Launch the installed app and confirm the Python sidecar reports an ephemeral loopback port, `/api/health` responds, and the existing dashboard renders with CSS/JS.
 5. Verify discovery through PATH and `%LOCALAPPDATA%\Programs\OpenAI\Codex\bin\codex.exe`; verify `CODEX_BIN` overrides either path.
 6. Using a pre-authenticated user Codex installation, verify quota collection; verify missing or expired authentication produces a useful diagnostic while historical data remains visible.
-7. Confirm `%LOCALAPPDATA%\Codex Quota Monitor\quota.db` is created, survives restart/upgrade, and is distinct from production or development data.
+7. Confirm `%LOCALAPPDATA%\FlightMargin\quota.db` is created, survives restart/upgrade, and is distinct from production or development data.
 8. Confirm no firewall prompt or externally reachable listener results from loopback-only binding.
 9. Confirm window close, explicit Quit, and backend crash behavior leave no orphan sidecar; implement/test tray/background behavior before claiming it supported.
 10. Record unsigned SmartScreen behavior. Do not sign, tag, publish, or enable auto-update without a separate release/security approval.
@@ -153,9 +153,9 @@ Milestone 6.16C was validated on Windows 11 Pro 10.0.26200 x64 with Python 3.14.
 ## Current limits
 
 - Tray lifecycle, single-instance handling, opt-in start-at-login, and bounded local desktop logging are implemented for the Windows beta. An unexpected sidecar exit presents a controlled diagnostic; reopening the application starts a fresh sidecar.
-- The primary internal beta installer is current-user NSIS. It preserves `%LOCALAPPDATA%\Codex Quota Monitor` on ordinary uninstall and upgrade. MSI output is no longer a primary beta path.
+- The primary beta installer is current-user NSIS. It preserves `%LOCALAPPDATA%\FlightMargin` on ordinary uninstall and upgrade. MSI output is no longer a primary beta path.
 - The NSIS preinstall hook checks for the packaged backend. If it is still active, the installer asks the user to fully Quit from the tray and Retry; it does not kill the process or proceed to a raw locked-file error.
-- Shell logs are `%LOCALAPPDATA%\Codex Quota Monitor\logs\desktop.log`, rotate at 1 MB, and keep one prior file. They must never contain credentials, authentication-file content, or quota payloads.
+- Shell logs are `%LOCALAPPDATA%\FlightMargin\logs\desktop.log`, rotate at 1 MB, and keep one prior file. They must never contain credentials, authentication-file content, or quota payloads.
 - Auto-update, native notifications, signed/public distribution, and broad Windows compatibility validation remain pending.
 - Linux desktop shell compilation remains unverified.
 - Signing and release distribution remain unapproved.

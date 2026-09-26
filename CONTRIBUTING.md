@@ -1,8 +1,8 @@
 # Contributing
 
-Thank you for your interest in Codex Quota Monitor. The project is preparing
-for a public beta but is not yet open for outside contributions because the
-selected AGPLv3-or-later license has not yet been applied to the repository.
+Thank you for your interest in FlightMargin. The project is preparing for a
+public beta but the repository remains private and is not yet open for outside
+contributions.
 
 After the repository and contribution process are opened:
 
@@ -45,5 +45,5 @@ Keep the approved Tauri, PyInstaller, FastAPI, loopback-only architecture unless
 an issue explicitly discusses an architectural change. Be respectful and keep
 technical discussion focused on reproducible behavior.
 
-License terms for contributions will be documented when the owner selects the
-project license. No contributor license agreement has been selected.
+Contributions are accepted under the project's `AGPL-3.0-or-later` license.
+No contributor license agreement has been selected.

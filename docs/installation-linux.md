@@ -1,8 +1,8 @@
-# Codex Quota Monitor — Linux Installation
+# FlightMargin — Linux Installation
 
 ## Overview
 
-Codex Quota Monitor currently supports Linux systems using systemd.
+FlightMargin currently supports Linux systems using systemd.
 
 The application runs as a Python service, launches the locally installed Codex CLI, samples quota information, stores historical data in SQLite, and serves a local web dashboard.
 
@@ -59,11 +59,11 @@ codex --version
 
 ## 2. Codex authentication
 
-Codex Quota Monitor does not manage OpenAI authentication itself.
+FlightMargin does not manage OpenAI authentication itself.
 
 It uses the authentication already available to the Codex CLI.
 
-Before installing Codex Quota Monitor, verify that Codex works normally for the user account that will run the service.
+Before installing FlightMargin, verify that Codex works normally for the user account that will run the service.
 
 For example:
 
@@ -83,7 +83,7 @@ Clone:
 
 ```bash
 git clone https://github.com/<owner>/<repository>.git
-cd codex-quota-monitor
+cd flightmargin
 ```
 
 Replace the placeholder with the public repository URL after launch approval.
@@ -129,6 +129,8 @@ scripts/install-linux.sh --apply
 Default configuration:
 
 ```text
+Service:         flightmargin.service
+CLI:             <repository>/venv/bin/flightmargin
 Host:            127.0.0.1
 Port:            8093
 Sample interval: 60 seconds
@@ -169,7 +171,7 @@ Firewall configuration is outside the installer.
 
 If a firewall is enabled, allow the chosen port only from trusted networks.
 
-Do not expose Codex Quota Monitor directly to the public internet.
+Do not expose FlightMargin directly to the public internet.
 
 The dashboard currently has no application-level authentication.
 
@@ -196,6 +198,8 @@ Important options include:
 --bootstrap-python PATH
 --venv PATH
 --codex PATH
+--cli PATH
+--service-name NAME
 --service-path PATH
 --dev
 --dry-run
@@ -206,7 +210,7 @@ Important options include:
 
 ```bash
 scripts/install-linux.sh \
-  --venv /opt/codex-quota-venv \
+  --venv /opt/flightmargin-venv \
   --apply
 ```
 
@@ -243,7 +247,7 @@ instead of only the runtime requirements.
 After installation:
 
 ```bash
-venv/bin/python -m app.cli doctor
+venv/bin/flightmargin doctor
 ```
 
 A successful result ends with:
@@ -272,13 +276,13 @@ The doctor checks:
 Run:
 
 ```bash
-venv/bin/python -m app.cli status
+venv/bin/flightmargin status
 ```
 
 Example output:
 
 ```text
-Codex Quota Monitor
+FlightMargin
 
 5-hour: 25% used / 75% remaining
 Weekly:  50% used / 50% remaining
@@ -293,53 +297,76 @@ Resets:  3 available
 Status:
 
 ```bash
-systemctl status codex-quota --no-pager -l
+systemctl status flightmargin --no-pager -l
 ```
 
 Check startup state:
 
 ```bash
-systemctl is-enabled codex-quota
+systemctl is-enabled flightmargin
 ```
 
 Check runtime state:
 
 ```bash
-systemctl is-active codex-quota
+systemctl is-active flightmargin
 ```
 
 Restart:
 
 ```bash
-sudo systemctl restart codex-quota
+sudo systemctl restart flightmargin
 ```
 
 Stop:
 
 ```bash
-sudo systemctl stop codex-quota
+sudo systemctl stop flightmargin
 ```
 
 Start:
 
 ```bash
-sudo systemctl start codex-quota
+sudo systemctl start flightmargin
 ```
 
 Logs:
 
 ```bash
-journalctl -u codex-quota -f
+journalctl -u flightmargin -f
 ```
 
 Recent logs:
 
 ```bash
 journalctl \
-  -u codex-quota \
+  -u flightmargin \
   -n 100 \
   --no-pager
 ```
+
+---
+
+## Legacy compatibility
+
+The public beta installs the `flightmargin` distribution and provides both the
+canonical `flightmargin` CLI and the legacy `codex-quota` alias. New generated
+units default to `flightmargin.service`.
+
+Do not rename a working legacy `codex-quota.service` merely for cosmetic
+consistency. Existing deployments can keep that service name and an explicit
+legacy CLI path:
+
+```bash
+scripts/install-linux.sh \
+  --service-name codex-quota \
+  --cli /path/to/venv/bin/codex-quota \
+  --apply
+```
+
+Milestone 6.20D.1 does not modify the protected production checkout
+`/opt/codex-quota`, unit `codex-quota.service`, port `8093`, database,
+configuration, firewall, user, or authentication state.
 
 ---
 
@@ -358,7 +385,7 @@ Expected structure:
 ```json
 {
     "status": "ok",
-    "version": "0.2.0",
+    "version": "0.3.0-beta.1",
     "collector": {
         "running": true
     },
@@ -373,7 +400,7 @@ Expected structure:
 Enter the repository:
 
 ```bash
-cd /path/to/codex-quota-monitor
+cd /path/to/flightmargin
 ```
 
 Update the source:
@@ -418,7 +445,7 @@ The installer:
 Before replacing an existing service, the installer creates backups similar to:
 
 ```text
-/etc/systemd/system/codex-quota.service.backup.20260923-140722
+/etc/systemd/system/flightmargin.service.backup.20260923-140722
 ```
 
 These are not automatically deleted.
@@ -433,25 +460,25 @@ List available backups:
 
 ```bash
 sudo ls -lt \
-  /etc/systemd/system/codex-quota.service*
+  /etc/systemd/system/flightmargin.service*
 ```
 
 Restore one:
 
 ```bash
 sudo cp \
-  /etc/systemd/system/codex-quota.service.backup.TIMESTAMP \
-  /etc/systemd/system/codex-quota.service
+  /etc/systemd/system/flightmargin.service.backup.TIMESTAMP \
+  /etc/systemd/system/flightmargin.service
 
 sudo systemctl daemon-reload
-sudo systemctl restart codex-quota
+sudo systemctl restart flightmargin
 ```
 
 Then verify:
 
 ```bash
 systemctl status \
-  codex-quota \
+  flightmargin \
   --no-pager -l
 ```
 
@@ -495,6 +522,14 @@ scripts/uninstall-linux.sh --help
 
 ## 16. Runtime data
 
+Repository installs explicitly use `<repository>/data`. Installed-user defaults
+are `$XDG_DATA_HOME/flightmargin` or `~/.local/share/flightmargin`. If the new
+directory is absent, FlightMargin copies `quota.db` and
+`desktop-preferences.json` from the corresponding legacy
+`codex-quota-monitor` directory. It preserves the legacy directory, skips logs
+and caches, and never overwrites an existing FlightMargin directory. Explicit
+`CODEX_QUOTA_DATA_DIR` and `CODEX_QUOTA_DB` values remain authoritative.
+
 The default SQLite database is:
 
 ```text
@@ -511,7 +546,7 @@ Back it up before deleting runtime data if historical usage is important.
 
 ## 17. Security
 
-Codex Quota Monitor currently has no application-level login.
+FlightMargin currently has no application-level login.
 
 Recommended configurations are:
 
@@ -556,7 +591,7 @@ Run Codex interactively as the service user:
 codex
 ```
 
-Verify authentication before restarting Codex Quota Monitor.
+Verify authentication before restarting FlightMargin.
 
 ### Python venv creation fails
 
@@ -578,7 +613,7 @@ Check:
 
 ```bash
 systemctl status \
-  codex-quota \
+  flightmargin \
   --no-pager -l
 ```
 
@@ -586,7 +621,7 @@ and:
 
 ```bash
 journalctl \
-  -u codex-quota \
+  -u flightmargin \
   -n 100 \
   --no-pager
 ```
@@ -635,7 +670,7 @@ Automatic Codex CLI installation is intentionally not part of the installer at t
 
 ## Installation path requirements
 
-Do not install Codex Quota Monitor under `/tmp`.
+Do not install FlightMargin under `/tmp`.
 
 The generated systemd service uses:
 
@@ -656,8 +691,8 @@ because the service cannot access the Python executable inside that checkout.
 Use a persistent location such as:
 
 ```text
-/opt/codex-quota
-/home/<user>/codex-quota-monitor
+/opt/flightmargin
+/home/<user>/flightmargin
 ```
 
 or another non-temporary directory.
