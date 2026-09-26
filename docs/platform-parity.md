@@ -91,14 +91,26 @@ required for Linux parity.
 
 ## Validation status
 
-The full cross-platform Python suite, JavaScript syntax checks, SQLite/API
-contract tests, and an isolated browser runtime smoke passed. The runtime smoke
-used temporary data on `127.0.0.1:18097`, exercised the real authenticated
-Codex collector, dashboard, Settings/About, history, Credits, refresh, and
-clean shutdown. A second isolated run on `18098` verified the missing-Codex
-503/error state without exposing the raw process error to the dashboard.
+6.20B native Linux validation completed on Ubuntu 24.04.5 LTS x86_64 with
+Python 3.12.3 and Codex CLI 0.153.2. An isolated development venv and SQLite
+data directory ran the real authenticated `account/rateLimits/read` collector
+on loopback-only temporary ports. Contract checks confirmed both quota
+windows, reset timestamps, Weekly Pace and exhaustion calculation, reset
+credits, account metadata, purchased credits, history, dashboard assets,
+browser Settings/About, refresh, panel preferences, and threshold states
+without recording account or quota values in this document.
 
-The available milestone host was Windows and had no WSL distribution or remote
-Linux development host. Native Linux process/systemd execution therefore
-remains a validation gate even though the Linux-specific paths and generated
-systemd unit are covered by tests. Production was not accessed.
+The missing-Codex path was simulated only through `CODEX_BIN`; it produced the
+controlled public message, no stale quota sample, a renderable dashboard, and
+available diagnostics. A temporary per-user
+`codex-quota-test-parity.service` used only the development checkout/venv,
+temporary SQLite data, and loopback port. Its install/start, collection,
+SQLite writes, restart, clean stop with no remaining children, start-again,
+journal inspection, and cleanup all passed. Production was inspected
+read-only afterward and remained active and isolated.
+
+The final isolated suite passed 108 Python tests; JavaScript syntax and API
+compatibility checks passed. Baseline (not an optimization target) was three
+processes, about 175 MB combined RSS, about 0.10% idle CPU for the server over
+a ten-second interval, a 16 KB temporary database, and about 3.3 KB of test
+service journal output.

@@ -169,17 +169,20 @@ about 0.10% idle CPU, a 16 KiB temporary DB, and about 3.3 KiB journal output.
 The runtime package is the 35,408-byte wheel plus required dependencies; source
 package content is 98,781 bytes.
 
-This Windows host has no WSL distribution, Docker engine, SSH-configured
-development host, or native Linux runner. Exact Linux venv bytes and native
-startup-to-health/first-sample timers therefore could not be re-measured.
-Production `/opt/codex-quota`, `codex-quota.service`, port 8093, and production
-data were not read or modified.
+Commit `11d94cf`, integrated before milestone completion, is the authoritative
+native Ubuntu 24.04.5 x86_64 validation: Python 3.12.3, Codex CLI 0.153.2, real
+authenticated collection, isolated loopback ports/data, and a temporary
+`codex-quota-test-parity.service`. It also verified read-only that production
+remained active and isolated. That retained evidence did not record exact venv
+bytes or startup-to-health/first-sample timers, so those two values are not
+invented here. This Windows host has no WSL/Docker/native Linux runner, and
+6.20C did not access production Linux.
 
 No retained packaging/npm optimization executes on Linux. The only shared
 change removes one duplicate startup sample; process count, RSS, dependencies,
-and 60-second cadence are otherwise unchanged. Shared tests, package/API smoke,
-collector/CLI/systemd contracts, and error behavior provide non-native evidence.
-A native isolated rerun remains a release-validation item, not a known defect.
+and 60-second cadence are otherwise unchanged. The final Linux figures remain
+three processes, about 175 MiB RSS, about 0.10% idle CPU, 16 KiB initial DB,
+about 3.3 KiB temporary journal output, and the same 40.64 MiB/year projection.
 
 ## Validation summary
 

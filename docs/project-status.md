@@ -154,14 +154,17 @@ Git history records these completed capabilities:
   license audits, branding/license/signing gates, and a human-gated release
   checklist. `0.3.0-beta.1` remains a recommendation rather than a version
   change.
-- Milestone 6.20B implementation aligns the Linux/browser product surface with Windows while
+- Milestone 6.20B platform parity is complete. It aligns the Linux/browser product surface with Windows while
   preserving native platform mechanics. Both editions now share quota states,
   unavailable/credit behavior, fixed panel ordering and visibility,
   responsive History, and Settings/About data. Linux uses a browser surface,
   systemd, and journal/process logging; Windows retains Tauri, native windows,
   tray/startup integration, PyInstaller, and NSIS. The shared runtime and real
-  Codex collector passed an isolated browser smoke, but the Windows-only
-  milestone host could not execute the final native Linux/systemd smoke.
+  Codex collector passed an isolated browser smoke and the final native Linux
+  runtime/systemd validation: real authenticated collection, browser/API and
+  failure-state handling, temporary-service lifecycle, resource baselining,
+  and read-only production-isolation verification. The validation found and
+  fixed Windows About-path separator formatting when checked from Linux.
 - Milestone 6.20C completes the pre-beta lean runtime review. The measured
   Windows NSIS installer is 16.835 MiB (down 9.20%), its installed runtime is
   25.464 MiB (down 8.21%), and app-owned RSS on the measured official npm Codex
@@ -190,9 +193,6 @@ Known caveats:
 - Codex CLI availability, its authenticated user context, and the app-server rate-limit response are external dependencies.
 - The dashboard has no built-in authentication and should remain local, trusted-LAN, or private-VPN only.
 - The service `WorkingDirectory` is the project root even though its executable is packaged; repository-based installation remains the documented workflow.
-- Native Linux 6.20C remeasurement remains unavailable on the Windows-only
-  milestone host. The supplied 6.20B isolated baseline is retained; no
-  production Linux resource was touched.
 
 Docker decision: self-contained Docker distribution is deferred because the current Codex app-server sandbox is not container-friendly under the tested Docker security profile. A host-bridge architecture is not currently justified. Native systemd remains the Linux/headless deployment model. Revisit Docker only if Codex gains a supported container-friendly execution model. See `docs/docker-feasibility.md` for the evidence.
 
