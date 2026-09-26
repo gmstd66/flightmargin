@@ -4,6 +4,7 @@ import queue
 import shutil
 import subprocess
 import threading
+from pathlib import Path
 from typing import Any
 
 from app.version import (
@@ -22,6 +23,52 @@ def windows_hidden_subprocess_kwargs(system_name=None):
         "creationflags": subprocess.CREATE_NO_WINDOW,
         "startupinfo": startupinfo,
     }
+
+
+def resolve_windows_npm_codex(
+    executable,
+    system_name=None,
+    machine=None,
+):
+    """Resolve an official npm shim to its packaged native Codex binary.
+
+    The npm shim otherwise leaves cmd.exe, conhost.exe, and Node resident for
+    the lifetime of the app-server. Only recognized official package layouts
+    are optimized; every other installation keeps using its original command.
+    """
+    if not executable or (system_name or os.name) != "nt":
+        return executable
+
+    wrapper = Path(executable)
+    if wrapper.name.lower() not in {"codex", "codex.cmd"}:
+        return executable
+
+    package_root = wrapper.parent / "node_modules" / "@openai" / "codex"
+    if not (package_root / "bin" / "codex.js").is_file():
+        return executable
+
+    machine = (machine or os.environ.get("PROCESSOR_ARCHITECTURE", "")).lower()
+    targets = {
+        "amd64": ("codex-win32-x64", "x86_64-pc-windows-msvc"),
+        "x86_64": ("codex-win32-x64", "x86_64-pc-windows-msvc"),
+        "arm64": ("codex-win32-arm64", "aarch64-pc-windows-msvc"),
+        "aarch64": ("codex-win32-arm64", "aarch64-pc-windows-msvc"),
+    }
+    target = targets.get(machine)
+    if not target:
+        return executable
+
+    package_name, triple = target
+    package_parents = (
+        package_root / "node_modules" / "@openai",
+        wrapper.parent / "node_modules" / "@openai",
+    )
+    for parent in package_parents:
+        native = parent / package_name / "vendor" / triple / "bin" / "codex.exe"
+        if native.is_file():
+            return str(native)
+
+    return executable
 
 
 class CodexNotFoundError(RuntimeError):
@@ -43,10 +90,12 @@ class CodexAppServer:
         self,
         executable: str | None = None,
     ):
+        configured = executable or os.environ.get("CODEX_BIN")
+        discovered = configured or shutil.which("codex")
         self.executable = (
-            executable
-            or os.environ.get("CODEX_BIN")
-            or shutil.which("codex")
+            discovered
+            if configured
+            else resolve_windows_npm_codex(discovered)
         )
 
         self.process = None

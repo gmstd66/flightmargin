@@ -25,6 +25,14 @@ Notable changes to Codex Quota Monitor are documented here. This file summarizes
 
 ### Changed
 
+- Completed the measurement-driven lean runtime review: reduced the Windows
+  installer by 9.2%, reduced app-owned steady RSS by 21.3% for the measured npm
+  Codex installation, removed a duplicate startup quota sample, and retained
+  existing Windows/Linux functionality and polling freshness.
+- Windows release builds now exclude optional Setuptools/PyYAML sidecar weight,
+  use safe Cargo LTO/strip settings, resolve recognized official npm shims to
+  native Codex with a compatibility fallback, and reliably run the canonical
+  sidecar-rebuilding `npm run tauri:build` flow.
 - Recorded the planned free, open-source distribution model: voluntary GitHub Sponsors support, GitHub Releases for future public installers, and a preference for qualifying free open-source code signing.
 - Fixed Windows sidecar startup by passing the pre-bound loopback socket directly to Uvicorn.
 - Added Windows Tauri icon configuration, current shell-plugin compatibility, clear sidecar-startup and collector diagnostics, and process-tree shutdown for PyInstaller one-file sidecars.

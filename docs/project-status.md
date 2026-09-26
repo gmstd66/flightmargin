@@ -162,6 +162,15 @@ Git history records these completed capabilities:
   tray/startup integration, PyInstaller, and NSIS. The shared runtime and real
   Codex collector passed an isolated browser smoke, but the Windows-only
   milestone host could not execute the final native Linux/systemd smoke.
+- Milestone 6.20C completes the pre-beta lean runtime review. The measured
+  Windows NSIS installer is 16.835 MiB (down 9.20%), its installed runtime is
+  25.464 MiB (down 8.21%), and app-owned RSS on the measured official npm Codex
+  installation is 225.55 MiB (down 21.33%, excluding WebView2). Optional
+  Setuptools/PyYAML sidecar content was excluded, safe Cargo thin-LTO/strip
+  settings were added, recognized official npm shims now use native Codex with
+  fallback, and duplicate startup collection was removed. The required
+  sidecar-rebuilding NSIS command and real authenticated runtime smoke pass.
+  See `docs/lean-runtime-review.md` for the breakdown and growth projections.
 
 ## Branch workflow, caveats, and next work
 
@@ -181,6 +190,9 @@ Known caveats:
 - Codex CLI availability, its authenticated user context, and the app-server rate-limit response are external dependencies.
 - The dashboard has no built-in authentication and should remain local, trusted-LAN, or private-VPN only.
 - The service `WorkingDirectory` is the project root even though its executable is packaged; repository-based installation remains the documented workflow.
+- Native Linux 6.20C remeasurement remains unavailable on the Windows-only
+  milestone host. The supplied 6.20B isolated baseline is retained; no
+  production Linux resource was touched.
 
 Docker decision: self-contained Docker distribution is deferred because the current Codex app-server sandbox is not container-friendly under the tested Docker security profile. A host-bridge architecture is not currently justified. Native systemd remains the Linux/headless deployment model. Revisit Docker only if Codex gains a supported container-friendly execution model. See `docs/docker-feasibility.md` for the evidence.
 

@@ -164,6 +164,11 @@ async def collector_loop():
     ] = True
 
     try:
+        # Lifespan performs the initial collection before the API becomes
+        # healthy. Wait a full interval so startup does not issue a duplicate
+        # Codex request and insert a near-identical row.
+        await asyncio.sleep(SAMPLE_INTERVAL)
+
         while True:
             started = time.monotonic()
 
@@ -216,13 +221,14 @@ async def collector_loop():
                 - started
             )
 
-            await asyncio.sleep(
-                max(
-                    1,
-                    SAMPLE_INTERVAL
-                    - elapsed,
+            if elapsed < SAMPLE_INTERVAL:
+                await asyncio.sleep(
+                    max(
+                        1,
+                        SAMPLE_INTERVAL
+                        - elapsed,
+                    )
                 )
-            )
 
     except asyncio.CancelledError:
         pass

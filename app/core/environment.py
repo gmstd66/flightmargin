@@ -5,7 +5,10 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-from app.adapters.codex_stdio import windows_hidden_subprocess_kwargs
+from app.adapters.codex_stdio import (
+    resolve_windows_npm_codex,
+    windows_hidden_subprocess_kwargs,
+)
 
 
 def detect_platform():
@@ -72,7 +75,15 @@ def find_codex(
     for executable_name in executable_names:
         found = which(executable_name)
         if found:
-            return found
+            return resolve_windows_npm_codex(
+                found,
+                system_name=(
+                    "nt"
+                    if (system or platform.system()).lower() == "windows"
+                    else "posix"
+                ),
+                machine=platform.machine(),
+            )
 
     for candidate in codex_candidate_paths(
         system=system,

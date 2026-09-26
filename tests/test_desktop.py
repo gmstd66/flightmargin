@@ -22,6 +22,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 PREPARE_SCRIPT = PROJECT_ROOT / "desktop" / "scripts" / "prepare-tauri-config.py"
 TAURI_MAIN = PROJECT_ROOT / "desktop" / "src-tauri" / "src" / "main.rs"
 TAURI_CONFIG = PROJECT_ROOT / "desktop" / "src-tauri" / "tauri.conf.template.json"
+TAURI_CARGO = PROJECT_ROOT / "desktop" / "src-tauri" / "Cargo.template.toml"
 TAURI_CAPABILITY = PROJECT_ROOT / "desktop" / "src-tauri" / "capabilities" / "default.json"
 OPEN_SETTINGS_CAPABILITY = PROJECT_ROOT / "desktop" / "src-tauri" / "capabilities" / "open-settings.json"
 CLOSE_SETTINGS_CAPABILITY = PROJECT_ROOT / "desktop" / "src-tauri" / "capabilities" / "close-settings.json"
@@ -129,6 +130,16 @@ def test_tauri_templates_use_canonical_version(tmp_path):
         assert __version__ in destination.read_text(encoding="utf-8")
 
 
+def test_tauri_release_profile_uses_safe_size_optimizations():
+    manifest = TAURI_CARGO.read_text(encoding="utf-8")
+
+    assert '[profile.release]' in manifest
+    assert 'codegen-units = 1' in manifest
+    assert 'lto = "thin"' in manifest
+    assert 'strip = "symbols"' in manifest
+    assert 'panic = "abort"' not in manifest
+
+
 def test_windows_desktop_logs_share_the_application_data_root():
     local_app_data = Path("C:/Users/test/AppData/Local")
 
@@ -183,8 +194,19 @@ def test_tauri_release_build_rebuilds_embedded_dashboard_sidecar():
     package = json.loads(DESKTOP_PACKAGE.read_text(encoding="utf-8"))
     scripts = package["scripts"]
 
+    assert scripts["prepare"] == "..\\.venv\\Scripts\\python.exe scripts/prepare-tauri-config.py"
     assert scripts["build:sidecar"] == "..\\.venv\\Scripts\\python.exe scripts/build-sidecar.py"
     assert scripts["tauri:build"].startswith("npm run build:sidecar &&")
+
+
+def test_sidecar_build_excludes_optional_build_environment_packages():
+    source = (
+        PROJECT_ROOT / "desktop" / "scripts" / "build-sidecar.py"
+    ).read_text(encoding="utf-8")
+
+    assert '"--collect-submodules",\n        "app",' in source
+    assert '"--exclude-module",\n        "setuptools",' in source
+    assert '"--exclude-module",\n        "yaml",' in source
 
 
 def test_windows_beta_workflow_is_manual_locked_and_nonpublishing():

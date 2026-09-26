@@ -17,6 +17,26 @@ DASHBOARD_SCRIPT = PROJECT_ROOT / "app" / "static" / "app.js"
 SETTINGS_SCRIPT = PROJECT_ROOT / "app" / "static" / "settings.js"
 
 
+def test_collector_loop_waits_before_next_sample(monkeypatch):
+    collections = []
+    sleeps = []
+
+    async def collect():
+        collections.append(True)
+
+    async def sleep(seconds):
+        sleeps.append(seconds)
+        raise asyncio.CancelledError
+
+    monkeypatch.setattr(main_module, "collect", collect)
+    monkeypatch.setattr(main_module.asyncio, "sleep", sleep)
+
+    asyncio.run(main_module.collector_loop())
+
+    assert sleeps == [main_module.SAMPLE_INTERVAL]
+    assert collections == []
+
+
 def sample(*, credits="365.8930500000"):
     now = int(time.time())
     return {
