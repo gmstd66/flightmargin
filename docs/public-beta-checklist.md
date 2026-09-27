@@ -12,8 +12,8 @@ artifact.
 - [x] Historical author-email/private-infrastructure exposure remediated
 - [x] Repository privacy and secret audit rerun against a fresh clone
 - [x] Final Linux publication preflight completed against the sanitized checkout
-- [ ] Public security reporting channel enabled
-- [ ] Repository intentionally made public
+- [x] GitHub private vulnerability reporting enabled
+- [x] Repository intentionally made public at `gmstd66/flightmargin`
 
 ## Version and source
 
@@ -64,11 +64,12 @@ artifact.
 
 Auto-update is deliberately excluded from beta 1 and remains a later decision.
 
-## 6.20D.3A evidence
+## 6.20D.3A/6.20D.4 evidence
 
 The 2026-09-27 Linux preflight validated the sanitized checkout's reachable
 history and current tree, wheel metadata, both CLI names, authenticated
 collection, isolated browser routes, and generated FlightMargin and legacy
-systemd units. It made no production change. Signing, an approved tag, a
-GitHub Release, public visibility, and the public security reporting channel
-remain unchecked owner gates.
+systemd units. It made no production change. On the same date, the repository
+was renamed to `gmstd66/flightmargin`, made public, given its approved metadata,
+and configured for private vulnerability reporting. Signing, an approved tag,
+and a GitHub Release remain separate gates.

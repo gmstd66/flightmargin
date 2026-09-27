@@ -6,11 +6,17 @@ Notable changes to FlightMargin are documented here. This file summarizes produc
 
 ### Added
 
+- Published the FlightMargin source repository as
+  `https://github.com/gmstd66/flightmargin` after the sanitized-history and
+  final privacy checks. Applied the approved description/topics and enabled
+  GitHub private vulnerability reporting. No beta tag, GitHub Release, binary,
+  signing submission, or production change was made.
 - Completed the Linux publication preflight against the sanitized development
   checkout: history/current-tree privacy and secret scans, wheel and CLI
   verification, authenticated local runtime and browser validation, static
   FlightMargin/legacy systemd checks, and production-isolation checks. The
-  repository remains private; no release or production change was made.
+  repository remained private at that preflight point; no release or production
+  change was made.
 - Added a reviewable pre-public Git-history sanitation plan covering the
   private backup, full-history privacy/secret inventory, exact rewrite and
   leased-push strategy, GitHub residual exposure, and post-rewrite validation.

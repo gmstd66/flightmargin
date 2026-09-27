@@ -48,7 +48,7 @@ general refactor.
 | License | selected but unapplied AGPLv3-or-later | A | Add the standard GNU AGPL v3 text as `LICENSE` and use SPDX `AGPL-3.0-or-later` in project/package metadata. |
 | README and current operational/release docs | Current old-name copy and pending-decision text | A/D | Rebrand current guidance and resolve the approved name/version/license decisions. Preserve old-name references only where needed to explain migration/history. |
 | Historical milestone records | Changelog 0.2.0, old feasibility/validation observations | D | Keep technically meaningful old-release references, labeling them as the legacy/internal identity where ambiguity is possible. |
-| Repository and checkout name | private GitHub `codex-quota-monitor`, local checkout path | B/C | Do not rename in this milestone. Intended future repository name is `flightmargin`, subject to availability and publication approval. |
+| Repository and checkout name | GitHub `codex-quota-monitor`, local checkout path | B/C | The repository was later renamed to public `gmstd66/flightmargin`; the local checkout path remains unchanged. |
 | Tests and fixtures | Old product, path, package, version, and installer assertions | A/C | Update public assertions and add explicit migration/idempotence plus legacy-alias coverage. Keep production-path fixtures unchanged. |
 
 ## Installer transition expectation
@@ -78,7 +78,8 @@ internal installation and data were not changed.
 
 ## Deferred work
 
-- No GitHub repository rename or visibility change.
+- No GitHub repository rename or visibility change in 6.20D.1; repository
+  publication was later completed in 6.20D.4.
 - No public release, Git tag, package publication, or GitHub Release.
 - No signing integration or auto-update.
 - No history rewrite or production service migration.
@@ -88,5 +89,5 @@ internal installation and data were not changed.
 The Linux development checkout now uses the sanitized reachable history. The
 previous checkout is archived privately and was not part of the preflight.
 The final public-tree audit is clean, and history sanitation is complete. The
-repository remains private; its future rename to `flightmargin` and publication
-await explicit owner approval. Signing and release work remain later gates.
+repository was subsequently renamed to public `gmstd66/flightmargin` in 6.20D.4.
+Signing and release work remain later gates.

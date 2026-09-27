@@ -3,15 +3,15 @@
 ## Supported versions
 
 There is no public supported release yet. Security fixes currently target the
-latest `dev/productization` source while the first Windows beta is prepared.
+public `main` and `dev/productization` source while the first Windows beta is
+prepared.
 
 ## Reporting a vulnerability
 
 Do not publish credentials, authentication files, exploit details, private
 logs, databases, or account information in a public issue.
 
-Before launch, the owner must enable GitHub private vulnerability reporting or
-publish another private security contact. Once enabled, use the repository's
+GitHub private vulnerability reporting is enabled. Use the repository's
 **Security > Report a vulnerability** flow and include:
 
 - affected version or commit;

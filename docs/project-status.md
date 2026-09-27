@@ -18,9 +18,10 @@ The canonical version is `0.3.0-beta.1` in `app/version.py`. Generated Cargo
 and Tauri versions match it. Python distribution metadata uses the equivalent
 PEP 440 form `0.3.0b1`. The beta feature set is frozen.
 
-The repository remains private. The beta has not been tagged, published,
-signed, or released. Auto-update is deferred. Source, issue, and Sponsor links
-remain hidden until real public destinations exist.
+The public repository is `https://github.com/gmstd66/flightmargin`. The beta
+has not been tagged, released, signed, or distributed as a binary/package.
+Auto-update is deferred. Desktop Source and Report Issue actions, and Sponsor
+links, remain disabled pending separate approval.
 
 FlightMargin is licensed `AGPL-3.0-or-later`; the standard GNU AGPL v3 text is
 present in `LICENSE`. Third-party license notices remain separately inventoried.
@@ -66,9 +67,8 @@ must stay on localhost or a trusted private network.
 - Existing `CODEX_QUOTA_*` configuration variables, the
   `codex-quota-backend` sidecar name, internal browser channel names, and the
   sidecar readiness protocol remain stable compatibility identifiers.
-- The private GitHub repository retains its current name. `flightmargin` is
-  the intended publication-time repository name if it remains available and
-  is separately approved.
+- The public GitHub repository is `gmstd66/flightmargin`; its issue destination
+  is `https://github.com/gmstd66/flightmargin/issues`.
 
 See `docs/flightmargin-rename.md` for the complete classified inventory.
 
@@ -168,10 +168,15 @@ does not authorize system-manager changes. The protected production service
 was only checked as active and its protected port as listening; no production
 files or configuration were accessed or modified.
 
-The repository remains private. Its planned public destination is
-`gmstd66/flightmargin`, with the description and topics recorded in the public
-release audit. Rename, visibility, signing, tag, release, and publication
-remain explicit owner gates.
+## Repository publication (6.20D.4)
+
+On 2026-09-27, the repository was renamed to `gmstd66/flightmargin` and made
+public after a final tracked-tree privacy sanity check. Its approved description
+and topics were applied, and GitHub private vulnerability reporting was enabled.
+`main` and `dev/productization` both pointed to the validated Beta 1 code at
+publication. History sanitation was completed before publication. No beta tag,
+GitHub Release, binary, Sponsor link, or signing submission was created; the
+protected production deployment remains unchanged.
 
 ## Prior validation baseline
 
@@ -195,17 +200,17 @@ normal uninstall removes application integration while preserving user data.
 The rename added no runtime dependency and increased the installer by only
 8,305 bytes (0.047%) from the lean baseline.
 
-## Remaining publication gates
+## Remaining Beta 1 release gates
 
 - human review of this identity/migration milestone;
 - history sanitation is **REMOTE HISTORY SANITATION COMPLETE** in
   `docs/history-sanitation-plan.md`; the validated refs were installed in one
   atomic explicitly leased transaction, and an independent fresh clone has
   clean privacy, secret, and integrity scans;
-- public repository rename/visibility approval and final privacy scan;
 - code-signing implementation and signed-artifact validation;
 - public tag, package/installer publication, and GitHub Release approval;
-- real public source, issue-reporting, security-contact, and Sponsor URLs.
+- separate approval to activate desktop Source/Report Issue actions or Sponsor
+  links.
 
-No merge to `main`, production deployment, new tag, release, public visibility
-change, repository rename, or signing submission is authorized yet.
+No production deployment, new tag, release, signing submission, or Sponsor
+activation is authorized by this publication record.

@@ -1,10 +1,11 @@
 # Public repository release audit
 
-Audit date: 2026-09-25; history rescan and final Linux preflight updated 2026-09-27
+Audit date: 2026-09-25; history rescan, final Linux preflight, and repository
+publication updated 2026-09-27
 
 Scope: the remotely installed sanitized history, its tracked file history,
-commit/tag metadata, and the fresh-clone working tree relevant to a future
-public release. Repository visibility and production state were not changed.
+commit/tag metadata, and the fresh-clone working tree. Repository publication
+was completed on 2026-09-27; production state was not changed.
 
 ## Secret scan
 
@@ -53,7 +54,7 @@ visibility and policy are approved.
 - Added ignores for temporary screenshots, `node_modules`, Cargo `target`, and
   generated Tauri ACL/schema output.
 
-## Publication blockers
+## Publication status and remaining release blockers
 
 - History sanitation is **REMOTE HISTORY SANITATION COMPLETE**. The exact
   validated refs were installed atomically with explicit leases; the fresh
@@ -61,12 +62,11 @@ visibility and policy are approved.
   preserved topology and dates, and clean integrity and secret scans.
 - FlightMargin naming, AGPLv3-or-later application, and the current-tree
   privacy audit are complete.
-- The repository must be deliberately made public only after the final audit.
-- Public security contact/private vulnerability reporting must be enabled.
+- `gmstd66/codex-quota-monitor` was renamed to the public repository
+  `gmstd66/flightmargin` after the final audit. Its approved description and
+  topics were applied, and private vulnerability reporting is enabled.
 - Signing, final artifact, and release approval gates remain open. Version
   `0.3.0-beta.1` is approved but no tag or release is authorized.
-- The intended future repository rename to `flightmargin` remains subject to
-  availability and explicit publication approval.
 
 ## Final Linux preflight
 
@@ -85,9 +85,10 @@ generated `flightmargin.service` and legacy-compatible `codex-quota.service`
 units passed static systemd verification. No system-manager unit was installed
 and no production resource was modified.
 
-Public repository preparation is documentation-only: the intended name is
-`flightmargin` at `gmstd66/flightmargin`; recommended description is “A
-lightweight, local-first monitor for OpenAI Codex usage limits, pacing, resets,
-credits, and history.” Recommended topics are `codex`, `openai`, `quota`,
+The public repository is `https://github.com/gmstd66/flightmargin`; its issue
+destination is `https://github.com/gmstd66/flightmargin/issues`. Its description
+is “A lightweight, local-first monitor for OpenAI Codex usage limits, pacing,
+resets, credits, and history.” Its topics are `codex`, `openai`, `quota`,
 `usage-monitor`, `rate-limits`, `windows`, `linux`, `tauri`, and `python`.
-Source, issue, and Sponsor links remain disabled until that destination exists.
+Desktop Source/Issue actions and Sponsor links remain disabled pending separate
+approval.

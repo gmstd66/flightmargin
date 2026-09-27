@@ -21,10 +21,10 @@ among other things:
 - documented committer/reviewer/approver roles and manual signing approval;
 - a published code-signing policy and privacy statement.
 
-The repository is private and has no public release or SignPath acceptance.
-The AGPLv3-or-later license is now applied through `LICENSE`; public project
-history and the other eligibility conditions remain prerequisites, not CI
-details that should be mocked.
+The repository is public at `https://github.com/gmstd66/flightmargin`, but has
+no public release or SignPath acceptance. The AGPLv3-or-later license is
+applied through `LICENSE`; the other eligibility conditions remain
+prerequisites, not CI details that should be mocked.
 
 ## Intended integration
 
