@@ -11,6 +11,9 @@ Notable changes to FlightMargin are documented here. This file summarizes produc
   in the Windows desktop shell.
 - Added the first-public-beta release-notes draft and explicit Windows
   checksum-verification guidance for the intentionally unsigned installer.
+- Validated the unsigned Beta 1 candidate through the GitHub-hosted Windows
+  workflow, independent SHA-256 verification, Defender scanning, and isolated
+  installed-application checks without tagging or publishing it.
 - Published the FlightMargin source repository as
   `https://github.com/gmstd66/flightmargin` after the sanitized-history and
   final privacy checks. Applied the approved description/topics and enabled

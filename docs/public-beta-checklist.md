@@ -110,3 +110,15 @@ console inspection, and uninstall with new and legacy user data preserved. A
 running-app reinstall remained blocked before copying and left the installed
 executable unchanged. Because the agent has no interactive desktop access, the
 three tray values and manual Retry/Cancel button interaction remain unchecked.
+
+The documentation-complete source snapshot
+`4f9285f8af7eb78131cd3e1587a8140f43c20ec6` also passed GitHub Actions run
+`36348249693`. Artifact ID `10942015033`, named
+`flightmargin-windows-unsigned-4f9285f8af7eb78131cd3e1587a8140f43c20ec6`,
+contained exactly the installer and checksum. The 17,732,166-byte installer's
+independently calculated SHA-256 was
+`98c90184c49be8f5c77625fd960d580cf38c76b3e4d51a03dbce0c3fc1c029a9`,
+matching the checksum file exactly. Metadata and `NotSigned` status were
+correct, and a Microsoft Defender custom scan found no threat. The milestone
+completion report identifies the final exact-source workflow run for this
+documentation snapshot.

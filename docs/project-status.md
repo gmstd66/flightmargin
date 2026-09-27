@@ -261,13 +261,21 @@ uninstall with user data preserved. The validation used a checkout-local
 installation rather than a clean VM. Visual inspection of the three tray values
 and manual interaction with the Retry/Cancel dialog were unavailable.
 
-This evidence update changes only documentation after the first hosted build;
-the resulting final source commit must receive one final hosted build so the
-candidate artifact corresponds to the exact documented source snapshot.
+The documentation-complete source snapshot
+`4f9285f8af7eb78131cd3e1587a8140f43c20ec6` then passed GitHub Actions run
+`36348249693`. Artifact ID `10942015033`, named
+`flightmargin-windows-unsigned-4f9285f8af7eb78131cd3e1587a8140f43c20ec6`,
+contained the same exact two-file installer/checksum set. Its 17,732,166-byte
+installer independently hashed to
+`98c90184c49be8f5c77625fd960d580cf38c76b3e4d51a03dbce0c3fc1c029a9` and
+the checksum matched exactly. FlightMargin `0.3.0-beta.1` metadata,
+`NotSigned` status, and a no-threat Microsoft Defender scan were reconfirmed.
+The milestone completion report identifies the final exact-source workflow run
+for this documentation snapshot, avoiding any claim that an older binary was
+built from a newer commit.
 
 ## Remaining Beta 1 release gates
 
-- final GitHub-hosted rebuild of the documentation-complete source commit;
 - interactive Windows 11 confirmation of the three tray values and the
   running-app Retry/Cancel dialog;
 - owner approval of the final release notes, tag, installer/checksum
