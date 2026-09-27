@@ -2,10 +2,9 @@
 
 Audit date: 2026-09-25; history rescan updated 2026-09-27
 
-Scope: the locally sanitized candidate's current tracked files, all 56
-reachable commits and 764 reachable object/path entries, tracked file history,
-commit/tag metadata, and the working tree relevant to a future public release.
-No GitHub ref, repository visibility, or production state was changed.
+Scope: the remotely installed sanitized history, its tracked file history,
+commit/tag metadata, and the fresh-clone working tree relevant to a future
+public release. Repository visibility and production state were not changed.
 
 ## Secret scan
 
@@ -27,18 +26,17 @@ visibility and policy are approved.
 
 ## Privacy and infrastructure findings
 
-1. Every baseline-reachable commit uses the same personal author and committer
-   email. Making the repository public will expose it through raw Git history.
-   This is not an application secret, but it is a personal privacy decision. A
-   checked-in `.mailmap` changes display in some tools but does not remove the
-   original metadata.
-2. Earlier commits contain a private Linux deployment host name, LAN
-   address/subnet, service user, and operational paths. Current tracked
-   documentation has been sanitized and the public documentation now retains
-   only the production-protection boundary. Historical copies remain reachable.
-3. Earlier README/install/deployment documentation includes the old private
-   GitHub clone/repository reference. Public-facing current docs use a launch
-   placeholder instead.
+1. The original history used a personal author and committer email. The
+   rewritten reachable history uses the owner-approved GitHub noreply address
+   while preserving historical names and dates; the old address now has zero
+   reachable metadata or content hits.
+2. The original history contained a private Linux deployment host name, LAN
+   address/subnet, service user, operational paths, and a host-bearing filename.
+   Neutral replacements preserve the useful technical history, and the final
+   fresh-clone scan found zero original-value hits.
+3. The original README/install/deployment history included an old private
+   clone/repository reference. Rewritten history and current public-facing docs
+   use neutral placeholders instead.
 4. The exact historical inventory, classifications, ref scope, rewrite command,
    GitHub residual-exposure review, and verification gates are recorded in
    `docs/history-sanitation-plan.md`.
@@ -48,24 +46,21 @@ visibility and policy are approved.
 - Replaced the machine-specific deployment record with a public-safe boundary.
 - Removed the personal Linux development username from tracked policy/status
   examples.
-- Removed the exact personal email from current audit prose. The locally
-  validated candidate rewrites author, committer, and tagger email to the
-  owner-approved GitHub noreply address while preserving historical names and
-  dates.
+- Removed the exact personal email from current audit prose and rewrote author,
+  committer, and tagger email to the owner-approved GitHub noreply address while
+  preserving historical names and dates.
 - Replaced private clone URLs with launch placeholders.
 - Added ignores for temporary screenshots, `node_modules`, Cargo `target`, and
   generated Tauri ACL/schema output.
 
 ## Publication blockers
 
-- History sanitation is **LOCAL SANITIZED HISTORY VALIDATED — REMOTE UPDATE
-  PENDING**. The private candidate has zero approved historical-infrastructure
-  or old-email hits, identical pre/post rewrite HEAD trees, preserved topology
-  and dates, clean integrity/secret scans, and complete functional validation.
-- GitHub still contains the old history. The exact atomic leased force-update
-  requires separate explicit approval; no remote ref was rewritten or deleted.
-- FlightMargin naming and AGPLv3-or-later application are complete; a final
-  current-tree audit must confirm the renamed artifacts and notices.
+- History sanitation is **REMOTE HISTORY SANITATION COMPLETE**. The exact
+  validated refs were installed atomically with explicit leases; the fresh
+  clone has zero approved historical-infrastructure or old-email hits,
+  preserved topology and dates, and clean integrity and secret scans.
+- FlightMargin naming, AGPLv3-or-later application, and the current-tree
+  privacy audit are complete.
 - The repository must be deliberately made public only after the final audit.
 - Public security contact/private vulnerability reporting must be enabled.
 - Signing, final artifact, and release approval gates remain open. Version

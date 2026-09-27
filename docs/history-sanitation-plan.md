@@ -1,20 +1,23 @@
 # Pre-public Git history sanitation plan
 
-Status: **LOCAL SANITIZED HISTORY VALIDATED — REMOTE UPDATE PENDING**
+Status: **REMOTE HISTORY SANITATION COMPLETE**
 
 Prepared: 2026-09-27
 
 Baseline: `c5ff3241cb113b38ca37ea4734919ee7bbaca387` on
-`dev/productization`. This document authorizes no rewrite, force-push, ref
-deletion, repository rename, visibility change, release, or production change.
+`dev/productization`. This document records the one owner-authorized rewrite;
+it authorizes no further rewrite, force-push, ref deletion, repository rename,
+visibility change, release, or production change.
 
 Local execution was completed on 2026-09-27 from authoritative source commit
 `b2120b12c0309e598d43a184f80f147e15b10885` in a fresh private mirror. All
 approved infrastructure values and the historical personal email were removed
 from reachable candidate history. The pre-rewrite and rewritten development
 heads had the identical tree `d1c27b559ee439352c90618cf0c1e9eb76b78625`.
-No GitHub ref has been updated; the remote still contains the unsanitized
-rollback history.
+On 2026-09-27, the exact validated `main`, `dev/productization`, and annotated
+`v0.1-baseline` refs were installed on GitHub in one atomic transaction with
+explicit old-OID leases. Independent remote verification and a fresh clone
+confirmed the sanitized refs. The repository remained private throughout.
 
 The candidate retained 55 mapped commits, one merge, one root, two branches,
 and one annotated tag before this validation-status commit. All mapped parent
@@ -46,8 +49,11 @@ has SHA-256
 `git bundle verify` reported that it is valid and records complete history with
 all seven then-reachable local, remote-tracking, tag, and HEAD refs. The bundle
 must remain private and must not be uploaded or added to Git. A second fresh
-bundle must be taken immediately before the future authorized rewrite because
-this planning commit postdates the recorded bundle.
+sanitized-candidate bundle named
+`flightmargin-sanitized-candidate-20260927-final.bundle` was also verified
+before the remote update. Its SHA-256 is
+`70F5FE86AEF5A0812047D15488941CCC74C47DD7514575978D08A43940A90272`.
+Both bundles remain outside Git in the private owner backup directory.
 
 ## Inventory method
 
@@ -62,7 +68,7 @@ built from the locally reviewed values and stored outside the repository.
 
 | Category | Affected commits at baseline | Affected paths | Location | Oldest / newest affected commit | Current-tree state | Classification and need |
 | --- | ---: | --- | --- | --- | --- | --- |
-| Personal author email | 54 of 54 in author and committer metadata; 7 also in file content | `docs/public-release-audit.md` for content | metadata and content; the annotated tag also has the address in tagger metadata | `67e586f` / `c5ff324` | exact address removed from current documentation in this milestone; metadata remains | **OWNER DECISION** for metadata; replace historical documentation text regardless |
+| Personal author email | 54 of 54 in author and committer metadata; 7 also in file content | `docs/public-release-audit.md` for content | metadata and content; the annotated tag also has the address in tagger metadata | `67e586f` / `c5ff324` | absent from the rewritten reachable history | **REPLACED** with the owner-approved noreply address while preserving names and dates |
 | Private Linux host identifier | 46 | `README.md`, `docs/architecture.md`, `docs/deployment-<private-host>.md`, `docs/project-status.md` | content; one commit message and the annotated tag message also contain it | `7244c16` / `59ccbba` | absent | **REPLACE** with `<private-host>`; rename the historical host-bearing path |
 | Private LAN address/subnet | 46 | `docs/deployment-<private-host>.md` | content | `7244c16` / `59ccbba` | absent; generic example/test addresses remain | **REPLACE** with neutral LAN placeholders |
 | Service-user/personal Linux identity | 48 | `AGENTS.md`, `docs/deployment-<private-host>.md`, `docs/platform-parity.md`, `docs/project-status.md` | content | `7244c16` / `c5ff324` | final current-tree occurrence replaced in this milestone | **REPLACE** with `<service-user>` where not already covered by a path replacement |
@@ -138,19 +144,18 @@ The owner selected option 2 for local execution:
 The selected address is owner-approved for GitHub attribution. The literal
 address is intentionally not repeated in this public-facing plan.
 
-## Proposed rewrite
+## Executed rewrite design
 
-Use `git filter-repo`, not `git filter-branch`. It is suitable because it has
+The rewrite used `git-filter-repo` 2.47.0, not `git filter-branch`, from an
+isolated private maintenance environment. It was suitable because it has
 first-class content, commit/tag message, path-renaming, and mailmap filters and
-produces commit/ref maps for review. It is not currently installed; install and
-record a specific version in an isolated maintenance environment before the
-authorized run.
+produces commit/ref maps for review.
 
-Run the dry run and actual rewrite in two separate fresh private mirror clones.
-Never run it in the working checkout. Store the exact source path, replacement
-files, and optional mailmap outside Git and outside the repository. The
-reviewed replacement file must apply longer strings before contained
-identities and implement this exact semantic map:
+The dry run and actual rewrite ran in separate fresh private mirror clones, not
+in the normal working checkout. Exact source paths, replacement files, and the
+mailmap remained outside Git and outside the repository. The reviewed
+replacement file applied longer strings before contained identities and used
+this semantic map:
 
 | Input category | Output |
 | --- | --- |
@@ -169,7 +174,7 @@ sanitizes the one commit message and annotated tag message while leaving all
 other messages unchanged. The path rename is separate so the historical
 filename is neutral. No file is deleted.
 
-From a fresh private mirror, the proposed commands are:
+The reviewed command shape was:
 
 ```powershell
 git filter-repo --dry-run `
@@ -181,9 +186,9 @@ git filter-repo --dry-run `
   --replace-refs delete-no-add
 ```
 
-Review the dry-run exports, then discard that mirror. In a second fresh mirror,
-run the identical command without `--dry-run`. If the owner chooses email
-replacement, add exactly:
+The dry-run exports were reviewed before running the identical command without
+`--dry-run` in the execution mirror. The owner chose email replacement, so the
+execution included:
 
 ```text
 --mailmap <private-owner-approved-mailmap>
@@ -196,13 +201,13 @@ removal. Author and committer dates are retained. Commit and tag messages are
 retained byte-for-byte except for the approved private-host substitution; the
 hash and encoding preservation flags prevent unrelated message rewrites.
 
-## Affected refs and publication transaction
+## Affected refs and executed publication transaction
 
 The private infrastructure first appears after the baseline tag's target
 commit, but the tag annotation itself contains the private host identifier.
-Accordingly, the candidate is expected to change:
+Accordingly, the authorized transaction changed:
 
-| Ref | Expected result |
+| Ref | Result |
 | --- | --- |
 | `refs/heads/main` | changes |
 | `refs/heads/dev/productization` | changes, including this plan commit |
@@ -223,10 +228,10 @@ git push --atomic origin `
   refs/tags/v0.1-baseline:refs/tags/v0.1-baseline
 ```
 
-This future push requires explicit owner approval. A lease mismatch aborts the
-transaction; never substitute blind `--force`. Do not push unreviewed refs,
-replace refs, backup refs, or `refs/original/*`. No remote branch cleanup is
-currently indicated.
+The executed push had explicit owner approval and all three exact old-OID
+leases matched. A lease mismatch would have aborted the transaction; blind
+`--force` was not used. No unreviewed, replacement, backup, or
+`refs/original/*` refs were pushed, and no remote branch cleanup was needed.
 
 ## GitHub residual exposure
 
@@ -255,17 +260,19 @@ every external copy has vanished.
 
 ## Current-tree audit
 
-The current FlightMargin tree is now clear of the inventoried private host,
-LAN, service-user/personal Linux identity, private development path, and old
-clone/repository reference. The exact personal email was also removed from
-current documentation, but it remains in Git metadata pending the owner
-decision. Generic documentation/test addresses, test users, compatibility
-identifiers, and the protected generic production boundary are intentionally
-retained.
+The current FlightMargin tree and all rewritten reachable history are clear of
+the inventoried private host, LAN, service-user/personal Linux identity,
+private development path, old clone/repository reference, and historical
+host-bearing filename. The exact personal email is absent from reachable file
+content and Git metadata; the approved noreply address is used instead while
+historical identity names and dates remain unchanged. Generic
+documentation/test addresses, test users, compatibility identifiers, and the
+protected generic production boundary are intentionally retained.
 
-## Post-rewrite verification
+## Post-rewrite verification record
 
-Before any push, perform all checks against the isolated candidate:
+The following checks were completed against the isolated candidate before the
+push and repeated where applicable from the fresh post-push clone:
 
 1. Verify the just-in-time bundle and record its absolute path, byte size, and
    SHA-256. Save live pre-rewrite heads/tags and the original HEAD tree OID.
@@ -299,9 +306,13 @@ metadata change.
 
 ## Execution gates
 
-Local execution is complete. The remaining history gate is separate owner
-authorization for the exact atomic force-with-lease transaction after reviewing
-the validated candidate and GitHub-side residual inventory.
+Local validation and the owner-authorized atomic leased GitHub update are
+complete. Post-push verification confirmed the two expected branches, the
+sanitized annotated baseline tag, a clean fresh-clone integrity check, zero
+approved privacy-value hits, and no high-confidence secrets. The original
+checkout and both bundles still contain or may contain private historical
+material and must remain private. Any Linux development checkout made before
+the rewrite must be replaced with a fresh clone before further development.
 
 Repository rename, public visibility, merge to `main`, tag/release publication,
 and production changes remain separate protected gates.

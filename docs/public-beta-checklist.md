@@ -1,16 +1,16 @@
 # Windows public beta release checklist
 
-All gates are intentionally unchecked. Completion requires current evidence for
-the exact release commit and artifact.
+Unchecked gates require current evidence for the exact release commit and
+artifact.
 
 ## Product and legal
 
 - [x] FlightMargin public product name approved; ReserveLight retained as fallback
 - [x] Selected AGPLv3-or-later terms applied through a reviewed `LICENSE`
 - [x] Contribution terms set to the project `AGPL-3.0-or-later` license
-- [x] Local sanitized history validated: **REMOTE UPDATE PENDING**
-- [ ] Historical author-email/private-infrastructure exposure accepted or remediated
-- [ ] Repository audit rerun and clean
+- [x] Remote history sanitation complete with atomic leased ref replacement
+- [x] Historical author-email/private-infrastructure exposure remediated
+- [x] Repository privacy and secret audit rerun against a fresh clone
 - [ ] Public security reporting channel enabled
 - [ ] Repository intentionally made public
 
