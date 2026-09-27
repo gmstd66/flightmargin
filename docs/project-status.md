@@ -210,18 +210,6 @@ normal uninstall removes application integration while preserving user data.
 The rename added no runtime dependency and increased the installer by only
 8,305 bytes (0.047%) from the lean baseline.
 
-## Remaining Beta 1 release gates
-
-- complete 6.21A local and GitHub-hosted candidate validation against one exact
-  source commit and record the resulting checksum and Windows security behavior;
-- review the third-party notice inventory against the final locked candidate;
-- owner approval of the final release notes, tag, installer/checksum
-  publication, and GitHub prerelease;
-- sponsorship remains a separate post-beta decision.
-
-No production deployment, new tag, GitHub Release, package publication,
-SignPath application, or Sponsor activation is authorized by this milestone.
-
 ## 6.21A local release-candidate validation
 
 The Beta 1 candidate activates Source Code and Report an Issue in About.
@@ -244,3 +232,47 @@ The local environment has Python 3.14; the GitHub-hosted workflow remains the
 required Python 3.12 candidate build. Interactive local UI automation was not
 available in the execution session, so About-link clicks and full lifecycle
 behavior remain unchecked until validation of the CI installer.
+
+## 6.21A GitHub-hosted candidate evidence
+
+Source `e071c7864fa32ad43fc587dfcf9db354d45b7f42` was identical on `main` and
+`dev/productization`. Manual GitHub Actions run `36345996995` succeeded on that
+exact SHA. Artifact ID `10941270569`, named
+`flightmargin-windows-unsigned-e071c7864fa32ad43fc587dfcf9db354d45b7f42`,
+contained exactly the named installer and checksum file. The 17,736,043-byte
+installer independently hashed to
+`0f8f389784cf99c7ec0946f2629082dc5b8e34ff6e707707a3f8dff615eb09f3`,
+matching the checksum file exactly. Metadata reported FlightMargin
+`0.3.0-beta.1`; Authenticode reported `NotSigned` with no signer.
+
+Defender antivirus, antispyware, and real-time protection remained enabled and
+a custom scan found no threat. An exact-hash test copy with normal Internet-zone
+metadata activated SmartScreen and remained behind its prompt; prompt text was
+not visible to the noninteractive automation session. The unsigned status is
+independently confirmed, so Unknown Publisher behavior remains expected and is
+documented for users.
+
+The CI artifact passed isolated install, authenticated Codex discovery and
+collection, dashboard/history rendering, About and sanitized diagnostics,
+Source/Issue external-browser launch while the FlightMargin webview remained
+open, Settings close/reopen, single instance, copy-only internal-0.2.0 data
+migration, hidden child-window inspection, preinstall running-app blocking, and
+uninstall with user data preserved. The validation used a checkout-local
+installation rather than a clean VM. Visual inspection of the three tray values
+and manual interaction with the Retry/Cancel dialog were unavailable.
+
+This evidence update changes only documentation after the first hosted build;
+the resulting final source commit must receive one final hosted build so the
+candidate artifact corresponds to the exact documented source snapshot.
+
+## Remaining Beta 1 release gates
+
+- final GitHub-hosted rebuild of the documentation-complete source commit;
+- interactive Windows 11 confirmation of the three tray values and the
+  running-app Retry/Cancel dialog;
+- owner approval of the final release notes, tag, installer/checksum
+  publication, and GitHub prerelease;
+- sponsorship remains a separate post-beta decision.
+
+No production deployment, new tag, GitHub Release, package publication,
+SignPath application, or Sponsor activation is authorized by this milestone.

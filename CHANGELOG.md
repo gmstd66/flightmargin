@@ -63,6 +63,9 @@ Notable changes to FlightMargin are documented here. This file summarizes produc
 
 ### Changed
 
+- Validated the first GitHub-hosted unsigned Windows candidate, its independent
+  checksum, Defender result, SmartScreen activation, isolated install/runtime,
+  migration, external project links, and uninstall/data-preservation behavior.
 - Made the owner-approved Beta 1 policy explicit: the installer is intentionally
   unsigned, SHA-256 verification is required, SmartScreen/Unknown Publisher and
   Defender observations must be recorded, and SignPath is deferred until user
