@@ -8,7 +8,7 @@ the exact release commit and artifact.
 - [x] FlightMargin public product name approved; ReserveLight retained as fallback
 - [x] Selected AGPLv3-or-later terms applied through a reviewed `LICENSE`
 - [x] Contribution terms set to the project `AGPL-3.0-or-later` license
-- [x] History sanitation documented: **PLANNED — NOT YET EXECUTED**
+- [x] Local sanitized history validated: **REMOTE UPDATE PENDING**
 - [ ] Historical author-email/private-infrastructure exposure accepted or remediated
 - [ ] Repository audit rerun and clean
 - [ ] Public security reporting channel enabled

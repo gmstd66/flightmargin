@@ -170,17 +170,16 @@ The rename added no runtime dependency and increased the installer by only
 ## Remaining publication gates
 
 - human review of this identity/migration milestone;
-- history sanitation is **PLANNED — NOT YET EXECUTED** in
-  `docs/history-sanitation-plan.md`; a verified private pre-rewrite bundle
-  exists, the fresh secret scan is clear, and the current tree is sanitized;
-- owner selection to preserve historical personal email metadata or replace it
-  with an exact owner-supplied public/noreply address;
-- separate approval for the validated history rewrite and atomic
-  force-with-lease update;
+- history sanitation is **LOCAL SANITIZED HISTORY VALIDATED — REMOTE UPDATE
+  PENDING** in `docs/history-sanitation-plan.md`; the private candidate has an
+  identical pre/post rewrite HEAD tree, clean privacy/secret/integrity scans,
+  preserved topology and dates, and complete Python/Rust/JavaScript/package
+  validation;
+- separate approval for the exact atomic force-with-lease remote update;
 - public repository rename/visibility approval and final privacy scan;
 - code-signing implementation and signed-artifact validation;
 - public tag, package/installer publication, and GitHub Release approval;
 - real public source, issue-reporting, security-contact, and Sponsor URLs.
 
-No merge to `main`, production deployment, tag, release, public visibility
-change, signing submission, or history rewrite is authorized yet.
+No remote history update, merge to `main`, production deployment, tag, release,
+public visibility change, or signing submission is authorized yet.

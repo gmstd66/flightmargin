@@ -2,14 +2,14 @@
 
 Audit date: 2026-09-25; history rescan updated 2026-09-27
 
-Scope: current tracked files, all 54 commits and 747 reachable object/path
-entries at baseline `c5ff324`, tracked file history, commit/tag metadata, and
-the local working tree relevant to a future public release. No repository
-visibility or history was changed.
+Scope: the locally sanitized candidate's current tracked files, all 56
+reachable commits and 764 reachable object/path entries, tracked file history,
+commit/tag metadata, and the working tree relevant to a future public release.
+No GitHub ref, repository visibility, or production state was changed.
 
 ## Secret scan
 
-- Scanned all baseline-reachable commit trees and messages plus the annotated
+- Scanned all candidate-reachable commit trees and messages plus the annotated
   tag for private-key headers and common GitHub, OpenAI-style, AWS, Google,
   bearer-token, JWT, credentialed-connection-string, and related patterns.
 - Searched the current tree for credential assignments, authentication-file
@@ -48,21 +48,22 @@ visibility and policy are approved.
 - Replaced the machine-specific deployment record with a public-safe boundary.
 - Removed the personal Linux development username from tracked policy/status
   examples.
-- Removed the exact personal email from current audit prose while leaving Git
-  author/committer metadata unchanged pending the owner decision.
+- Removed the exact personal email from current audit prose. The locally
+  validated candidate rewrites author, committer, and tagger email to the
+  owner-approved GitHub noreply address while preserving historical names and
+  dates.
 - Replaced private clone URLs with launch placeholders.
 - Added ignores for temporary screenshots, `node_modules`, Cargo `target`, and
   generated Tauri ACL/schema output.
 
 ## Publication blockers
 
-- Historical infrastructure sanitation is **PLANNED — NOT YET EXECUTED**. The
-  owner has approved removing private infrastructure identifiers, but must
-  still choose whether author/committer email metadata is preserved or changed
-  to an exact owner-supplied public/noreply address in the same future rewrite.
-- The destructive rewrite and atomic leased force-update require a separate
-  explicit approval after candidate validation. This milestone does not
-  rewrite, force-push, or delete any ref.
+- History sanitation is **LOCAL SANITIZED HISTORY VALIDATED — REMOTE UPDATE
+  PENDING**. The private candidate has zero approved historical-infrastructure
+  or old-email hits, identical pre/post rewrite HEAD trees, preserved topology
+  and dates, clean integrity/secret scans, and complete functional validation.
+- GitHub still contains the old history. The exact atomic leased force-update
+  requires separate explicit approval; no remote ref was rewritten or deleted.
 - FlightMargin naming and AGPLv3-or-later application are complete; a final
   current-tree audit must confirm the renamed artifacts and notices.
 - The repository must be deliberately made public only after the final audit.

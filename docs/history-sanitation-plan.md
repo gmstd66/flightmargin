@@ -1,12 +1,27 @@
 # Pre-public Git history sanitation plan
 
-Status: **PLANNED — NOT YET EXECUTED**
+Status: **LOCAL SANITIZED HISTORY VALIDATED — REMOTE UPDATE PENDING**
 
 Prepared: 2026-09-27
 
 Baseline: `c5ff3241cb113b38ca37ea4734919ee7bbaca387` on
 `dev/productization`. This document authorizes no rewrite, force-push, ref
 deletion, repository rename, visibility change, release, or production change.
+
+Local execution was completed on 2026-09-27 from authoritative source commit
+`b2120b12c0309e598d43a184f80f147e15b10885` in a fresh private mirror. All
+approved infrastructure values and the historical personal email were removed
+from reachable candidate history. The pre-rewrite and rewritten development
+heads had the identical tree `d1c27b559ee439352c90618cf0c1e9eb76b78625`.
+No GitHub ref has been updated; the remote still contains the unsanitized
+rollback history.
+
+The candidate retained 55 mapped commits, one merge, one root, two branches,
+and one annotated tag before this validation-status commit. All mapped parent
+relationships, author/committer names and dates, and messages matched, except
+for the approved private-host placeholder. The tag target mapping, tagger name
+and date, and annotation semantics also matched. Strict `git fsck`, the
+historical privacy scan, and the focused secret scan passed.
 
 ## Repository state and backup
 
@@ -112,20 +127,16 @@ baseline tag uses the primary identity as tagger. After this plan commit, the
 same configured identity is expected on 55 of 55 commits; the execution-time
 inventory must confirm that count.
 
-Two options remain:
+The owner selected option 2 for local execution:
 
-1. **Preserve metadata.** Do not pass `--mailmap`; the personal email remains
-   public in raw commit and tag metadata.
-2. **Replace the email in the same rewrite.** After the owner supplies an exact
-   GitHub noreply or public development address, create a private mailmap with
-   one entry for each existing name spelling. Map only the email and retain the
-   original names, author/committer dates, messages, and ordering. Apply it in
-   the same `git filter-repo` invocation so history is rewritten only once.
+1. **Preserve metadata** was rejected.
+2. **Replace the email in the same rewrite** was executed with the exact
+   owner-approved GitHub noreply address. Both historical name spellings were
+   retained without normalization, together with author/committer/tagger dates,
+   messages, and ordering.
 
-Option 2 can preserve GitHub contribution attribution if the selected address
-is associated with the owner's GitHub account. An unassociated address can
-make contributions fail to link to the profile. No replacement address is
-invented or assumed here. The owner must decide before execution.
+The selected address is owner-approved for GitHub attribution. The literal
+address is intentionally not repeated in this public-facing plan.
 
 ## Proposed rewrite
 
@@ -288,12 +299,9 @@ metadata change.
 
 ## Execution gates
 
-Before execution, the owner must decide only:
-
-1. preserve the historical personal email, or provide the exact approved
-   GitHub noreply/public development address for the same-pass rewrite; and
-2. separately authorize the destructive history rewrite and the atomic
-   force-with-lease update after reviewing a fully validated candidate.
+Local execution is complete. The remaining history gate is separate owner
+authorization for the exact atomic force-with-lease transaction after reviewing
+the validated candidate and GitHub-side residual inventory.
 
 Repository rename, public visibility, merge to `main`, tag/release publication,
 and production changes remain separate protected gates.

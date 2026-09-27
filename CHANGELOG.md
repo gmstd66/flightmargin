@@ -9,6 +9,9 @@ Notable changes to FlightMargin are documented here. This file summarizes produc
 - Added a reviewable pre-public Git-history sanitation plan covering the
   private backup, full-history privacy/secret inventory, exact rewrite and
   leased-push strategy, GitHub residual exposure, and post-rewrite validation.
+- Created and fully validated a local sanitized-history candidate with an
+  unchanged current HEAD tree, preserved topology and dates, approved noreply
+  metadata, clean privacy/secret/integrity scans, and no remote ref update.
 - Adopted the FlightMargin public identity across the Windows application,
   NSIS metadata, browser dashboard, Linux CLI/service defaults, packaging,
   release artifacts, About content, and current documentation.
