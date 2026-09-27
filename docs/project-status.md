@@ -1,6 +1,6 @@
 # FlightMargin — Project Status
 
-Updated: 2026-09-26
+Updated: 2026-09-27
 
 Branch: `dev/productization`
 
@@ -170,7 +170,13 @@ The rename added no runtime dependency and increased the installer by only
 ## Remaining publication gates
 
 - human review of this identity/migration milestone;
-- separate history-sanitation milestone and force-push approval;
+- history sanitation is **PLANNED — NOT YET EXECUTED** in
+  `docs/history-sanitation-plan.md`; a verified private pre-rewrite bundle
+  exists, the fresh secret scan is clear, and the current tree is sanitized;
+- owner selection to preserve historical personal email metadata or replace it
+  with an exact owner-supplied public/noreply address;
+- separate approval for the validated history rewrite and atomic
+  force-with-lease update;
 - public repository rename/visibility approval and final privacy scan;
 - code-signing implementation and signed-artifact validation;
 - public tag, package/installer publication, and GitHub Release approval;

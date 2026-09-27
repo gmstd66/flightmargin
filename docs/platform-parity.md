@@ -7,7 +7,7 @@ The shared Python behavior, Linux browser branding, new/legacy CLI metadata,
 data migration, and systemd rendering are tested from Windows. A native Linux
 follow-up should run the renamed wheel, installer dry run, generated
 `flightmargin.service`, explicit legacy `codex-quota.service` path, and browser
-smoke from `<private-development-path>`; no production resource is required.
+smoke from `/home/<user>/codex-quota-dev`; no production resource is required.
 
 Milestone 6.20B treats the Windows product experience as the user-facing
 reference while retaining native platform mechanics. Both editions run the

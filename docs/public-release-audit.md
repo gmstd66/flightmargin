@@ -1,15 +1,17 @@
 # Public repository release audit
 
-Audit date: 2026-09-25; identity status updated 2026-09-26
+Audit date: 2026-09-25; history rescan updated 2026-09-27
 
-Scope: current tracked files, all 47 reachable commits, tracked file history,
-Git metadata, and the local working tree relevant to a future public release.
-No repository visibility or history was changed.
+Scope: current tracked files, all 54 commits and 747 reachable object/path
+entries at baseline `c5ff324`, tracked file history, commit/tag metadata, and
+the local working tree relevant to a future public release. No repository
+visibility or history was changed.
 
 ## Secret scan
 
-- Scanned 554 reachable Git objects for private-key headers and common GitHub,
-  OpenAI-style, AWS, Google, and bearer-token patterns.
+- Scanned all baseline-reachable commit trees and messages plus the annotated
+  tag for private-key headers and common GitHub, OpenAI-style, AWS, Google,
+  bearer-token, JWT, credentialed-connection-string, and related patterns.
 - Searched the current tree for credential assignments, authentication-file
   references, personal email patterns, absolute user paths, private network
   addresses, logs, databases, and credential-like filenames.
@@ -25,37 +27,42 @@ visibility and policy are approved.
 
 ## Privacy and infrastructure findings
 
-1. Every reachable commit currently uses the personal author email
-   `<historical-personal-email>`. Making the repository public will expose it through
-   Git history. This is not an application secret, but it is a personal privacy
-   decision. A `.mailmap` changes display in some tools but does not remove the
+1. Every baseline-reachable commit uses the same personal author and committer
+   email. Making the repository public will expose it through raw Git history.
+   This is not an application secret, but it is a personal privacy decision. A
+   checked-in `.mailmap` changes display in some tools but does not remove the
    original metadata.
 2. Earlier commits contain a private Linux deployment host name, LAN
    address/subnet, service user, and operational paths. Current tracked
    documentation has been sanitized and the public documentation now retains
    only the production-protection boundary. Historical copies remain reachable.
-3. The repository remote and earlier README/install documentation include the
-   current private GitHub owner/repository path. Public-facing current docs use
-   a launch placeholder instead.
-4. Local untracked owner-review screenshots and generated desktop build trees
-   exist in the development checkout. They were not staged, and matching
-   temporary/build paths are now ignored. They must not be added to a public
-   commit without a separate privacy review.
+3. Earlier README/install/deployment documentation includes the old private
+   GitHub clone/repository reference. Public-facing current docs use a launch
+   placeholder instead.
+4. The exact historical inventory, classifications, ref scope, rewrite command,
+   GitHub residual-exposure review, and verification gates are recorded in
+   `docs/history-sanitation-plan.md`.
 
 ## Current-tree remediation
 
 - Replaced the machine-specific deployment record with a public-safe boundary.
 - Removed the personal Linux development username from tracked policy/status
   examples.
+- Removed the exact personal email from current audit prose while leaving Git
+  author/committer metadata unchanged pending the owner decision.
 - Replaced private clone URLs with launch placeholders.
 - Added ignores for temporary screenshots, `node_modules`, Cargo `target`, and
   generated Tauri ACL/schema output.
 
 ## Publication blockers
 
-- Owner must decide whether to accept the historical author-email and private
-  infrastructure exposure or authorize a separately planned history rewrite.
-  This milestone does not rewrite or force-push history.
+- Historical infrastructure sanitation is **PLANNED — NOT YET EXECUTED**. The
+  owner has approved removing private infrastructure identifiers, but must
+  still choose whether author/committer email metadata is preserved or changed
+  to an exact owner-supplied public/noreply address in the same future rewrite.
+- The destructive rewrite and atomic leased force-update require a separate
+  explicit approval after candidate validation. This milestone does not
+  rewrite, force-push, or delete any ref.
 - FlightMargin naming and AGPLv3-or-later application are complete; a final
   current-tree audit must confirm the renamed artifacts and notices.
 - The repository must be deliberately made public only after the final audit.
