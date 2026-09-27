@@ -82,3 +82,11 @@ internal installation and data were not changed.
 - No public release, Git tag, package publication, or GitHub Release.
 - No signing integration or auto-update.
 - No history rewrite or production service migration.
+
+## Publication-preflight confirmation
+
+The Linux development checkout now uses the sanitized reachable history. The
+previous checkout is archived privately and was not part of the preflight.
+The final public-tree audit is clean, and history sanitation is complete. The
+repository remains private; its future rename to `flightmargin` and publication
+await explicit owner approval. Signing and release work remain later gates.

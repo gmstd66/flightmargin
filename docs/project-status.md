@@ -145,6 +145,34 @@ companion, remote monitoring, or auto-update. Those remain possible post-beta
 work based on demand. Bug, security, release-blocker, and migration fixes are
 allowed.
 
+## Publication preflight (6.20D.3A)
+
+On 2026-09-27, the active Linux development checkout was verified as a fresh
+sanitized-history checkout. Strict Git integrity, reachable-history privacy,
+focused secret, current-tree, package, CLI, authenticated runtime, browser,
+and static systemd checks passed. The old checkout remains archived privately;
+it was not accessed as part of this preflight.
+
+The FlightMargin wheel validated as `flightmargin 0.3.0b1` with
+`AGPL-3.0-or-later` metadata. Both `flightmargin` and the `codex-quota`
+compatibility alias invoke the same implementation. Authenticated collection
+confirmed the 5-hour and weekly windows, resets, pace inputs, projected-
+exhaustion inputs, credits, and account fields without recording account
+values in this document. An isolated loopback dashboard served FlightMargin,
+Weekly Pace, Settings, and About successfully.
+
+Generated `flightmargin.service` and legacy-compatible `codex-quota.service`
+units passed `systemd-analyze verify`. No temporary system-manager unit was
+installed because this preflight is restricted to the development checkout and
+does not authorize system-manager changes. The protected production service
+was only checked as active and its protected port as listening; no production
+files or configuration were accessed or modified.
+
+The repository remains private. Its planned public destination is
+`gmstd66/flightmargin`, with the description and topics recorded in the public
+release audit. Rename, visibility, signing, tag, release, and publication
+remain explicit owner gates.
+
 ## Prior validation baseline
 
 Milestones through integrated commit `381b8e5` established Windows/Linux feature

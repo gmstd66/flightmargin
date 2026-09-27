@@ -1,6 +1,6 @@
 # Public repository release audit
 
-Audit date: 2026-09-25; history rescan updated 2026-09-27
+Audit date: 2026-09-25; history rescan and final Linux preflight updated 2026-09-27
 
 Scope: the remotely installed sanitized history, its tracked file history,
 commit/tag metadata, and the fresh-clone working tree relevant to a future
@@ -67,3 +67,27 @@ visibility and policy are approved.
   `0.3.0-beta.1` is approved but no tag or release is authorized.
 - The intended future repository rename to `flightmargin` remains subject to
   availability and explicit publication approval.
+
+## Final Linux preflight
+
+The sanitized active Linux checkout passed strict Git integrity and
+reachable-history/current-tree privacy and focused secret scans. The current
+tracked tree contains no credentials, populated authentication files,
+databases, logs, private screenshots, generated build trees, backup bundles,
+or history-rewrite maps. `.gitignore` excludes local virtual environments,
+build output, runtime databases, environment files, temporary files, desktop
+build output, and test caches.
+
+The package was built and verified as `flightmargin 0.3.0b1` under
+`AGPL-3.0-or-later`; canonical and legacy CLI aliases, authenticated Codex
+collection, and isolated FlightMargin dashboard/Settings routes passed. The
+generated `flightmargin.service` and legacy-compatible `codex-quota.service`
+units passed static systemd verification. No system-manager unit was installed
+and no production resource was modified.
+
+Public repository preparation is documentation-only: the intended name is
+`flightmargin` at `gmstd66/flightmargin`; recommended description is “A
+lightweight, local-first monitor for OpenAI Codex usage limits, pacing, resets,
+credits, and history.” Recommended topics are `codex`, `openai`, `quota`,
+`usage-monitor`, `rate-limits`, `windows`, `linux`, `tauri`, and `python`.
+Source, issue, and Sponsor links remain disabled until that destination exists.

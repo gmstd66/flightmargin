@@ -6,6 +6,11 @@ Notable changes to FlightMargin are documented here. This file summarizes produc
 
 ### Added
 
+- Completed the Linux publication preflight against the sanitized development
+  checkout: history/current-tree privacy and secret scans, wheel and CLI
+  verification, authenticated local runtime and browser validation, static
+  FlightMargin/legacy systemd checks, and production-isolation checks. The
+  repository remains private; no release or production change was made.
 - Added a reviewable pre-public Git-history sanitation plan covering the
   private backup, full-history privacy/secret inventory, exact rewrite and
   leased-push strategy, GitHub residual exposure, and post-rewrite validation.
