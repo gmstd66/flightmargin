@@ -71,7 +71,9 @@ def test_console_script():
 
 
 def test_project_license():
-    assert load_pyproject()["project"]["license"] == "AGPL-3.0-or-later"
+    assert load_pyproject()["project"]["license"] == {
+        "text": "AGPL-3.0-or-later",
+    }
 
 
 def test_runtime_dependencies():

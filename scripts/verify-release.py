@@ -66,8 +66,12 @@ def verify_wheel(wheel: Path) -> None:
             fail(f"metadata Name is {metadata['Name']!r}")
         if metadata["Version"] != __version__.replace("-beta.", "b"):
             fail(f"metadata Version is {metadata['Version']!r}")
-        if metadata["License-Expression"] != "AGPL-3.0-or-later":
-            fail(f"metadata License-Expression is {metadata['License-Expression']!r}")
+        license_expression = metadata.get(
+            "License-Expression",
+            metadata.get("License"),
+        )
+        if license_expression != "AGPL-3.0-or-later":
+            fail(f"metadata license is {license_expression!r}")
 
         license_paths = [
             name
