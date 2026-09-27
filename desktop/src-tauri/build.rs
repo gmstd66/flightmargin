@@ -2,7 +2,7 @@ fn main() {
     tauri_build::try_build(
         tauri_build::Attributes::new().app_manifest(
             tauri_build::AppManifest::new()
-                .commands(&["open_settings", "close_settings"]),
+                .commands(&["open_settings", "close_settings", "open_project_link"]),
         ),
     )
     .expect("failed to build Tauri command permissions")

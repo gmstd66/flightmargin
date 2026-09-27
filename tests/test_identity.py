@@ -47,6 +47,27 @@ def test_windows_workflow_stages_flightmargin_artifacts_without_publishing():
     assert "release:" not in workflow
 
 
+def test_desktop_project_links_are_narrowly_scoped():
+    rust = (PROJECT_ROOT / "desktop" / "src-tauri" / "src" / "main.rs").read_text(
+        encoding="utf-8"
+    )
+    capability = json.loads(
+        (
+            PROJECT_ROOT
+            / "desktop"
+            / "src-tauri"
+            / "capabilities"
+            / "open-project-link.json"
+        ).read_text(encoding="utf-8")
+    )
+
+    assert '"source" => Some(SOURCE_CODE_URL)' in rust
+    assert '"issues" => Some(REPORT_ISSUE_URL)' in rust
+    assert "SPONSOR_URL" not in rust
+    assert capability["windows"] == ["settings"]
+    assert capability["permissions"] == ["allow-open-project-link"]
+
+
 def test_linux_service_description_uses_public_identity(tmp_path):
     config = AppConfig(
         app_root=tmp_path,

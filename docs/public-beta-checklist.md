@@ -1,7 +1,7 @@
 # Windows public beta release checklist
 
 Unchecked gates require current evidence for the exact release commit and
-artifact.
+artifact. Beta 1 is intentionally unsigned; signing is not a release gate.
 
 ## Product and legal
 
@@ -13,63 +13,65 @@ artifact.
 - [x] Repository privacy and secret audit rerun against a fresh clone
 - [x] Final Linux publication preflight completed against the sanitized checkout
 - [x] GitHub private vulnerability reporting enabled
-- [x] Repository intentionally made public at `gmstd66/flightmargin`
+- [x] Repository public at `gmstd66/flightmargin`
+- [x] Beta 1 unsigned decision documented; Authenticode/SignPath deferred
 
 ## Version and source
 
 - [x] Public version approved as `0.3.0-beta.1`
-- [x] Canonical version updated once and synchronized across generated manifests
-- [ ] Release branch/main state reviewed and approved
-- [ ] Signed tag `v0.3.0-beta.1` approved and created
-- [ ] Source corresponding exactly to the binary is publicly available
+- [x] Canonical version synchronized across generated manifests
+- [ ] Exact release-candidate source is identical on `main` and `dev/productization`
+- [ ] Source corresponding exactly to the candidate binary is public
+- [ ] Tag `v0.3.0-beta.1` approved and created (publication gate; not part of 6.21A)
 
-## Build and signing
+## Candidate build
 
-- [ ] GitHub-hosted Windows workflow passes from the approved tag
-- [ ] Python, npm, and Cargo resolved dependency inputs reviewed
-- [ ] PyInstaller sidecar rebuilt from current dashboard assets
-- [ ] Tauri release and NSIS installer pass
-- [ ] SignPath eligibility/application approved or alternative signing approved
-- [ ] Signing origin and artifact configuration verified
-- [ ] Executable/installer signature and timestamp verified
-- [ ] Final signed-installer SHA-256 produced and independently checked
+- [ ] GitHub-hosted Windows workflow succeeds for the exact RC commit on `main`
+- [x] Python, npm, and Cargo resolved dependency inputs reviewed
+- [x] PyInstaller sidecar rebuilt from current dashboard assets locally
+- [x] Local Tauri release and NSIS installer build succeeds
+- [x] Unsigned installer status and expected Windows warnings documented
+- [ ] Installer SHA-256 produced and independently checked
+- [x] Checksum-verification instructions reviewed
 
 ## Native validation
 
-- [ ] Clean Windows 11 x64 installation passes
+- [ ] Windows 11 x64 installation passes using the CI-built installer
 - [ ] Existing Codex CLI is detected; Codex is not bundled
 - [ ] Authenticated health/quota reads pass
 - [ ] Dashboard and Weekly History render correctly without visible consoles
 - [ ] Weekly, 5-hour, and Credits tray indicators pass
-- [ ] Settings, About, and sanitized Copy diagnostics pass
+- [ ] Settings, About, Source Code, Report an Issue, and sanitized Copy diagnostics pass
 - [ ] Close-to-tray, single-instance, relaunch, and Quit cleanup pass
-- [ ] Upgrade from the previous public beta preserves data/preferences
 - [ ] Transition from the internal 0.2.0 build copies legacy data without loss
-- [ ] Running-app installer prompt/Retry behavior passes
+- [ ] Running-app installer Retry/Cancel behavior passes
 - [ ] Uninstall succeeds and documented user-data preservation is accurate
-- [ ] SmartScreen behavior recorded
-- [ ] Defender result recorded without disabling protection
+- [ ] SmartScreen/Unknown Publisher behavior recorded without evasion
+- [ ] Microsoft Defender result recorded without disabling protection
 
 ## Public presentation and release
 
-- [ ] README screenshot reviewed for private data
-- [ ] Installation/privacy/troubleshooting docs final
-- [ ] Third-party notices generated and reviewed
-- [ ] Source Code URL enabled in About
-- [ ] Report an Issue URL enabled in About
-- [ ] GitHub Sponsors configured and Sponsor URL/FUNDING.yml enabled, or explicitly deferred
-- [ ] Release notes reviewed
+- [x] README contains no screenshot or private data
+- [x] Installation/privacy/troubleshooting docs reviewed for the candidate
+- [x] Third-party notice inventory reviewed against exact release lockfiles
+- [ ] Source Code URL enabled and validated in desktop and browser About
+- [ ] Report an Issue URL enabled and validated in desktop and browser About
+- [x] Sponsorship explicitly deferred; no Sponsor action, `FUNDING.yml`, or donation button
+- [x] Release-notes draft completed and internally reviewed
 - [ ] GitHub prerelease created only after final human approval
-- [ ] Installer and checksum attached to the prerelease
+- [ ] Installer and checksum attached only after final human approval
 
-Auto-update is deliberately excluded from beta 1 and remains a later decision.
+Auto-update and code signing are deliberately excluded from Beta 1. SignPath
+may be reconsidered after demonstrated adoption, user feedback, or material
+SmartScreen friction. No signing secrets or configuration are currently
+required.
 
-## 6.20D.3A/6.20D.4 evidence
+## Prior evidence
 
 The 2026-09-27 Linux preflight validated the sanitized checkout's reachable
 history and current tree, wheel metadata, both CLI names, authenticated
 collection, isolated browser routes, and generated FlightMargin and legacy
 systemd units. It made no production change. On the same date, the repository
 was renamed to `gmstd66/flightmargin`, made public, given its approved metadata,
-and configured for private vulnerability reporting. Signing, an approved tag,
-and a GitHub Release remain separate gates.
+and configured for private vulnerability reporting. The Beta 1 tag and GitHub
+Release remain separate protected publication gates.

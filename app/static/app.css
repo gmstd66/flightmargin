@@ -77,6 +77,9 @@ button:disabled {
 .about-identity { margin-bottom:12px; }
 .about-identity h2 { font-size:19px; }
 .about-version,.about-secondary { color:#9ca1a9; font-size:12px; }
+.project-actions { display:flex; gap:14px; }
+.project-actions a { color:#9ec5ff; }
+.project-actions a:hover { color:#c6dcff; }
 .technical-details { margin:14px 0; padding:10px; border:1px solid #292c31; border-radius:8px; }
 .technical-details summary { cursor:pointer; font-weight:600; }
 .technical-details dl { margin:10px 0; }

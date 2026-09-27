@@ -1,52 +1,50 @@
 # Public beta release process
 
-This is a design for a future owner-approved release. It is not active public
-automation.
+This is the owner-approved process for preparing FlightMargin Beta 1. Tagging
+and publication remain protected human gates.
 
-## Human-gated flow
+## Beta 1 flow
 
 ```text
-approved FlightMargin name, AGPL license, and version
-  -> reviewed release commit on an approved branch
-  -> reviewed merge to main
-  -> signed version tag
-  -> manually approved GitHub Actions candidate build
+reviewed release-candidate commit on dev/productization
+  -> fast-forward main to the exact candidate commit
+  -> manually dispatch the GitHub-hosted Windows workflow on main
   -> tests and unsigned NSIS artifact
-  -> SignPath origin verification and manual signing approval
-  -> signed installer and final checksum verification
-  -> owner reviews release notes and clean-machine results
-  -> GitHub prerelease is published manually
+  -> independently verify the installer SHA-256
+  -> record Defender, SmartScreen, and native validation results
+  -> owner reviews the exact source, artifact, and release notes
+  -> owner separately approves tag and GitHub prerelease publication
 ```
 
 Pushing an ordinary commit must never publish an installer. The current
 workflow uses `workflow_dispatch`, uploads a short-lived unsigned Actions
-artifact, and has read-only repository contents permission. It does not create
-a tag or release and does not sign anything.
+artifact, and has read-only repository contents permission. It does not sign,
+tag, or publish anything.
+
+FlightMargin `0.3.0-beta.1` is intentionally unsigned. Authenticode/SignPath
+approval, configuration, and secrets are not Beta 1 gates and must not be
+simulated. The published installer must be accompanied by its SHA-256 file,
+and that checksum must be calculated independently before publication.
+Unknown Publisher and Microsoft Defender SmartScreen behavior must be recorded
+with Defender left enabled.
 
 ## First beta update policy
 
-`0.3.0-beta.1` is the approved first beta version. Users update
-manually from GitHub Releases and must fully Quit the app before upgrade. Tauri
-auto-update is deferred until the manual build/sign/publish process is stable.
-Future updater private keys are separate sensitive release credentials and must
-use protected storage, rotation, backup, and reviewer policies.
+Users update manually from GitHub Releases and must fully Quit the app before
+an upgrade. Tauri auto-update is deferred until the manual build and publish
+process is stable. Future updater private keys would be separate protected
+release credentials.
 
-## Sponsorship launch TODO
+## Post-beta signing review
 
-The software remains free, with no paid feature tier. Voluntary support is the
-only approved sustainability model.
+SignPath remains a possible improvement after Beta 1. Reconsider it when
+adoption, user feedback, repeated SmartScreen friction, or another concrete
+need justifies the operational process. See [code-signing.md](code-signing.md)
+for retained research. No signing secrets or configuration are currently
+required.
 
-After a real destination exists:
+## Sponsorship
 
-- configure GitHub Sponsors;
-- add `.github/FUNDING.yml` with the real sponsor identity;
-- enable the repository Sponsor button;
-- add the real Sponsor URL to About;
-- verify Source Code and Report an Issue URLs at the same time.
-
-Launch configuration must replace the README's `<owner>/<repository>` clone
-placeholder and add three reviewed About actions: the public repository root,
-the repository's issue-reporting page, and the real GitHub Sponsors profile.
-They are intentionally absent from the current app rather than disabled links.
-
-Do not add placeholder URLs or enable these actions before public launch.
+Sponsorship remains deferred. Beta 1 has no Sponsor action, `FUNDING.yml`, or
+donation button. Any future sponsorship activation requires a separate owner
+decision and a real destination.

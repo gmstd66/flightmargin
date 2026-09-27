@@ -19,9 +19,10 @@ and Tauri versions match it. Python distribution metadata uses the equivalent
 PEP 440 form `0.3.0b1`. The beta feature set is frozen.
 
 The public repository is `https://github.com/gmstd66/flightmargin`. The beta
-has not been tagged, released, signed, or distributed as a binary/package.
-Auto-update is deferred. Desktop Source and Report Issue actions, and Sponsor
-links, remain disabled pending separate approval.
+has not been tagged, released, or distributed as a binary/package. Beta 1 is
+intentionally unsigned; code signing is not a Beta 1 gate. Auto-update is
+deferred. About exposes Source Code and Report an Issue actions. Sponsor links
+remain deferred and absent.
 
 FlightMargin is licensed `AGPL-3.0-or-later`; the standard GNU AGPL v3 text is
 present in `LICENSE`. Third-party license notices remain separately inventoried.
@@ -119,6 +120,12 @@ FlightMargin-0.3.0-beta.1-Windows-x64.exe.sha256
 It has read-only contents permission and does not sign, publish, create a tag,
 or create a GitHub Release.
 
+Beta 1 relies on the published installer SHA-256 and an independent checksum
+match. Unknown Publisher, SmartScreen, and Defender behavior must be recorded.
+SignPath is retained as post-beta research and should be reconsidered only when
+adoption, user feedback, or concrete warning friction justifies it. No signing
+configuration or secrets are required now.
+
 The new bundle identifier intentionally distinguishes FlightMargin from the
 internal 0.2.0 application, so an old build may need explicit uninstall and may
 temporarily coexist. The user-data copy prevents silent loss of history and
@@ -130,8 +137,11 @@ About reports FlightMargin, canonical version, Beta status, detected Codex CLI
 version, OS, architecture, and sanitized data/log paths. It states that local
 history/preferences/logs are stored locally, the existing authenticated Codex
 CLI is used, credentials are not managed or stored, telemetry is absent, the
-license is AGPLv3-or-later, and the app is unofficial. Public action links stay
-hidden.
+license is AGPLv3-or-later, and the app is unofficial. Public action links are
+available in browser/Linux as normal external links. The Windows shell routes
+the same two actions through a Settings-only Tauri command that maps only the
+fixed source and issue keys to approved GitHub URLs; it exposes no arbitrary
+URL-opening command and does not broaden CSP.
 
 Logs contain concise lifecycle/errors only, rotate at 1 MB, and retain one
 prior file. Diagnostics exclude account identity, quota payloads, credentials,
@@ -202,15 +212,35 @@ The rename added no runtime dependency and increased the installer by only
 
 ## Remaining Beta 1 release gates
 
-- human review of this identity/migration milestone;
-- history sanitation is **REMOTE HISTORY SANITATION COMPLETE** in
-  `docs/history-sanitation-plan.md`; the validated refs were installed in one
-  atomic explicitly leased transaction, and an independent fresh clone has
-  clean privacy, secret, and integrity scans;
-- code-signing implementation and signed-artifact validation;
-- public tag, package/installer publication, and GitHub Release approval;
-- separate approval to activate desktop Source/Report Issue actions or Sponsor
-  links.
+- complete 6.21A local and GitHub-hosted candidate validation against one exact
+  source commit and record the resulting checksum and Windows security behavior;
+- review the third-party notice inventory against the final locked candidate;
+- owner approval of the final release notes, tag, installer/checksum
+  publication, and GitHub prerelease;
+- sponsorship remains a separate post-beta decision.
 
-No production deployment, new tag, release, signing submission, or Sponsor
-activation is authorized by this publication record.
+No production deployment, new tag, GitHub Release, package publication,
+SignPath application, or Sponsor activation is authorized by this milestone.
+
+## 6.21A local release-candidate validation
+
+The Beta 1 candidate activates Source Code and Report an Issue in About.
+Browser/Linux renders two normal external HTTPS links. Windows uses a
+Settings-only command whose Rust allowlist accepts only the fixed `source` and
+`issues` keys; unit tests reject arbitrary and Sponsor destinations. CSP is
+unchanged.
+
+Local Windows validation passed 122 Python tests, JavaScript syntax checks,
+canonical/desktop version synchronization, the wheel build and release
+verifier, locked Cargo check, 14 Rust tests, and `git diff --check`. The
+canonical `npm run tauri:build` rebuilt the PyInstaller sidecar and produced an
+unsigned NSIS installer with FlightMargin/`0.3.0-beta.1` metadata. An isolated
+direct runtime reached a healthy authenticated Codex collection and exposed
+5-hour, Weekly, reset, pace/projection, credits, and history fields without
+recording account values. Its sidecar/Codex process tree had no visible console
+window, and a second launch exited while the original instance remained.
+
+The local environment has Python 3.14; the GitHub-hosted workflow remains the
+required Python 3.12 candidate build. Interactive local UI automation was not
+available in the execution session, so About-link clicks and full lifecycle
+behavior remain unchecked until validation of the CI installer.

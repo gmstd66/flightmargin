@@ -26,6 +26,7 @@ TAURI_CARGO = PROJECT_ROOT / "desktop" / "src-tauri" / "Cargo.template.toml"
 TAURI_CAPABILITY = PROJECT_ROOT / "desktop" / "src-tauri" / "capabilities" / "default.json"
 OPEN_SETTINGS_CAPABILITY = PROJECT_ROOT / "desktop" / "src-tauri" / "capabilities" / "open-settings.json"
 CLOSE_SETTINGS_CAPABILITY = PROJECT_ROOT / "desktop" / "src-tauri" / "capabilities" / "close-settings.json"
+OPEN_PROJECT_LINK_CAPABILITY = PROJECT_ROOT / "desktop" / "src-tauri" / "capabilities" / "open-project-link.json"
 TAURI_BUILD = PROJECT_ROOT / "desktop" / "src-tauri" / "build.rs"
 DESKTOP_JS = PROJECT_ROOT / "app" / "static" / "app.js"
 SETTINGS_JS = PROJECT_ROOT / "app" / "static" / "settings.js"
@@ -215,6 +216,7 @@ def test_windows_beta_workflow_is_manual_locked_and_nonpublishing():
     assert "workflow_dispatch:" in workflow
     assert "permissions:\n  contents: read" in workflow
     assert "npm ci" in workflow
+    assert workflow.index("npm run build:sidecar") < workflow.index("cargo check --locked")
     assert "cargo check --locked" in workflow
     assert "cargo test --locked" in workflow
     assert "npm run tauri:build" in workflow
@@ -308,25 +310,30 @@ def test_native_settings_about_content_uses_dynamic_safe_metadata():
     assert 'f"App version:' not in settings_source
     assert __version__ not in settings
     assert '@app.get("/api/about")' in backend
-    assert "Source Code" not in settings
-    assert "Report an Issue" not in settings
+    assert "Source Code" in settings
+    assert "Report an Issue" in settings
     assert "Sponsor" not in settings
-    assert "github.com" not in settings.lower()
-    assert "<a " not in settings.lower()
+    assert "https://github.com/gmstd66/flightmargin" in settings
+    assert 'target="_blank" rel="noopener noreferrer"' in settings
 
 
 def test_settings_commands_have_narrow_tauri_acl_capabilities():
     build_script = TAURI_BUILD.read_text(encoding="utf-8")
     open_capability = json.loads(OPEN_SETTINGS_CAPABILITY.read_text(encoding="utf-8"))
     close_capability = json.loads(CLOSE_SETTINGS_CAPABILITY.read_text(encoding="utf-8"))
+    project_capability = json.loads(OPEN_PROJECT_LINK_CAPABILITY.read_text(encoding="utf-8"))
 
-    assert '.commands(&["open_settings", "close_settings"])' in build_script
+    for command in ("open_settings", "close_settings", "open_project_link"):
+        assert f'"{command}"' in build_script
     assert open_capability["windows"] == ["main"]
     assert open_capability["permissions"] == ["allow-open-settings"]
     assert close_capability["windows"] == ["settings"]
     assert close_capability["permissions"] == ["allow-close-settings"]
     assert open_capability["remote"]["urls"] == ["http://127.0.0.1:*/*"]
     assert close_capability["remote"]["urls"] == ["http://127.0.0.1:*/*"]
+    assert project_capability["windows"] == ["settings"]
+    assert project_capability["permissions"] == ["allow-open-project-link"]
+    assert project_capability["remote"]["urls"] == ["http://127.0.0.1:*/*"]
 
 
 def test_tray_settings_and_about_reuse_the_native_settings_window():
@@ -344,7 +351,7 @@ def test_tray_settings_and_about_reuse_the_native_settings_window():
     assert 'url.set_query(Some(&format!("section={}"' in rust
     assert "window.openSettingsSection = openSettingsSection" in settings_source
     assert 'new URLSearchParams(window.location.search).get("section")' in settings_source
-    assert '/static/settings.js?v=4' in SETTINGS_TEMPLATE.read_text(encoding="utf-8")
+    assert '/static/settings.js?v=5' in SETTINGS_TEMPLATE.read_text(encoding="utf-8")
     assert "settingsDialog" not in dashboard
     assert "showModal" not in DESKTOP_JS.read_text(encoding="utf-8")
 

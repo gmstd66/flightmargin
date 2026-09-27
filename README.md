@@ -4,8 +4,8 @@ FlightMargin is a lightweight, local-first monitor for OpenAI Codex usage
 limits, pacing, resets, purchased credits, and history.
 
 > **Beta status:** `0.3.0-beta.1` source is public, but no beta tag, GitHub
-> Release, installer, or package has been published. Current Windows artifacts
-> remain unsigned.
+> Release, installer, or package has been published. Beta 1 is intentionally
+> unsigned; code signing is not a Beta 1 release gate.
 
 Unofficial community tool. Not affiliated with or endorsed by OpenAI.
 
@@ -48,7 +48,9 @@ FlightMargin-0.3.0-beta.1-Windows-x64.exe
 FlightMargin-0.3.0-beta.1-Windows-x64.exe.sha256
 ```
 
-Auto-update and signing are deferred. No installer is public yet. See the
+The Beta 1 installer will be unsigned and Windows may show Unknown Publisher
+or Microsoft Defender SmartScreen warnings. A published SHA-256 checksum is
+required for verification. Signing and auto-update are deferred; see the
 [Windows installation guide](docs/installation-windows.md).
 
 Windows data is stored under:
@@ -130,8 +132,8 @@ auto-update remain possible post-beta work based on user demand.
 
 The public source repository is [gmstd66/flightmargin](https://github.com/gmstd66/flightmargin)
 and issues are collected at [github.com/gmstd66/flightmargin/issues](https://github.com/gmstd66/flightmargin/issues).
-The desktop Source and Report Issue actions remain disabled pending a separate
-launch-state milestone. Sponsor links remain disabled.
+The About page links to the public source and issue tracker. Sponsor links
+remain deferred and are not present.
 
 ## License
 

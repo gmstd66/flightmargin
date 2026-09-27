@@ -114,6 +114,11 @@ def test_dashboard_order_and_browser_settings_match_platform_parity():
     assert settings.count("data-native-only") == 4
     assert '["dashboard", "about"]' in settings_script
     assert 'window.location.assign("/")' in settings_script
+    assert 'href="https://github.com/gmstd66/flightmargin"' in settings
+    assert 'href="https://github.com/gmstd66/flightmargin/issues"' in settings
+    assert settings.count('target="_blank" rel="noopener noreferrer"') == 2
+    assert 'tauriInvoke("open_project_link"' in settings_script
+    assert "Sponsor" not in settings
 
 
 def test_collector_uses_canonical_structured_rate_limit_method(monkeypatch):

@@ -6,6 +6,11 @@ Notable changes to FlightMargin are documented here. This file summarizes produc
 
 ### Added
 
+- Activated About actions for the public source repository and issue tracker
+  in browser/Linux use and through an exact allowlisted external-browser bridge
+  in the Windows desktop shell.
+- Added the first-public-beta release-notes draft and explicit Windows
+  checksum-verification guidance for the intentionally unsigned installer.
 - Published the FlightMargin source repository as
   `https://github.com/gmstd66/flightmargin` after the sanitized-history and
   final privacy checks. Applied the approved description/topics and enabled
@@ -58,6 +63,10 @@ Notable changes to FlightMargin are documented here. This file summarizes produc
 
 ### Changed
 
+- Made the owner-approved Beta 1 policy explicit: the installer is intentionally
+  unsigned, SHA-256 verification is required, SmartScreen/Unknown Publisher and
+  Defender observations must be recorded, and SignPath is deferred until user
+  adoption or feedback justifies reconsideration.
 - Advanced the single canonical version to `0.3.0-beta.1` and synchronized
   generated Tauri/Cargo metadata and release validation.
 - Froze the Beta 1 feature set; only bug, security, release-blocker, and

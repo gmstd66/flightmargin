@@ -63,10 +63,8 @@ Public-facing preparation and release gates are documented in
 
 ## Distribution gate
 
-Before public distribution, obtain a code-signing certificate, sign the
-desktop executable and NSIS installer with a trusted timestamp, and repeat
-the SmartScreen reputation check. Tauri's signing guidance and Microsoft's
-SignTool documentation are the implementation references. Certificate choice,
-annual cost, hardware/cloud key custody, and any Microsoft Store path require
-human approval. Microsoft Store packaging remains a future distribution
-alternative, not part of this beta workflow.
+Beta 1 is intentionally unsigned. Before public distribution, independently
+verify the CI-built installer's SHA-256 and record Defender and interactive
+SmartScreen/Unknown Publisher behavior without weakening either control. Code
+signing and Microsoft Store packaging remain post-beta options that require a
+separate owner decision after adoption or user feedback establishes a need.

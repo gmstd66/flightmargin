@@ -1,6 +1,6 @@
 # Native Desktop Prototype Implementation
 
-Status: the Windows desktop shell is internal/beta ready after native validation. It remains unsigned and is not a public or signed distribution.
+Status: the Windows desktop shell is beta ready after native validation. Beta 1 is intentionally unsigned and has not yet been published.
 
 Milestone 6.18 prepares the current 0.2.0 build for owner GUI/product review.
 It records the present dashboard, diagnostics, and tray behavior in
@@ -156,7 +156,7 @@ Milestone 6.16C was validated on Windows 11 Pro 10.0.26200 x64 with Python 3.14.
 - The primary beta installer is current-user NSIS. It preserves `%LOCALAPPDATA%\FlightMargin` on ordinary uninstall and upgrade. MSI output is no longer a primary beta path.
 - The NSIS preinstall hook checks for the packaged backend. If it is still active, the installer asks the user to fully Quit from the tray and Retry; it does not kill the process or proceed to a raw locked-file error.
 - Shell logs are `%LOCALAPPDATA%\FlightMargin\logs\desktop.log`, rotate at 1 MB, and keep one prior file. They must never contain credentials, authentication-file content, or quota payloads.
-- Auto-update, native notifications, signed/public distribution, and broad Windows compatibility validation remain pending.
+- Auto-update, native notifications, optional post-beta signing, public distribution, and broad Windows compatibility validation remain pending.
 - Linux desktop shell compilation remains unverified.
-- Signing and release distribution remain unapproved.
+- Signing remains deferred post-beta, and release distribution remains unapproved.
 - No desktop installer or release artifact is committed, published, or signed. Local unsigned validation artifacts are development-only and must not be published.

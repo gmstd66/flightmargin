@@ -126,7 +126,7 @@ Windows should be the first supported desktop OS. It has the highest requested p
 
 Tauri requires Microsoft C++ Build Tools for Windows development and uses Edge WebView2; Tauri documents WebView2 as already present on supported modern Windows versions, with an Evergreen installer fallback. [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/) also note the MSI VBSCRIPT prerequisite.
 
-An unsigned internal build can be distributed to trusted testers but may display SmartScreen warnings. A public release requires Authenticode code signing; reputation warnings may persist initially even with a certificate. [Tauri's Windows signing guidance](https://tauri.app/distribute/sign/windows/) describes this distinction. Tauri's updater requires signed update artifacts, so defer auto-update and GitHub Release distribution until the signing/release decision is approved. See the [Tauri updater](https://v2.tauri.app/plugin/updater/).
+An unsigned build may display SmartScreen warnings; reputation warnings may persist initially even with a certificate. This feasibility-era signing gate was superseded by the owner decision to release Beta 1 unsigned with required SHA-256 verification and documented warnings. [Tauri's Windows signing guidance](https://tauri.app/distribute/sign/windows/) remains useful post-beta research. Tauri's updater requires signed update artifacts, so auto-update remains deferred. See the [Tauri updater](https://v2.tauri.app/plugin/updater/).
 
 ## macOS and Linux path
 
@@ -163,4 +163,4 @@ Do not add autostart, auto-update, notifications, macOS/Linux installers, a loca
 
 ## Remaining gates before Windows-native validation
 
-The architecture, Windows-first scope, no-token internal prototype, and unsigned internal builds are approved. No further architecture decision blocks Windows-native validation. A Windows machine with existing authenticated Codex is required. Public signing, updates, GitHub Releases, auto-update, macOS notarization, and any change to the local API threat model remain separate gates.
+The architecture, Windows-first scope, no-token internal prototype, and unsigned internal builds are approved. No further architecture decision blocks Windows-native validation. A Windows machine with existing authenticated Codex is required. Signing is deferred post-beta; GitHub Release publication, auto-update, macOS notarization, and any change to the local API threat model remain separate gates.

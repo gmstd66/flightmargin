@@ -162,6 +162,21 @@ document.getElementById("copyDiagnostics").addEventListener("click", async () =>
     }
 });
 
+document.querySelectorAll("[data-project-link]").forEach(link => {
+    link.addEventListener("click", async event => {
+        if (!nativeInvoke()) return;
+        event.preventDefault();
+        try {
+            await tauriInvoke("open_project_link", {
+                destination: link.dataset.projectLink
+            });
+        } catch (error) {
+            document.getElementById("settingsStatus").textContent =
+                `Unable to open link: ${error}`;
+        }
+    });
+});
+
 document.getElementById("closeSettings").addEventListener("click", async () => {
     if (!nativeInvoke()) {
         window.location.assign("/");

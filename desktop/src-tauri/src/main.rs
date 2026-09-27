@@ -41,6 +41,8 @@ const SETTINGS_WINDOW_LABEL: &str = "settings";
 const SETTINGS_WINDOW_WIDTH: f64 = 420.0;
 const SETTINGS_WINDOW_HEIGHT: f64 = 450.0;
 const SETTINGS_WINDOW_GAP: f64 = 16.0;
+const SOURCE_CODE_URL: &str = "https://github.com/gmstd66/flightmargin";
+const REPORT_ISSUE_URL: &str = "https://github.com/gmstd66/flightmargin/issues";
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum SettingsSection {
@@ -322,6 +324,24 @@ fn close_settings(app: tauri::AppHandle) -> Result<(), String> {
         settings.close().map_err(|error| error.to_string())?;
     }
     Ok(())
+}
+
+fn project_url(destination: &str) -> Option<&'static str> {
+    match destination {
+        "source" => Some(SOURCE_CODE_URL),
+        "issues" => Some(REPORT_ISSUE_URL),
+        _ => None,
+    }
+}
+
+#[tauri::command]
+fn open_project_link(app: tauri::AppHandle, destination: String) -> Result<(), String> {
+    let url = project_url(&destination)
+        .ok_or_else(|| "Project link is not allowed".to_string())?;
+    #[allow(deprecated)]
+    app.shell()
+        .open(url, None)
+        .map_err(|error| format!("Unable to open project link: {error}"))
 }
 
 fn tray_indicator_enabled() -> bool {
@@ -699,7 +719,11 @@ fn setup_tray(app: &tauri::AppHandle) -> tauri::Result<()> {
 fn main() {
     let migration = migrate_legacy_desktop_data();
     let app = tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![open_settings, close_settings])
+        .invoke_handler(tauri::generate_handler![
+            open_settings,
+            close_settings,
+            open_project_link
+        ])
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_autostart::init(
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
@@ -763,7 +787,7 @@ mod tests {
     use super::{
         adjacent_window_position, credits_color, credits_display, credits_tooltip,
         digit_layout, migrate_legacy_data_at, numeric_icon_pixels, parse_credits,
-        parse_percentage, quota_color,
+        parse_percentage, project_url, quota_color,
         tray_indicator_preference, ScreenRect, SettingsSection, CREDITS_INDICATOR_ID,
         FIVE_HOUR_INDICATOR_ID, WEEKLY_INDICATOR_ID,
     };
@@ -805,6 +829,20 @@ mod tests {
     fn settings_sections_route_to_one_native_settings_page() {
         assert_eq!(SettingsSection::Dashboard.name(), "dashboard");
         assert_eq!(SettingsSection::About.name(), "about");
+    }
+
+    #[test]
+    fn project_links_are_exactly_allowlisted() {
+        assert_eq!(
+            project_url("source"),
+            Some("https://github.com/gmstd66/flightmargin")
+        );
+        assert_eq!(
+            project_url("issues"),
+            Some("https://github.com/gmstd66/flightmargin/issues")
+        );
+        assert_eq!(project_url("https://example.com"), None);
+        assert_eq!(project_url("sponsor"), None);
     }
 
     #[test]

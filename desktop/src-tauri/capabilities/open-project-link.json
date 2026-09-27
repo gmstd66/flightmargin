@@ -1,0 +1,10 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "open-project-link",
+  "description": "Allows only the native Settings/About window to request an allowlisted project link.",
+  "remote": {
+    "urls": ["http://127.0.0.1:*/*"]
+  },
+  "windows": ["settings"],
+  "permissions": ["allow-open-project-link"]
+}

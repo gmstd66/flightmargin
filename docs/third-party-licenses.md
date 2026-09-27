@@ -1,8 +1,16 @@
 # Third-party dependency and license inventory
 
-Inventory date: 2026-09-25. This is an engineering review, not legal advice.
+Inventory date: 2026-09-27. This is an engineering review, not legal advice.
 Exact resolved versions are recorded in `requirements-windows-build.txt`,
 `desktop/package-lock.json`, and `desktop/src-tauri/Cargo.lock`.
+
+For the Beta 1 candidate, all 27 pinned Python packages were compared with the
+installed build environment and had no version mismatch. `cargo metadata
+--locked --offline --format-version 1` resolved 498 Rust packages and found no
+package without a declared license expression. The npm lock contains one
+direct build tool, `@tauri-apps/cli`; its version and license matched this
+inventory. These checks can be repeated from the repository without modifying
+the lockfiles.
 
 ## Python runtime and build dependencies
 
@@ -32,11 +40,13 @@ similarly permissive); re-run the inventory whenever the lock changes.
 | url | 2.5.8 | MIT OR Apache-2.0 |
 
 The resolved Cargo graph is predominantly MIT/Apache/BSD/Zlib/Unicode licensed.
-Five resolved CSS/parser packages are MPL-2.0; two `r-efi` versions offer a
-choice including MIT or Apache-2.0. No resolved Rust package declared GPL or
-AGPL as its only license. MPL-2.0 is file-level copyleft and should be reviewed
-again when the selected AGPLv3-or-later terms are applied, but this audit found
-no obvious direct license blocker.
+Five resolved CSS/parser packages are MPL-2.0: `cssparser 0.36.0`,
+`cssparser-macros 0.6.1`, `dtoa-short 0.3.5`, `option-ext 0.2.0`, and
+`selectors 0.36.1`. They are unmodified registry dependencies; the exact
+upstream source is identified by `Cargo.lock`. Two `r-efi` versions offer an
+MIT or Apache-2.0 choice in addition to LGPL. No resolved third-party Rust
+package lacks a license declaration or declares GPL/AGPL as its only license;
+FlightMargin itself is the expected AGPL-3.0-or-later package.
 
 ## JavaScript and installer tooling
 
@@ -52,13 +62,18 @@ Codex CLI is discovered from the user's machine and is **not bundled**.
 
 ## Compatibility finding
 
-No direct dependency reviewed here presents an identified blocker to the
-selected AGPLv3-or-later distribution direction. Final review should confirm:
+The PyInstaller exception expressly permits distribution of applications made
+with its bootloader. The locked Python packages use MIT, BSD, Apache, PSF, or
+the PyInstaller-exception terms recorded above. The MPL components are
+unmodified, their exact versions and source locations remain traceable through
+the public lockfile, and no vendored dependency source or local patch requires
+a separate modified-source notice. The WebView2 Evergreen runtime is supplied
+by Microsoft and is not bundled by FlightMargin; the installer may invoke
+Microsoft's network bootstrapper if the runtime is absent. NSIS and the Tauri
+CLI are build tools rather than application JavaScript dependencies.
 
-- PyInstaller exception and required notices for the shipped bootloader;
-- MPL-2.0 notices/source obligations for relevant transitive files;
-- complete third-party notices generated from the exact release lockfiles;
-- WebView2 bootstrapper terms used by the installer.
-
-Changing dependencies or lockfiles requires refreshing this inventory before a
-public release candidate is approved.
+No remaining third-party attribution blocker was identified for Beta 1 by this
+engineering review. This concise inventory is intentionally used instead of a
+large vendored license dump; the public source and exact lockfiles preserve the
+complete reproducible dependency record. Changing dependencies, lockfiles,
+vendored source, or WebView2 delivery mode requires refreshing this review.

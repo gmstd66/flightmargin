@@ -1,78 +1,63 @@
-# Windows code-signing plan
+# Windows code-signing plan (post-Beta 1)
 
-Target: SignPath Foundation open-source code signing, if the project qualifies.
-No application, account, credential, or signing job is created by milestone
-6.20D.1; signing remains the following protected phase.
+FlightMargin `0.3.0-beta.1` is intentionally unsigned. Code signing is not a
+Beta 1 release gate. No SignPath application, signing account, secret, fake
+configuration, or signing job is required for Beta 1.
 
-## Eligibility dependencies
+Beta 1 instead requires a GitHub-hosted build, a published SHA-256 file with an
+independent checksum match, and recorded Microsoft Defender and
+SmartScreen/Unknown Publisher behavior. User documentation must explain the
+unsigned status without telling users to weaken or blindly bypass Windows
+security controls.
+
+## When to reconsider signing
+
+SignPath Foundation remains a possible post-beta improvement. Reconsider it
+when demonstrated adoption, user feedback, recurring SmartScreen friction, or
+another concrete distribution need justifies the application, review, and
+credential-management process. Do not implement speculative signing
+configuration before that decision.
+
+## Retained SignPath research
 
 SignPath Foundation's published
-[conditions for open-source projects](https://signpath.org/terms.html) require,
+[conditions for open-source projects](https://signpath.org/terms.html) include,
 among other things:
 
-- an OSI-approved open-source license for all project components, without
+- an OSI-approved open-source license for project components, without
   commercial dual licensing;
 - a public, maintained, documented, already released project;
-- no proprietary project components in the signed package (system libraries
-  and unsigned upstream OSS components are addressed separately by its terms);
-- a verifiable relationship between source, trusted automated build, and signed
-  binary;
+- no proprietary project components in the signed package, subject to its
+  documented treatment of system libraries and unsigned upstream components;
+- a verifiable relationship between source, trusted automated build, and the
+  signed binary;
 - MFA for repository and SignPath access;
-- documented committer/reviewer/approver roles and manual signing approval;
+- documented committer, reviewer, and approver roles with manual approval;
 - a published code-signing policy and privacy statement.
 
-The repository is public at `https://github.com/gmstd66/flightmargin`, but has
-no public release or SignPath acceptance. The AGPLv3-or-later license is
-applied through `LICENSE`; the other eligibility conditions remain
-prerequisites, not CI details that should be mocked.
+The public repository and manual GitHub-hosted workflow establish useful
+provenance, but they do not imply SignPath eligibility or acceptance.
 
-## Intended integration
-
-The manual Windows candidate workflow in
-`.github/workflows/windows-beta-build.yml` establishes the unsigned trusted
-build boundary: GitHub-hosted Windows runner, locked Node/Rust dependencies,
-resolved Python build requirements, tests, NSIS build, and checksum.
-
-After SignPath acceptance, the release workflow should:
+If signing is later approved, the intended boundary is:
 
 ```text
 approved source/tag
   -> GitHub-hosted Windows build and tests
   -> unsigned NSIS artifact
-  -> SignPath origin verification and signing request
+  -> verified SignPath origin and signing request
   -> manual signing approval
-  -> signed installer returned to GitHub Actions
-  -> signed-file SHA-256 checksum
-  -> human-reviewed GitHub prerelease
+  -> signed installer returned to automation
+  -> checksum calculated from the signed file
+  -> human-reviewed GitHub release
 ```
 
-Signing should occur after the build and before the final checksum/release
-upload. The Windows application executable and installer should be covered as
-supported by the approved SignPath artifact configuration. SignPath's HSM-held
-certificate/key should never be exported into GitHub Actions.
+The application executable and installer should be covered when supported by
+the approved artifact configuration. A provider-held signing key should never
+be exported into GitHub Actions. Exact organization, project, policy, artifact,
+and credential values must come from an accepted project; placeholders must
+not be committed. Credentials would require a protected GitHub environment,
+minimum permissions, and human reviewers.
 
-## Future protected configuration
-
-The exact values and secret names must come from the accepted SignPath project,
-not placeholders. The integration is expected to require identifiers for the
-SignPath organization/project, signing policy, artifact configuration, and an
-authentication token or approved GitHub integration. Store credentials in a
-protected GitHub release environment with required human reviewers and minimum
-workflow permissions.
-
-Before enabling signing, publish a **FlightMargin code signing policy** containing the text
-and roles required by SignPath, link the privacy policy, protect release
-branches/tags, require review of workflow/build changes, and verify artifact
-metadata consistently uses the approved product name and version.
-
-## Public distribution
-
-Only the signed installer and its checksum should enter the final GitHub
-prerelease. Preserve the unsigned CI artifact for provenance/debugging according
-to a documented retention policy, but do not present it as the preferred public
-download once signing is active.
-
-If SignPath does not accept the project, paid signing requires a separate owner
-decision covering provider, cost, organization identity, key custody,
-timestamping, renewal, and CI integration. Microsoft Store distribution remains
-a future alternative rather than the primary channel.
+If SignPath is unsuitable, paid signing or Microsoft Store distribution would
+require a separate owner decision covering cost, identity, key custody,
+timestamping, renewal, workflow security, and support impact.

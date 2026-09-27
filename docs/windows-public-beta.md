@@ -24,10 +24,10 @@ After launch approval:
 4. Fully Quit FlightMargin or an older internal Codex Quota Monitor build from its tray menu.
 5. Run the current-user installer and launch the Start menu shortcut.
 
-The first public beta has no automatic updater. Until code signing is active,
-Windows may display an unidentified-publisher or SmartScreen warning. Download
-only from the project's eventual GitHub Releases page; Defender and SmartScreen
-must not be disabled or bypassed globally.
+The first public beta has no automatic updater and is intentionally unsigned.
+Windows may display an Unknown Publisher or SmartScreen warning. Download only
+from the project's GitHub Releases page, verify the published SHA-256, and do
+not disable Defender or SmartScreen or bypass a warning blindly.
 
 The installer checks for the packaged backend process before copying files. If
 it is still running, the installer instructs the user to Quit from the tray and
@@ -93,11 +93,12 @@ quota payloads. Security-sensitive reports follow `SECURITY.md`.
 
 ## Known first-beta limitations
 
-- unsigned until the approved code-signing path is available;
+- intentionally unsigned, with SHA-256 verification required;
 - manual updates only;
 - Windows 11 x64 is the only validated public desktop target;
 - user must install and authenticate Codex independently;
 - notification icons may be placed in Windows overflow;
-- code signing, public repository readiness, and final release approval remain launch gates.
+- checksum/security validation and final release approval remain launch gates;
+  code signing is deferred until post-beta adoption or feedback justifies it.
 
 See [Privacy](privacy.md) for actual local-data and network behavior.
