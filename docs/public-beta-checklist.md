@@ -23,7 +23,7 @@ binary source. Beta 1 is intentionally unsigned; signing is not a release gate.
 - [x] Canonical version synchronized across generated manifests
 - [x] Exact release-candidate source is identical on `main` and `dev/productization`
 - [x] Source corresponding exactly to the candidate binary is public
-- [ ] Tag `v0.3.0-beta.1` approved and created (publication gate; not part of 6.21A)
+- [x] Annotated tag `v0.3.0-beta.1` created at the exact validated binary source
 
 ## Candidate build
 
@@ -60,8 +60,8 @@ binary source. Beta 1 is intentionally unsigned; signing is not a release gate.
 - [x] Report an Issue URL enabled and validated in desktop and browser About
 - [x] Sponsorship explicitly deferred; no Sponsor action, `FUNDING.yml`, or donation button
 - [x] Release-notes draft completed and internally reviewed
-- [ ] GitHub prerelease created only after final human approval
-- [ ] Installer and checksum attached only after final human approval
+- [x] GitHub prerelease created after final human approval
+- [x] Validated installer and checksum attached after final human approval
 
 Auto-update and code signing are deliberately excluded from Beta 1. SignPath
 may be reconsidered after demonstrated adoption, user feedback, or material
@@ -161,3 +161,23 @@ SmartScreen or Unknown Publisher warnings. These results validate the Beta 1
 release candidate. This acceptance record is documentation-only; the binary
 source remains the `c9a25dd` commit and the installer is not rebuilt for this
 record.
+
+## 6.21B publication evidence
+
+The annotated tag `v0.3.0-beta.1` resolves to exact binary source commit
+`c9a25dd78e9ab01c5b2ea83abe0c4e923e09111b`. GitHub Actions run `36356858138`
+produced artifact ID `10944765612`, named
+`flightmargin-windows-unsigned-c9a25dd78e9ab01c5b2ea83abe0c4e923e09111b`.
+
+The public GitHub prerelease is titled `FlightMargin 0.3.0-beta.1` and exposes
+exactly the validated installer and checksum file. The installer is 17,732,301
+bytes, intentionally unsigned, and has SHA-256
+`d742da49292c5166c49f0e5bd0621fae963dbebbd06f4d1a2262b079441bfeec`.
+An anonymous download from the public Release reproduced the expected installer
+digest and exact checksum-file contents. The release page and its absolute
+installation, issue, security, privacy, and repository links resolved publicly.
+
+The release remains a prerelease. Signing is deferred, and no Sponsor,
+package, auto-update, or production change accompanied publication. Later
+release bookkeeping commits contain documentation only and do not move the
+Beta 1 tag or change its binary source.

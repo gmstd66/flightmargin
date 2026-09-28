@@ -18,14 +18,14 @@ The canonical version is `0.3.0-beta.1` in `app/version.py`. Generated Cargo
 and Tauri versions match it. Python distribution metadata uses the equivalent
 PEP 440 form `0.3.0b1`. The beta feature set is frozen.
 
-The public repository is `https://github.com/gmstd66/flightmargin`. The beta
-has not been tagged, released, or distributed as a binary/package. Beta 1 is
+The public repository is `https://github.com/gmstd66/flightmargin`. FlightMargin
+`0.3.0-beta.1` is published there as a GitHub prerelease. Beta 1 is
 intentionally unsigned; code signing is not a Beta 1 gate. Auto-update is
 deferred. About exposes Source Code and Report an Issue actions. Sponsor links
 remain deferred and absent.
 
 The `0.3.0-beta.1` release candidate passed final owner acceptance in milestone
-6.21A-F. Publication still requires a separate owner decision.
+6.21A-F and was published under the owner's separate milestone 6.21B approval.
 
 FlightMargin is licensed `AGPL-3.0-or-later`; the standard GNU AGPL v3 text is
 present in `LICENSE`. Third-party license notices remain separately inventoried.
@@ -307,12 +307,32 @@ Internet-zone execution invoked SmartScreen; no security control was disabled
 or bypassed. The exact warning text is not a gate. This milestone's commit
 records acceptance evidence only; it does not change the `c9a25dd` binary
 source, build inputs, or artifact, and no rebuild is needed for this record.
-The Beta 1 release candidate is validated but remains unpublished.
+The Beta 1 release candidate was validated before publication.
 
-## Remaining Beta 1 release gates
+## 6.21B public Beta 1 publication
 
-- owner approval of the final release notes, tag, installer/checksum
-  publication, and GitHub prerelease.
+Annotated tag `v0.3.0-beta.1` resolves to validated binary source commit
+`c9a25dd78e9ab01c5b2ea83abe0c4e923e09111b`. GitHub Actions run `36356858138`
+built artifact
+`flightmargin-windows-unsigned-c9a25dd78e9ab01c5b2ea83abe0c4e923e09111b`.
+The public prerelease is
+`https://github.com/gmstd66/flightmargin/releases/tag/v0.3.0-beta.1` and exposes
+exactly these user assets:
 
-No production deployment, new tag, GitHub Release, package publication,
-SignPath application, or Sponsor activation is authorized by this milestone.
+```text
+FlightMargin-0.3.0-beta.1-Windows-x64.exe
+FlightMargin-0.3.0-beta.1-Windows-x64.exe.sha256
+```
+
+The 17,732,301-byte installer is intentionally unsigned and independently
+hashed to
+`d742da49292c5166c49f0e5bd0621fae963dbebbd06f4d1a2262b079441bfeec`.
+An anonymous public download of both assets reproduced that digest and matched
+the checksum file exactly. The release is marked prerelease, and its public
+page, installation guide, issue tracker, security policy, privacy page, and
+repository README all resolved successfully.
+
+This release bookkeeping is documentation-only. It does not change the binary
+source, application code, dependencies, build inputs, workflow, or version.
+Signing remains deferred. No Sponsor activation, package publication,
+auto-update change, or production change occurred.

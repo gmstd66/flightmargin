@@ -4,8 +4,14 @@ Notable changes to FlightMargin are documented here. This file summarizes produc
 
 ## Unreleased
 
+## 0.3.0-beta.1 - 2026-09-27
+
 ### Added
 
+- Published the first FlightMargin public beta as a GitHub prerelease with the
+  validated unsigned Windows 11 x64 installer and its SHA-256 checksum. Tag
+  `v0.3.0-beta.1` points to binary source commit
+  `c9a25dd78e9ab01c5b2ea83abe0c4e923e09111b`.
 - Activated About actions for the public source repository and issue tracker
   in browser/Linux use and through an exact allowlisted external-browser bridge
   in the Windows desktop shell.
@@ -14,10 +20,9 @@ Notable changes to FlightMargin are documented here. This file summarizes produc
 - Validated the unsigned Beta 1 candidate through the GitHub-hosted Windows
   workflow, independent SHA-256 verification, Defender scanning, and isolated
   installed-application checks. The owner accepted the tray indicators, both
-  running-app installer paths, and uninstall/data preservation. This later
-  evidence-only update does not change the validated binary source commit
-  `c9a25dd78e9ab01c5b2ea83abe0c4e923e09111b`; no tag or publication was
-  created.
+  running-app installer paths, and uninstall/data preservation. Later
+  acceptance and release bookkeeping commits contain documentation only; the
+  published binary source remains `c9a25dd78e9ab01c5b2ea83abe0c4e923e09111b`.
 - Published the FlightMargin source repository as
   `https://github.com/gmstd66/flightmargin` after the sanitized-history and
   final privacy checks. Applied the approved description/topics and enabled

@@ -48,3 +48,18 @@ required.
 Sponsorship remains deferred. Beta 1 has no Sponsor action, `FUNDING.yml`, or
 donation button. Any future sponsorship activation requires a separate owner
 decision and a real destination.
+
+## Published Beta 1 evidence
+
+FlightMargin `0.3.0-beta.1` was published as a GitHub prerelease after separate
+owner authorization. Annotated tag `v0.3.0-beta.1` points to validated binary
+source commit `c9a25dd78e9ab01c5b2ea83abe0c4e923e09111b`; later commits only record
+acceptance and release evidence. GitHub Actions run `36356858138` produced the
+published `FlightMargin-0.3.0-beta.1-Windows-x64.exe`, whose SHA-256 is
+`d742da49292c5166c49f0e5bd0621fae963dbebbd06f4d1a2262b079441bfeec`.
+
+The public installer and checksum were downloaded anonymously after publication
+and verified again. The checksum matched exactly, the release retained
+prerelease status, and the installer retained its intentional `NotSigned`
+status. Publication did not add signing, Sponsor, package distribution,
+auto-update, or production changes.
