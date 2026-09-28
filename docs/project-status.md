@@ -24,6 +24,9 @@ intentionally unsigned; code signing is not a Beta 1 gate. Auto-update is
 deferred. About exposes Source Code and Report an Issue actions. Sponsor links
 remain deferred and absent.
 
+The `0.3.0-beta.1` release candidate passed final owner acceptance in milestone
+6.21A-F. Publication still requires a separate owner decision.
+
 FlightMargin is licensed `AGPL-3.0-or-later`; the standard GNU AGPL v3 text is
 present in `LICENSE`. Third-party license notices remain separately inventoried.
 
@@ -258,8 +261,9 @@ Source/Issue external-browser launch while the FlightMargin webview remained
 open, Settings close/reopen, single instance, copy-only internal-0.2.0 data
 migration, hidden child-window inspection, preinstall running-app blocking, and
 uninstall with user data preserved. The validation used a checkout-local
-installation rather than a clean VM. Visual inspection of the three tray values
-and manual interaction with the Retry/Cancel dialog were unavailable.
+installation rather than a clean VM. At this stage, visual inspection of the
+tray values and manual Retry/Cancel interaction were unavailable; the final
+owner acceptance below closes those checks.
 
 The documentation-complete source snapshot
 `4f9285f8af7eb78131cd3e1587a8140f43c20ec6` then passed GitHub Actions run
@@ -270,17 +274,45 @@ installer independently hashed to
 `98c90184c49be8f5c77625fd960d580cf38c76b3e4d51a03dbce0c3fc1c029a9` and
 the checksum matched exactly. FlightMargin `0.3.0-beta.1` metadata,
 `NotSigned` status, and a no-threat Microsoft Defender scan were reconfirmed.
-The milestone completion report identifies the final exact-source workflow run
-for this documentation snapshot, avoiding any claim that an older binary was
-built from a newer commit.
+This was an intermediate documentation snapshot. The final binary source and
+owner acceptance are recorded below.
+
+## 6.21A-F final Beta 1 candidate acceptance
+
+The validated Windows binary was built from
+`c9a25dd78e9ab01c5b2ea83abe0c4e923e09111b` by GitHub Actions run
+`36356858138`. Artifact
+`flightmargin-windows-unsigned-c9a25dd78e9ab01c5b2ea83abe0c4e923e09111b`
+contained `FlightMargin-0.3.0-beta.1-Windows-x64.exe` and its checksum file.
+The installer's independently verified SHA-256 was
+`d742da49292c5166c49f0e5bd0621fae963dbebbd06f4d1a2262b079441bfeec`.
+Authenticode reported `NotSigned`.
+
+The exact CI installer passed installation and installed-app smoke validation:
+authenticated Codex collection, populated dashboard and History, Settings and
+About, both approved external project links, close-to-tray, clean Quit, and no
+visible console windows. The owner explicitly reported **PASS** for visual
+inspection of the main, Weekly, 5-hour, and Credits tray indicators: they were
+present, legible, and matched the dashboard. No private values are recorded.
+
+The owner also reported **PASS** for both running-app installer paths. Cancel
+exited without replacing the installed app; FlightMargin remained healthy and
+user data stayed intact. For Retry, the owner fully Quit FlightMargin, selected
+Retry, observed installation proceed, and confirmed normal relaunch with
+authenticated quota collection. Uninstall and user-data/history preservation
+also passed owner confirmation.
+
+Defender protection remained enabled and the scan found no threat.
+Internet-zone execution invoked SmartScreen; no security control was disabled
+or bypassed. The exact warning text is not a gate. This milestone's commit
+records acceptance evidence only; it does not change the `c9a25dd` binary
+source, build inputs, or artifact, and no rebuild is needed for this record.
+The Beta 1 release candidate is validated but remains unpublished.
 
 ## Remaining Beta 1 release gates
 
-- interactive Windows 11 confirmation of the three tray values and the
-  running-app Retry/Cancel dialog;
 - owner approval of the final release notes, tag, installer/checksum
-  publication, and GitHub prerelease;
-- sponsorship remains a separate post-beta decision.
+  publication, and GitHub prerelease.
 
 No production deployment, new tag, GitHub Release, package publication,
 SignPath application, or Sponsor activation is authorized by this milestone.

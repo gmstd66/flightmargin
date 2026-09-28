@@ -1,7 +1,8 @@
 # Windows public beta release checklist
 
-Unchecked gates require current evidence for the exact release commit and
-artifact. Beta 1 is intentionally unsigned; signing is not a release gate.
+Unchecked gates require current evidence for the exact binary source commit and
+artifact. A later documentation-only acceptance commit does not change that
+binary source. Beta 1 is intentionally unsigned; signing is not a release gate.
 
 ## Product and legal
 
@@ -37,14 +38,15 @@ artifact. Beta 1 is intentionally unsigned; signing is not a release gate.
 ## Native validation
 
 - [x] Isolated Windows 11 x64 installation passes using the CI-built installer
+- [x] Definitive CI artifact installed-app smoke passes
 - [x] Existing Codex CLI is detected; Codex is not bundled
 - [x] Authenticated health/quota reads pass
 - [x] Dashboard and Weekly History render correctly without visible consoles
-- [ ] Weekly, 5-hour, and Credits tray indicators pass
+- [x] Main, Weekly, 5-hour, and Credits tray indicators pass owner visual review
 - [x] Settings, About, Source Code, Report an Issue, and sanitized diagnostics pass
 - [x] Close-to-tray, single-instance, relaunch, and backend cleanup pass
 - [x] Transition from the internal 0.2.0 build copies legacy data without loss
-- [ ] Running-app installer Retry/Cancel behavior passes
+- [x] Running-app installer Cancel and Retry paths pass owner interaction
 - [x] Uninstall succeeds and documented user-data preservation is accurate
 - [x] SmartScreen activation and unsigned/Unknown Publisher status recorded without evasion
 - [x] Microsoft Defender result recorded without disabling protection
@@ -108,8 +110,9 @@ inspection, both allowlisted external-browser commands without replacing the
 webview, single-instance behavior, copy-only legacy migration, process-tree
 console inspection, and uninstall with new and legacy user data preserved. A
 running-app reinstall remained blocked before copying and left the installed
-executable unchanged. Because the agent has no interactive desktop access, the
-three tray values and manual Retry/Cancel button interaction remain unchecked.
+executable unchanged. At that stage, the automated session could not complete
+visual tray review or manual Retry/Cancel interaction; the owner acceptance
+below closes those checks.
 
 The documentation-complete source snapshot
 `4f9285f8af7eb78131cd3e1587a8140f43c20ec6` also passed GitHub Actions run
@@ -122,3 +125,39 @@ matching the checksum file exactly. Metadata and `NotSigned` status were
 correct, and a Microsoft Defender custom scan found no threat. The milestone
 completion report identifies the final exact-source workflow run for this
 documentation snapshot.
+
+## 6.21A-F final owner acceptance
+
+The validated binary was built from source commit
+`c9a25dd78e9ab01c5b2ea83abe0c4e923e09111b` by GitHub Actions run
+`36356858138`. Artifact
+`flightmargin-windows-unsigned-c9a25dd78e9ab01c5b2ea83abe0c4e923e09111b`
+contained `FlightMargin-0.3.0-beta.1-Windows-x64.exe` and its SHA-256 file.
+The installer SHA-256 was independently verified as
+`d742da49292c5166c49f0e5bd0621fae963dbebbd06f4d1a2262b079441bfeec`.
+Its Authenticode status was `NotSigned`.
+
+The exact CI installer passed the definitive installed-app smoke: installation,
+launch, authenticated Codex collection, dashboard and History rendering,
+Settings/About, external Source Code and Report an Issue actions, close-to-tray,
+and clean Quit without visible console windows. The owner then explicitly
+confirmed **PASS** for all remaining interactive checks:
+
+- The main, Weekly, 5-hour, and Credits tray indicators were present, legible,
+  and showed values corresponding to the dashboard. No private values are
+  recorded here.
+- With the app running, **Cancel** exited the installer without replacing the
+  installed application; FlightMargin stayed healthy and user data stayed
+  intact.
+- After fully Quitting FlightMargin, **Retry** let installation proceed. The
+  app relaunched normally and authenticated quota collection succeeded.
+- Uninstall removed the application while preserving user data and history as
+  documented.
+
+Microsoft Defender protection stayed enabled and its scan found no threat.
+Internet-zone execution invoked SmartScreen; no security control was disabled
+or bypassed. Exact warning wording is not a release gate, and Windows may show
+SmartScreen or Unknown Publisher warnings. These results validate the Beta 1
+release candidate. This acceptance record is documentation-only; the binary
+source remains the `c9a25dd` commit and the installer is not rebuilt for this
+record.
