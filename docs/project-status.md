@@ -1,6 +1,6 @@
 # FlightMargin — Project Status
 
-Updated: 2026-09-27
+Updated: 2026-09-29
 
 Branch: `dev/productization`
 
@@ -90,6 +90,12 @@ FlightMargin copies only `quota.db` and `desktop-preferences.json` through a
 staging directory. It never deletes the legacy directory, copies logs/caches,
 or overwrites an existing new directory. Explicit data/database overrides are
 not migrated. Python and Rust tests cover copy behavior and idempotence.
+
+## Linux LAN binding hardening
+
+On 2026-09-29, the development Linux installer added a dedicated `--lan` mode that binds to `0.0.0.0` instead of embedding a literal DHCP-assigned LAN address in the systemd unit. The secure default remains `127.0.0.1`. The existing `--host ADDRESS` option remains available for advanced/backward-compatible explicit binding and cannot be combined with `--lan`.
+
+The Linux installation and upgrade guidance now uses `--lan`, and regression tests protect the localhost default and wildcard LAN binding contract. This change does not alter the protected production checkout, service, port, database, firewall, authentication state, or network exposure.
 
 ## Linux production protection
 

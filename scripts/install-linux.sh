@@ -18,6 +18,8 @@ PROJECT_DIR="$(
 )"
 
 HOST="127.0.0.1"
+HOST_EXPLICIT=0
+LAN_MODE=0
 PORT="8093"
 SAMPLE_SECONDS="60"
 
@@ -64,8 +66,15 @@ Options:
       Default:
         ${SERVICE_NAME}
 
+  --lan
+      Make the dashboard reachable on a trusted LAN.
+      Binds to all IPv4 interfaces (0.0.0.0) so DHCP/IP
+      changes do not invalidate the systemd service.
+      Cannot be combined with --host.
+
   --host ADDRESS
-      Dashboard bind address.
+      Advanced explicit dashboard bind address.
+      Cannot be combined with --lan.
       Default: ${HOST}
 
   --port PORT
@@ -162,7 +171,7 @@ Examples:
 
   LAN-accessible service:
     scripts/install-linux.sh \
-      --host 192.168.1.50 \
+      --lan \
       --port 8093 \
       --apply
 
@@ -212,11 +221,17 @@ while [[ $# -gt 0 ]]; do
             shift 2
             ;;
 
+        --lan)
+            LAN_MODE=1
+            shift
+            ;;
+
         --host)
             [[ $# -ge 2 ]] \
                 || fail "--host requires a value"
 
             HOST="$2"
+            HOST_EXPLICIT=1
             shift 2
             ;;
 
@@ -357,6 +372,15 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
+
+
+if (( LAN_MODE == 1 && HOST_EXPLICIT == 1 )); then
+    fail "--lan cannot be combined with --host"
+fi
+
+if (( LAN_MODE == 1 )); then
+    HOST="0.0.0.0"
+fi
 
 
 if [[ "$(uname -s)" != "Linux" ]]; then
@@ -800,7 +824,12 @@ echo
 echo "FlightMargin installed successfully."
 echo
 echo "Dashboard:"
-echo "  http://${HEALTH_HOST}:${PORT}"
+if [[ "${HOST}" == "0.0.0.0" ]]; then
+    echo "  Local: http://127.0.0.1:${PORT}"
+    echo "  LAN:   http://<server-LAN-IP>:${PORT}"
+else
+    echo "  http://${HEALTH_HOST}:${PORT}"
+fi
 echo
 echo "Service:"
 echo "  ${SERVICE_NAME}"
