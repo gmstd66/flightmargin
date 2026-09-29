@@ -1,0 +1,13 @@
+{
+  "pepper": "fixture-pepper-exactly-32-bytes!!",
+  "host_credential": "fmh1.11111111-1111-4111-8111-111111111111.AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "host_digest": "c09582a442f9e98a7968acbb100bde26eb47c0659fc52dfbaa9ef06593ba5a56",
+  "device_credential": "fmd1.22222222-2222-4222-8222-222222222222.Hx4dHBsaGRgXFhUUExIREA8ODQwLCgkIBwYFBAMCAQA",
+  "device_digest": "51e70215788beb3f87f979e33e2074f86d76f4a36eaee5fb8a8b32dd87c260a5",
+  "pairing_token": "fmp1.33333333-3333-4333-8333-333333333333.UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFA",
+  "pairing_qr_digest": "9d5272d3b4e4ba50414e08f019297ffe9cf71b3aabd0839757147788436b7f07",
+  "manual_code": "01234-56789",
+  "pairing_manual_digest": "da4ffa772fed9ec4f3c646ad9010d0c2e2467e2a752f3bcb13b72cd80d0629a7",
+  "ip": "192.0.2.44",
+  "rate_limit_digest": "ab82eaec9c57009101b4740677fbe14f81f32d6598cbcbf490f2e89ad9c54684"
+}

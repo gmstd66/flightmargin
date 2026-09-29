@@ -1,6 +1,6 @@
-# FlightMargin Mobile Relay — Design and I-03 Local Pairing API
+# FlightMargin Mobile Relay — Design and I-04A Hosted Implementation
 
-Status: approved architecture, local I-03 implementation; not deployed
+Status: production-oriented Edge Function and deployment path implemented; not deployed
 
 ## Goal
 
@@ -339,12 +339,34 @@ Revocation sets `revoked_at`; a revoked credential immediately loses access.
 
 ## Edge Function layout
 
-Initial deployment uses one Edge Function named `flightmargin-relay` with
-internal routing for `/v1/*`.
+The hosted implementation is one Supabase Edge Function named `relay-v1` under
+`supabase/functions/relay-v1/`, with internal routing for `/health` and the v1
+contract. `supabase/config.toml` sets `verify_jwt = false`: the function uses
+FlightMargin `fmh1` and `fmd1` credentials rather than Supabase Auth accounts
+or Supabase JWTs. Every protected route authenticates the FlightMargin token
+before application data access.
 
-The function uses FlightMargin credentials rather than Supabase user JWTs.
-Every protected route authenticates the FlightMargin token before database
-access.
+The function uses a module-scope `node-postgres` pool with at most one
+connection per warm isolate, no named/prepared statements, bounded
+connection/query behavior, and TLS certificate verification for hosted
+connections. It reads only `FLIGHTMARGIN_RELAY_DATABASE_URL`. Hosted
+deployment must set that secret to the Supabase shared transaction-pooler URL
+on port 6543; local tests set it to the local PostgreSQL URL. There is no
+fallback to the built-in direct `SUPABASE_DB_URL`. All SQL values are
+parameterized. Explicit `BEGIN`/`COMMIT`/`ROLLBACK`, transactional row locks,
+and advisory transaction locks preserve the registration, authentication,
+monotonic quota, and pairing concurrency semantics established by the Python
+reference.
+
+Public JSON endpoints require `application/json`, accept at most 16 KiB, and
+enforce the same field/type/length constraints as the Python implementation.
+Routes and methods are explicit, CORS is not enabled, internal failures return
+a generic response, and the only logged failure attribute is a safe request
+ID. FlightMargin application code does not persist or log raw client IPs,
+authorization values, bodies, pairing material, or credentials. Supabase
+infrastructure and its gateway may retain request metadata, including
+client-IP-related headers, according to Supabase platform logging and
+retention; FlightMargin does not control those infrastructure logs.
 
 ## Database tables
 
@@ -390,12 +412,26 @@ See `docs/mobile-relay-development.md`.
 - revoked credentials/devices: retain temporarily for audit/debugging;
 - no remote quota history in v1.
 
-## Initial rate-limit targets
+## I-04A public rate limits
 
-- host registration: 5/hour/IP;
-- pairing claim: 20/hour/IP and maximum 5 failures/session;
-- quota report: 30/minute/host credential;
-- quota read: 120/minute/device credential.
+The public Edge Function enforces database-backed fixed-window limits before
+processing unauthenticated request bodies:
+
+- host registration: 10 requests per IP identity per 60 minutes;
+- pairing claim: 20 requests per IP identity per 5 minutes, in addition to the
+  five failures permitted for a session-addressable QR claim.
+
+The identity is selected from `cf-connecting-ip`, then `x-real-ip`, with one
+shared `unknown` identity when neither is present. Only
+`HMAC-SHA-256(pepper, "rate-limit-ip:" + identity)` is stored. Atomic
+PostgreSQL upserts increment fixed-window buckets, and over-limit responses are
+generic `429` responses with `Retry-After`. An expiry index supports periodic
+purging; the implementation also removes expired buckets during checks. The
+`relay_rate_limit_buckets` stores only these contextual HMAC digests, not raw
+client IPs. FlightMargin application code does not persist or log raw client
+IPs. Supabase infrastructure and its gateway may retain request metadata,
+including client-IP-related headers, according to Supabase platform logging
+and retention; FlightMargin does not control those infrastructure logs.
 
 ## Deferred work
 
@@ -410,7 +446,7 @@ Not part of I-01:
 - billing/subscription logic;
 - production-grade abuse scoring.
 
-## I-02 and I-03 local implementation
+## Implementations through I-04A
 
 The first working relay API is separate source under `relay/`; it is excluded
 from normal FlightMargin package discovery and runs from a source checkout
@@ -431,6 +467,19 @@ change. Local development startup is intentionally fixed to
 PostgreSQL readiness. QR rendering, iPhone UI, rate limiting, hosted Supabase
 deployment, device-management endpoints, and production operations remain
 outside I-03.
+
+I-04A adds the production-oriented TypeScript/Deno implementation under
+`supabase/functions/relay-v1/`. It preserves the same JSON/status behavior and
+credential/HMAC contexts, and adds the public-edge controls and database-backed
+limits required before exposure. The Python implementation remains the local
+reference and is not replaced or packaged with the main FlightMargin app.
+
+The manual-only GitHub workflow `.github/workflows/deploy-mobile-relay.yml`
+defines the eventual hosted path: check out the selected exact commit, install
+the official Supabase CLI, link the project, apply committed migrations, set
+the HMAC pepper and shared transaction-pooler URL as function secrets, deploy
+`relay-v1`, and report the commit. I-04A does not run that workflow, create its
+required secrets, link a hosted project, or deploy anything.
 
 The credential and pairing design leaves room for adding payload encryption
 later without changing device identity.

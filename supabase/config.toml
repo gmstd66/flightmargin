@@ -1,0 +1,4 @@
+project_id = "flightmargin-local"
+
+[functions.relay-v1]
+verify_jwt = false

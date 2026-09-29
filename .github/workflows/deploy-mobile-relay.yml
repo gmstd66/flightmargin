@@ -1,0 +1,96 @@
+name: Deploy mobile relay
+
+# Manual-only by design. Selecting "Run workflow" deploys the exact selected
+# commit; pushes and pull requests never deploy the hosted relay.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mobile-relay-deployment
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Apply relay migrations and deploy relay-v1
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out exact selected commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Set up Supabase CLI
+        uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359 # v3.0.1
+        with:
+          version: 2.84.2
+
+      - name: Verify required deployment secrets are configured
+        shell: bash
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          FLIGHTMARGIN_RELAY_PEPPER: ${{ secrets.FLIGHTMARGIN_RELAY_PEPPER }}
+          FLIGHTMARGIN_RELAY_DATABASE_URL: ${{ secrets.FLIGHTMARGIN_RELAY_DATABASE_URL }}
+        run: |
+          for variable_name in SUPABASE_ACCESS_TOKEN SUPABASE_PROJECT_REF FLIGHTMARGIN_RELAY_PEPPER FLIGHTMARGIN_RELAY_DATABASE_URL; do
+            if [ -z "${!variable_name}" ]; then
+              echo "Required repository/environment secret is missing: ${variable_name}" >&2
+              exit 1
+            fi
+          done
+          if [ "$(printf %s "$FLIGHTMARGIN_RELAY_PEPPER" | wc -c)" -lt 32 ]; then
+            echo "FLIGHTMARGIN_RELAY_PEPPER must be at least 32 bytes" >&2
+            exit 1
+          fi
+          node -e '
+            const value = new URL(process.env.FLIGHTMARGIN_RELAY_DATABASE_URL);
+            if (value.port !== "6543" || !value.hostname.endsWith(".pooler.supabase.com")) {
+              throw new Error("FLIGHTMARGIN_RELAY_DATABASE_URL must use the Supabase shared transaction pooler on port 6543");
+            }
+          '
+
+      - name: Link hosted project
+        shell: bash
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: |
+          if [ -z "$SUPABASE_DB_PASSWORD" ]; then
+            echo "Required repository/environment secret is missing: SUPABASE_DB_PASSWORD" >&2
+            exit 1
+          fi
+          supabase link --project-ref "$SUPABASE_PROJECT_REF"
+
+      - name: Apply committed migrations
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: supabase db push
+
+      - name: Configure server-only relay secrets
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          FLIGHTMARGIN_RELAY_PEPPER: ${{ secrets.FLIGHTMARGIN_RELAY_PEPPER }}
+          FLIGHTMARGIN_RELAY_DATABASE_URL: ${{ secrets.FLIGHTMARGIN_RELAY_DATABASE_URL }}
+        run: |
+          supabase secrets set \
+            FLIGHTMARGIN_RELAY_PEPPER="$FLIGHTMARGIN_RELAY_PEPPER" \
+            FLIGHTMARGIN_RELAY_DATABASE_URL="$FLIGHTMARGIN_RELAY_DATABASE_URL" \
+            --project-ref "$SUPABASE_PROJECT_REF"
+
+      - name: Deploy relay-v1 Edge Function
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: supabase functions deploy relay-v1 --project-ref "$SUPABASE_PROJECT_REF"
+
+      - name: Report deployed revision
+        run: echo "Deployed FlightMargin relay commit ${GITHUB_SHA}"

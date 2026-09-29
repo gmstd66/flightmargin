@@ -6,6 +6,18 @@ Notable changes to FlightMargin are documented here. This file summarizes produc
 
 ### Added
 
+- Added the I-04A production-oriented TypeScript/Deno Supabase Edge Function
+  for the complete relay v1 contract, with direct transactional PostgreSQL
+  access, FlightMargin-native authentication, strict public request handling,
+  shared Python/TypeScript HMAC vectors, and standalone Deno integration tests.
+- Added database-backed fixed-window public limits of 10 host registrations per
+  IP-HMAC per hour and 20 pairing claims per IP-HMAC per five minutes. A new
+  additive migration stores no raw IPs and supports expired-bucket purging.
+- Added a manual-only GitHub-hosted deployment workflow that will apply
+  committed migrations, configure the server-only pepper and explicit shared
+  transaction-pooler URL, and deploy the exact selected `relay-v1` revision
+  after secrets and deployment are separately authorized. I-04A performs no
+  hosted deployment.
 - Added the I-03 accountless mobile pairing API with host-authenticated
   five-minute pairing creation, QR token/manual code/deep-link responses,
   atomic QR and manual claims, five-attempt session exhaustion, idempotent
@@ -29,6 +41,13 @@ Notable changes to FlightMargin are documented here. This file summarizes produc
 
 ### Fixed
 
+- Hardened I-04A hosted database access by replacing pipelining Postgres.js
+  with a one-client `node-postgres` pool, explicit transactions, unnamed
+  parameterized queries, verified hosted TLS, and the required
+  `FLIGHTMARGIN_RELAY_DATABASE_URL` transaction-pooler secret. Clarified that
+  FlightMargin code stores only contextual IP HMACs and does not log raw client
+  IPs, while Supabase infrastructure may retain request metadata under its own
+  logging and retention.
 - Hardened the local mobile relay before push with explicit v1 response
   envelopes, immutable host metadata on registration retries, bounded strict
   request validation, a minimum 32-byte HMAC pepper, constant-time credential

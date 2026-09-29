@@ -56,7 +56,7 @@ The Windows shell communicates with its sidecar on an OS-assigned loopback
 port. The Linux browser deployment has no application-level authentication and
 must stay on localhost or a trusted private network.
 
-## Mobile companion relay — I-01 through I-03
+## Mobile companion relay — I-01 through I-04A
 
 The approved mobile-companion architecture uses a central Supabase relay so the
 iPhone requires no VPN, port forwarding, third-party user account, router
@@ -116,6 +116,61 @@ session to increment; it receives the same generic error, and planned
 deployment-side per-IP claim rate limiting remains required before public
 exposure. No Edge Function, QR rendering, iPhone UI, hosted Supabase
 deployment, production service, or production data change is part of I-03.
+
+I-04A adds the production-oriented `relay-v1` Supabase Edge Function as a
+separate TypeScript/Deno implementation of the complete current relay contract.
+It uses FlightMargin credentials without Supabase Auth, a module-scope
+`node-postgres` pool capped at one verified-TLS connection per hosted warm
+isolate, unnamed parameterized SQL, bounded connection/query behavior,
+constant-time digest comparisons, and explicit multi-query transactions that
+preserve the I-02/I-03 row/advisory locking and revocation semantics. It reads
+only `FLIGHTMARGIN_RELAY_DATABASE_URL`; hosted operation requires the Supabase
+shared transaction-pooler URL on port 6543 and never falls back to the built-in
+direct `SUPABASE_DB_URL`. `supabase/config.toml` explicitly sets
+`verify_jwt = false`. The Python implementation remains the local reference.
+
+The additive I-04A migration creates `relay_rate_limit_buckets`. Atomic
+fixed-window upserts enforce 10 host registrations per IP-HMAC per 60 minutes
+and 20 pairing claims per IP-HMAC per five minutes. The function prefers the
+gateway `cf-connecting-ip`, falls back to `x-real-ip`, and shares one `unknown`
+identity when neither is available. `relay_rate_limit_buckets` stores only a
+dedicated contextual HMAC, not the raw client IP. FlightMargin application
+code does not persist or log raw client IPs. Supabase infrastructure and its
+gateway may retain request metadata, including client-IP-related headers,
+according to Supabase platform logging and retention; FlightMargin does not
+control those infrastructure logs. Expired buckets are indexed and purged
+during checks. QR session failures retain the five-attempt behavior, while
+unknown manual codes remain protected by their entropy plus the mandatory
+per-IP claim limit.
+
+Public-edge handling is explicit and bounded: exact routes/methods, required
+JSON content type, a 16 KiB body maximum, strict contract fields/types, no CORS
+policy, generic internal errors, and safe request-ID-only failure logging. Deno
+tests run without the unsupported local Supabase Edge Runtime and cover shared
+Python/TypeScript crypto vectors, routing/validation/error safety, and live
+PostgreSQL registration, authentication, quota, pairing, revocation,
+expiry/exhaustion, and rate limiting.
+
+The new GitHub-hosted Ubuntu workflow is manual-only. An authorized future run
+will check out the exact selected commit, install the official Supabase CLI,
+link the hosted project, apply committed migrations, set the server-only
+pepper and transaction-pooler connection URL, deploy `relay-v1`, and report
+the SHA. It requires
+`SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD`, and
+`FLIGHTMARGIN_RELAY_PEPPER`, plus `FLIGHTMARGIN_RELAY_DATABASE_URL` containing
+the shared transaction-pooler connection string on port 6543. The database
+password is scoped only to CLI link/migration steps; both function secrets are
+installed without printing them. I-04A creates none of those secrets and
+performs no push, hosted project link, workflow run, deployment, production
+change, or COXON backup operation.
+
+Local I-04A validation passed 185 Python tests, 15 standalone Deno tests with
+live disposable-PostgreSQL coverage, Deno format/lint/type checks, a clean
+I-01-plus-I-04A migration replay, workflow syntax checks, and wheel build and
+artifact verification. The COXON CPU cannot run the local Supabase Edge
+Runtime, so gateway behavior, hosted secret injection and transaction-pooler
+TLS connectivity, migration application through the Supabase CLI, and remote
+smoke tests remain deployment-time validation gates.
 
 ## Public identity and compatibility
 

@@ -104,6 +104,41 @@ and claim a pairing, then read quota with the new device credential. Run only
 on `127.0.0.1:18093` against local PostgreSQL at `127.0.0.1:55432`, stop the
 relay afterward, and confirm that no listener remains.
 
+## I-04A TypeScript hosted relay
+
+The production-oriented Supabase implementation is
+`supabase/functions/relay-v1/`. It is a separate TypeScript/Deno implementation
+of the same v1 contract; the Python relay remains the local reference. The
+TypeScript code connects directly to PostgreSQL because pairing and credential
+operations require transactions, row locks, and advisory locks.
+
+For standalone validation on machines where the Supabase Edge Runtime cannot
+execute, install Deno in the current user's environment and run:
+
+```bash
+cd supabase/functions/relay-v1
+deno task check
+deno task test
+```
+
+Integration tests use `FLIGHTMARGIN_RELAY_DATABASE_URL` and
+`FLIGHTMARGIN_RELAY_PEPPER` against the disposable local PostgreSQL database.
+The hosted function uses that same explicit database variable; its value must
+be the Supabase shared transaction-pooler connection string on port 6543, not
+the built-in direct `SUPABASE_DB_URL`. Hosted connections require TLS. The
+HMAC pepper must be at least 32 UTF-8 bytes in both implementations. Neither
+database URL nor pepper belongs in source, output, logs, or committed
+environment files.
+
+The additive migration
+`supabase/migrations/20260929203000_relay_rate_limits.sql` owns fixed-window
+public rate-limit buckets. It stores only contextual IP HMACs. Expired rows may
+be purged safely with:
+
+```sql
+delete from public.relay_rate_limit_buckets where expires_at < now();
+```
+
 ## Local Supabase stack
 
 The Supabase CLI local stack is the development database. It is disposable and
@@ -127,17 +162,38 @@ After another developer or branch adds migrations, pull Git and run
 Do not expose the local Supabase development stack to the public internet. It
 is a development service, not the relay production endpoint.
 
-## Remote deployment rule
+## Manual hosted deployment rule
 
-Once a revision is tested locally and pushed to GitHub:
+The manual-only `.github/workflows/deploy-mobile-relay.yml` is the sole prepared
+I-04A deployment path. It never runs on push. Configure these GitHub repository
+secrets before an authorized deployment:
 
-1. link the checkout to the dedicated FlightMargin Supabase development/staging
-   project;
-2. verify migration history;
-3. run `supabase db push`;
-4. deploy Edge Functions from the same Git commit;
-5. perform remote smoke tests;
-6. only then promote the reviewed change toward production.
+- `SUPABASE_ACCESS_TOKEN`
+- `SUPABASE_PROJECT_REF`
+- `SUPABASE_DB_PASSWORD`
+- `FLIGHTMARGIN_RELAY_PEPPER` (at least 32 bytes)
+- `FLIGHTMARGIN_RELAY_DATABASE_URL` (the shared transaction-pooler URL on port
+  6543)
+
+`SUPABASE_DB_PASSWORD` is available only to the CLI link/migration steps. The
+workflow installs both `FLIGHTMARGIN_RELAY_PEPPER` and
+`FLIGHTMARGIN_RELAY_DATABASE_URL` as function secrets without printing their
+values.
+
+Once a revision is tested locally, pushed to GitHub, and deployment is
+explicitly approved, manually select that exact revision and run the workflow.
+It will:
+
+1. check out the selected exact commit on a GitHub-hosted Ubuntu runner;
+2. install the official Supabase CLI action;
+3. link the dedicated hosted project;
+4. apply committed migrations with `supabase db push`;
+5. set `FLIGHTMARGIN_RELAY_PEPPER` and
+   `FLIGHTMARGIN_RELAY_DATABASE_URL` in the function secret store;
+6. deploy `relay-v1` and report the deployed commit SHA.
+
+Remote smoke tests and any promotion decision remain a human-controlled
+follow-up. I-04A neither configures those secrets nor runs the workflow.
 
 Do not make ad-hoc schema edits in the hosted Supabase Dashboard. Remote schema
 changes must originate from repository migrations so Git remains canonical.
@@ -212,3 +268,14 @@ Keeping a separate backup/mirror preserves both goals:
 
 - deterministic local development;
 - an independent copy of hosted operational data.
+
+## Environment boundaries
+
+| Component | Role | Contains operational data? |
+| --- | --- | --- |
+| Python `relay/` | Local reference implementation | Only when pointed at the disposable local database |
+| TypeScript `supabase/functions/relay-v1/` | Hosted implementation, locally testable with Deno | Only after an authorized hosted deployment |
+| Local PostgreSQL on COXON/developer machine | Disposable migration and integration-test database | No hosted operational state |
+| Hosted Supabase PostgreSQL | Future operational relay database | Yes, after deployment |
+| GitHub-hosted Ubuntu runner | Ephemeral manual deployment executor | No retained database or backup |
+| COXON backup archive | Future restricted disaster-recovery archive | Logical copies of hosted state; never a development database |
