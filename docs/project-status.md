@@ -56,6 +56,26 @@ The Windows shell communicates with its sidecar on an OS-assigned loopback
 port. The Linux browser deployment has no application-level authentication and
 must stay on localhost or a trusted private network.
 
+## Mobile companion relay — I-01
+
+The approved mobile-companion architecture uses a central Supabase relay so the
+iPhone requires no VPN, port forwarding, third-party user account, router
+configuration, or direct connection to the host. The desktop/Linux agent
+uploads only normalized quota state; OpenAI/Codex credentials, prompts,
+transcripts, source code, agent output, and local history remain on the host.
+
+I-01 is specified in `docs/mobile-relay-design.md` with a provider-independent
+FlightMargin API contract and an initial Supabase migration at
+`supabase/migrations/0001_mobile_relay.sql`. Clients use revocable
+FlightMargin host/device credentials and never receive Supabase
+secret/service-role credentials. Relay tables have RLS enabled and direct
+`anon`/`authenticated` grants revoked. Pairing uses a five-minute one-time
+QR secret or high-entropy manual code. The relay stores one latest quota row
+per host; remote history, APNs, and iOS UI implementation remain deferred.
+
+Development for this work is isolated on `dev/mobile-relay`; it does not
+modify the published Beta 1 tag.
+
 ## Public identity and compatibility
 
 - Browser, Settings/About, tray, installer, Start Menu, CLI output, workflow
@@ -99,18 +119,23 @@ The Linux installation and upgrade guidance now uses `--lan`, and regression tes
 
 ## Linux production protection
 
-The existing production deployment remains protected and unchanged:
+The existing production deployment remains protected:
 
 - checkout `/opt/codex-quota`;
 - service `codex-quota.service`;
 - port `8093`;
 - database `/opt/codex-quota/data/quota.db`;
-- production configuration, firewall, service user, permissions, Codex
-  authentication, and credentials.
+- service user, permissions, Codex authentication, credentials, and local data.
 
-No 6.20D.1 action may migrate or alter those resources. Linux development uses
-an isolated checkout, ports `18000-18999`, and temporary service names beginning
-`codex-quota-test-`.
+On 2026-09-29 the owner explicitly authorized one production configuration
+change: a systemd drop-in overrides only `CODEX_QUOTA_HOST` to `0.0.0.0` so
+LAN DHCP address changes no longer stop the service. Existing firewall policy
+continues to restrict network access to trusted private networks. The protected
+production application remains on the legacy 0.2.0 installation; no application
+upgrade or data migration accompanied the bind change.
+
+Linux development uses an isolated checkout, ports `18000-18999`, and
+temporary service names beginning `codex-quota-test-`.
 
 ## Windows beta and packaging
 
