@@ -4,6 +4,10 @@ Notable changes to FlightMargin are documented here. This file summarizes produc
 
 ## Unreleased
 
+### Fixed
+
+- Hardened Linux LAN deployment with a dedicated `--lan` installer mode that binds to `0.0.0.0` instead of a single DHCP-assigned address, so the service continues to start after LAN IP changes. Localhost remains the secure default, and explicit `--host ADDRESS` binding remains available for advanced deployments.
+
 ## 0.3.0-beta.1 - 2026-09-27
 
 ### Added

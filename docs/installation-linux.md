@@ -150,28 +150,26 @@ http://127.0.0.1:8093
 
 ## 6. LAN installation
 
-To make the dashboard available to devices on a trusted LAN, bind it to the machine's LAN address.
-
-Example:
+To make the dashboard available to devices on a trusted LAN, use `--lan`:
 
 ```bash
 scripts/install-linux.sh \
-  --host 192.168.1.50 \
+  --lan \
   --port 8093 \
   --apply
 ```
 
-The dashboard would then be available at:
+LAN mode binds FlightMargin to `0.0.0.0`, which means all IPv4 interfaces. This avoids tying the systemd service to one DHCP-assigned address, so a later LAN IP change does not prevent the service from starting.
+
+Do not enter `0.0.0.0` in a browser. Use the server's current LAN address, for example:
 
 ```text
-http://192.168.1.50:8093
+http://<server-LAN-IP>:8093
 ```
 
-Firewall configuration is outside the installer.
+The default installation remains localhost-only (`127.0.0.1`). The existing `--host ADDRESS` option remains available for advanced deployments that intentionally need a specific bind address, but a service bound to a literal address will fail to start if that address later disappears.
 
-If a firewall is enabled, allow the chosen port only from trusted networks.
-
-Do not expose FlightMargin directly to the public internet.
+Firewall configuration is outside the installer. Because `--lan` listens on every IPv4 interface, allow the chosen port only from trusted networks and do not expose FlightMargin directly to the public internet.
 
 The dashboard currently has no application-level authentication.
 
@@ -188,6 +186,7 @@ scripts/install-linux.sh --help
 Important options include:
 
 ```text
+--lan
 --host ADDRESS
 --port PORT
 --sample-seconds SECONDS
@@ -417,11 +416,11 @@ For a localhost installation:
 scripts/install-linux.sh --apply
 ```
 
-For a LAN installation, repeat the existing host and port:
+For a LAN installation, repeat LAN mode and the existing port:
 
 ```bash
 scripts/install-linux.sh \
-  --host 192.168.1.50 \
+  --lan \
   --port 8093 \
   --apply
 ```
@@ -626,6 +625,14 @@ journalctl \
   --no-pager
 ```
 
+If the log says that FlightMargin could not bind to a specific LAN address and that address changed, reinstall the service in resilient LAN mode:
+
+```bash
+scripts/install-linux.sh \
+  --lan \
+  --apply
+```
+
 ### Health endpoint fails
 
 For a default installation:
@@ -635,7 +642,7 @@ curl \
   http://127.0.0.1:8093/api/health
 ```
 
-For LAN deployments, use the configured host.
+For LAN deployments, use the server's current LAN address.
 
 ### Port already in use
 
