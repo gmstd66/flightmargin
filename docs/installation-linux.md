@@ -164,7 +164,7 @@ LAN mode binds FlightMargin to `0.0.0.0`, which means all IPv4 interfaces. This 
 Do not enter `0.0.0.0` in a browser. Use the server's current LAN address, for example:
 
 ```text
-http://192.168.1.129:8093
+http://<server-LAN-IP>:8093
 ```
 
 The default installation remains localhost-only (`127.0.0.1`). The existing `--host ADDRESS` option remains available for advanced deployments that intentionally need a specific bind address, but a service bound to a literal address will fail to start if that address later disappears.
