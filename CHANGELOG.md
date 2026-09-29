@@ -4,6 +4,14 @@ Notable changes to FlightMargin are documented here. This file summarizes produc
 
 ## Unreleased
 
+### Added
+
+- Defined the accountless mobile-relay architecture for the iPhone companion,
+  including revocable host/device credentials, five-minute QR/manual pairing,
+  a provider-independent v1 quota API, and the initial Supabase schema with
+  RLS plus revoked direct client grants. No relay project or production backend
+  is deployed by this milestone.
+
 ### Fixed
 
 - Hardened Linux LAN deployment with a dedicated `--lan` installer mode that binds to `0.0.0.0` instead of a single DHCP-assigned address, so the service continues to start after LAN IP changes. Localhost remains the secure default, and explicit `--host ADDRESS` binding remains available for advanced deployments.
