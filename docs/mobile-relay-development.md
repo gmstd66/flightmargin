@@ -1,0 +1,155 @@
+# FlightMargin Mobile Relay — Development Workflow
+
+## Principle
+
+The mobile relay follows the same development model as the rest of
+FlightMargin:
+
+```text
+COXON local checkout
+      |
+      | develop + test
+      v
+Git commit on dev/mobile-relay
+      |
+      | push
+      v
+GitHub
+      |
+      | deploy exact committed revision
+      v
+Hosted Supabase project
+```
+
+The hosted Supabase project is a deployment target, not the primary place where
+schema or function code is authored.
+
+## Local source of truth
+
+Use the normal FlightMargin development checkout on COXON. Relay work stays on
+`dev/mobile-relay` until it is reviewed and intentionally integrated.
+
+The repository owns:
+
+- `supabase/config.toml` after local initialization;
+- `supabase/migrations/`;
+- `supabase/functions/`;
+- safe development seed data;
+- relay tests and contract documentation.
+
+Never commit:
+
+- Supabase access tokens;
+- database passwords;
+- service-role/secret keys;
+- Edge Function HMAC pepper;
+- live database dumps.
+
+## Local Supabase stack
+
+The Supabase CLI local stack is the development database. It is disposable and
+must be reproducible from committed migrations and safe development seed data.
+
+Normal loop:
+
+```bash
+git pull
+supabase start
+supabase db reset
+# develop/test
+git add supabase/ docs/ tests/
+git commit
+git push
+```
+
+After another developer or branch adds migrations, pull Git and run
+`supabase db reset` so the local database is rebuilt from the repository.
+
+Do not expose the local Supabase development stack to the public internet. It
+is a development service, not the relay production endpoint.
+
+## Remote deployment rule
+
+Once a revision is tested locally and pushed to GitHub:
+
+1. link the checkout to the dedicated FlightMargin Supabase development/staging
+   project;
+2. verify migration history;
+3. run `supabase db push`;
+4. deploy Edge Functions from the same Git commit;
+5. perform remote smoke tests;
+6. only then promote the reviewed change toward production.
+
+Do not make ad-hoc schema edits in the hosted Supabase Dashboard. Remote schema
+changes must originate from repository migrations so Git remains canonical.
+
+## Three database roles
+
+### 1. Local development database
+
+Purpose: development and tests.
+
+- recreated freely with `supabase db reset`;
+- contains only safe development/test data;
+- never treated as a backup of production;
+- reproducible from Git.
+
+### 2. Hosted Supabase relay database
+
+Purpose: live/staging relay operation.
+
+- stores latest relay state and pairing/device records;
+- changed only through committed migrations;
+- backed up to COXON.
+
+### 3. COXON relay backup archive
+
+Purpose: independent disaster-recovery copy of hosted relay data.
+
+Planned path:
+
+```text
+/srv/flightmargin/backups/supabase/
+```
+
+The backup job will create timestamped logical data dumps from the linked
+hosted database. The schema is versioned in Git, so recovery consists of:
+
+1. provision a clean Postgres/Supabase target;
+2. apply the Git migrations;
+3. restore the selected data dump;
+4. rotate/reconfigure server secrets as required;
+5. validate host/device access.
+
+Initial retention target:
+
+- 14 daily backups;
+- 8 weekly backups.
+
+Backup files must be excluded from Git, readable only by the backup owner, and
+kept separate from the development database. Once the hosted project exists,
+the backup job should use an unattended credential stored outside the
+repository in a restricted system location.
+
+## Backup verification
+
+A backup is not considered reliable merely because a dump command succeeded.
+Periodically restore a selected dump into an isolated local database and run
+basic integrity checks:
+
+- expected relay tables exist;
+- row counts are plausible;
+- foreign keys validate;
+- revoked credentials stay revoked;
+- quota rows resolve to existing hosts.
+
+## Why the live copy is separate from development
+
+Restoring live relay data directly into the normal development database would
+introduce state that migrations and seed files cannot reproduce, and could
+place security-sensitive credential digests into routine development workflows.
+
+Keeping a separate backup/mirror preserves both goals:
+
+- deterministic local development;
+- an independent copy of hosted operational data.
