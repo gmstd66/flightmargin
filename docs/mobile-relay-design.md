@@ -1,6 +1,6 @@
-# FlightMargin Mobile Relay — I-01 Design
+# FlightMargin Mobile Relay — Design and I-02 Local API
 
-Status: approved architecture, pre-deployment design
+Status: approved architecture, local I-02 implementation; not deployed
 
 ## Goal
 
@@ -139,6 +139,20 @@ Content-Type: application/json
 The Edge Function validates the token shape, HMACs the secret, inserts the host
 and credential, and discards the raw credential. Registration is idempotent
 when the same host ID, credential ID, and credential secret are retried.
+Retrying with that same identity does not update the host metadata established
+by the first successful registration.
+
+```json
+{
+  "api_version": 1,
+  "host_id": "uuid",
+  "registered": true,
+  "result": "registered"
+}
+```
+
+An idempotent retry returns `registered: false` and
+`result: "already_registered"`.
 
 ## Quota report
 
@@ -238,6 +252,39 @@ The response includes the paired host metadata, latest raw quota snapshot,
 `sampled_at`, `received_at`, and `last_seen_at`. The iPhone computes
 time-dependent remaining/reset/pace/stale presentation locally.
 
+The I-02 response shape is:
+
+```json
+{
+  "api_version": 1,
+  "host": {
+    "id": "uuid",
+    "display_name": "COXON",
+    "platform": "linux",
+    "app_version": "0.3.0-beta.1",
+    "last_seen_at": "2026-09-29T17:01:00Z"
+  },
+  "quota": {
+    "schema_version": 1,
+    "sampled_at": "2026-09-29T17:00:00Z",
+    "received_at": "2026-09-29T17:00:01Z",
+    "five_hour_used": 42.5,
+    "five_hour_reset_at": "2026-09-29T19:12:00Z",
+    "weekly_used": 78.0,
+    "weekly_reset_at": "2026-10-02T15:00:00Z",
+    "plan_type": "plus",
+    "reset_credits_available": 3,
+    "credits_balance": 12.5,
+    "spend_control_reached": false,
+    "rate_limit_reached_type": null,
+    "collector_state": "ok",
+    "collector_message_code": null
+  }
+}
+```
+
+`quota` is `null` until the paired host submits its first report.
+
 ## Device management
 
 Reserved host-authenticated endpoints:
@@ -321,6 +368,25 @@ Not part of I-01:
 - web dashboard;
 - billing/subscription logic;
 - production-grade abuse scoring.
+
+## I-02 local implementation
+
+The first working relay API is separate source under `relay/`; it is excluded
+from normal FlightMargin package discovery and runs from a source checkout
+with `python -m relay`. It does not share routes, configuration, storage, or
+process lifecycle with the browser/dashboard API under `app/`. It implements
+`GET /health`, accountless
+`POST /v1/hosts/register`, host-authenticated `PUT /v1/quota`, and
+device-authenticated `GET /v1/quota` against the I-01 PostgreSQL schema.
+
+The process reads only `FLIGHTMARGIN_RELAY_DATABASE_URL` and
+`FLIGHTMARGIN_RELAY_PEPPER`; the pepper must encode to at least 32 bytes.
+Runtime PostgreSQL connections use a five-second connection timeout, and
+credential digests are checked in process with constant-time comparison after
+credential-ID lookup. Local development startup is intentionally fixed to
+`127.0.0.1:18093`. `/health` is process liveness only and does not imply
+PostgreSQL readiness. Pairing, rate limiting, hosted Supabase deployment,
+device-management endpoints, and production operations remain outside I-02.
 
 The credential and pairing design leaves room for adding payload encryption
 later without changing device identity.

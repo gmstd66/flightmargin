@@ -6,6 +6,12 @@ Notable changes to FlightMargin are documented here. This file summarizes produc
 
 ### Added
 
+- Added the first working local mobile relay API as isolated reference source:
+  accountless idempotent host registration, contextual HMAC-SHA-256 host and
+  device authentication, monotonic latest-quota updates, and paired-device
+  quota reads backed by the existing protected PostgreSQL schema. Integration
+  tests use the disposable local database and the manual server binds only to
+  `127.0.0.1:18093`; pairing and hosted deployment remain deferred.
 - Defined the accountless mobile-relay architecture for the iPhone companion,
   including revocable host/device credentials, five-minute QR/manual pairing,
   a provider-independent v1 quota API, and the initial Supabase schema with
@@ -16,6 +22,11 @@ Notable changes to FlightMargin are documented here. This file summarizes produc
 
 ### Fixed
 
+- Hardened the local mobile relay before push with explicit v1 response
+  envelopes, immutable host metadata on registration retries, bounded strict
+  request validation, a minimum 32-byte HMAC pepper, constant-time credential
+  digest checks, five-second PostgreSQL connection timeouts, and exclusion of
+  the reference relay source from normal FlightMargin package discovery.
 - Hardened Linux LAN deployment with a dedicated `--lan` installer mode that binds to `0.0.0.0` instead of a single DHCP-assigned address, so the service continues to start after LAN IP changes. Localhost remains the secure default, and explicit `--host ADDRESS` binding remains available for advanced deployments.
 
 ## 0.3.0-beta.1 - 2026-09-27

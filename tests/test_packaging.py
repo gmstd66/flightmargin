@@ -13,6 +13,8 @@ PROJECT_ROOT = (
     .parents[1]
 )
 
+RELAY_REQUIREMENTS = PROJECT_ROOT / "requirements-relay-dev.txt"
+
 PYPROJECT = (
     PROJECT_ROOT
     / "pyproject.toml"
@@ -90,6 +92,21 @@ def test_runtime_dependencies():
         "uvicorn",
         "jinja2",
     }
+
+
+def test_package_discovery_excludes_local_relay_reference():
+    packages = load_pyproject()["tool"]["setuptools"]["packages"]["find"]
+
+    assert packages["include"] == ["app", "app.*"]
+
+
+def test_relay_development_requirements_are_isolated():
+    assert RELAY_REQUIREMENTS.read_text(encoding="utf-8").splitlines() == [
+        "-r requirements.txt",
+        "-r requirements-dev.txt",
+        "httpx2>=2,<3",
+        "psycopg[binary]>=3.2,<4",
+    ]
 
 
 def test_package_data():

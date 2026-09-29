@@ -27,3 +27,12 @@ Before applying the migration to a hosted project:
 5. apply the migration through a controlled development workflow.
 
 Clients must never receive the Supabase secret/service-role key.
+
+## I-02
+
+The first local API implementation is the separate Python package in
+`relay/`. It uses the existing I-01 schema unchanged and connects with
+`FLIGHTMARGIN_RELAY_DATABASE_URL`; credential digests use the server-only
+`FLIGHTMARGIN_RELAY_PEPPER`. See `docs/mobile-relay-development.md` for the
+loopback-only test workflow. I-02 does not add an Edge Function, pairing
+routes, hosted deployment, or production configuration.

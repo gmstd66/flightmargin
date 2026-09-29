@@ -45,6 +45,50 @@ Never commit:
 - Edge Function HMAC pepper;
 - live database dumps.
 
+## I-02 local Python relay
+
+The local I-02 API lives in the separate `relay` Python package. Install its
+test dependencies into the development virtual environment:
+
+```bash
+.venv/bin/python -m pip install -r requirements-relay-dev.txt
+```
+
+Set the database URL and HMAC pepper only through the approved environment
+variables; do not place either value in a command, committed file, test output,
+or application log:
+
+```text
+FLIGHTMARGIN_RELAY_DATABASE_URL
+FLIGHTMARGIN_RELAY_PEPPER
+```
+
+The pepper must be at least 32 bytes when UTF-8 encoded. The relay rejects a
+shorter value without including the value in its error. The local `/health`
+route is a simple process-liveness check; it does not query PostgreSQL and must
+not be treated as database readiness.
+
+Run focused integration tests against the disposable local relay database:
+
+```bash
+.venv/bin/python -m pytest -q \
+  tests/test_mobile_relay_schema.py tests/test_mobile_relay_api.py
+```
+
+Run the API for local HTTP validation:
+
+```bash
+.venv/bin/python -m relay
+```
+
+The development entry point is deliberately fixed to `127.0.0.1:18093`.
+Do not use port `8093`, a wildcard address, or a hosted Supabase target for
+local I-02 validation. Tests create unique hosts and fake paired-device rows
+directly in PostgreSQL and remove them through host cascade deletion. No
+pairing endpoints exist in I-02. The `relay/` source is intentionally excluded
+from the normal FlightMargin distributable package and remains runnable from
+the checkout with `.venv/bin/python -m relay`.
+
 ## Local Supabase stack
 
 The Supabase CLI local stack is the development database. It is disposable and

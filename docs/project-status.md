@@ -2,7 +2,7 @@
 
 Updated: 2026-09-29
 
-Branch: `dev/productization`
+Branch: `dev/mobile-relay`
 
 This is the primary continuity record. Read it with `AGENTS.md` and verify it
 against the working tree and Git history before making changes.
@@ -56,7 +56,7 @@ The Windows shell communicates with its sidecar on an OS-assigned loopback
 port. The Linux browser deployment has no application-level authentication and
 must stay on localhost or a trusted private network.
 
-## Mobile companion relay — I-01
+## Mobile companion relay — I-01 and I-02
 
 The approved mobile-companion architecture uses a central Supabase relay so the
 iPhone requires no VPN, port forwarding, third-party user account, router
@@ -79,6 +79,32 @@ with Git/GitHub as the canonical schema and code source. Hosted Supabase is a
 deployment target. A separate scheduled COXON backup archive will retain
 logical copies of hosted relay data without mixing live state into the
 disposable development database.
+
+I-02 adds separate `relay/` FastAPI source for the first working local API.
+It implements health, accountless idempotent host registration, authenticated
+monotonic quota upload, and authenticated paired-device quota retrieval. The
+API reads only `FLIGHTMARGIN_RELAY_DATABASE_URL` and
+`FLIGHTMARGIN_RELAY_PEPPER`; raw credential secrets are parsed in memory,
+contextually HMACed, and never stored. The pepper must be at least 32 bytes.
+Host/device revocation is enforced on every authenticated request, with
+constant-time digest checks after credential-ID lookup and row locking. Relay
+PostgreSQL connects use a five-second timeout. The versioned registration and
+quota-read responses, immutable idempotent-registration metadata, strict input
+validation, and bounded public strings are covered by tests. The local entry
+point binds only to `127.0.0.1:18093` and is separate from the
+browser/dashboard API and its configuration. Its liveness endpoint does not
+claim PostgreSQL readiness.
+
+The relay is a local I-02 reference/test implementation, so setuptools package
+discovery remains limited to `app` and excludes `relay`; the relay still runs
+from the source checkout with `.venv/bin/python -m relay`.
+
+The existing I-01 migration required no change. I-02 integration tests use the
+disposable local PostgreSQL database, seed fake paired devices directly, and
+clean up unique test hosts. No pairing endpoint, Edge Function, hosted
+Supabase deployment, production service, or production data change is part of
+this milestone. The next relay milestone remains pairing plus deployment-path
+work after an explicit architecture/production decision gate.
 
 ## Public identity and compatibility
 
