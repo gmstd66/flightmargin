@@ -6,7 +6,7 @@ MIGRATION = (
     PROJECT_ROOT
     / "supabase"
     / "migrations"
-    / "0001_mobile_relay.sql"
+    / "20260929173100_mobile_relay.sql"
 )
 DESIGN = (
     PROJECT_ROOT
@@ -17,6 +17,10 @@ DESIGN = (
 
 def read_text(path):
     return path.read_text(encoding="utf-8")
+
+
+def test_migration_uses_supabase_timestamp_filename():
+    assert MIGRATION.name == "20260929173100_mobile_relay.sql"
 
 
 def test_relay_schema_has_expected_tables():
