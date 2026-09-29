@@ -9,8 +9,10 @@ Notable changes to FlightMargin are documented here. This file summarizes produc
 - Defined the accountless mobile-relay architecture for the iPhone companion,
   including revocable host/device credentials, five-minute QR/manual pairing,
   a provider-independent v1 quota API, and the initial Supabase schema with
-  RLS plus revoked direct client grants. No relay project or production backend
-  is deployed by this milestone.
+  RLS plus revoked direct client grants. Relay development is local-first with
+  Git as the schema/code source of truth, and hosted relay data will have an
+  independent scheduled backup archive on COXON. No relay project or production
+  backend is deployed by this milestone.
 
 ### Fixed
 
