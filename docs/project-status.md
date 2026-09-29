@@ -66,7 +66,7 @@ transcripts, source code, agent output, and local history remain on the host.
 
 I-01 is specified in `docs/mobile-relay-design.md` with a provider-independent
 FlightMargin API contract and an initial Supabase migration at
-`supabase/migrations/0001_mobile_relay.sql`. Clients use revocable
+`supabase/migrations/20260929173100_mobile_relay.sql`. Clients use revocable
 FlightMargin host/device credentials and never receive Supabase
 secret/service-role credentials. Relay tables have RLS enabled and direct
 `anon`/`authenticated` grants revoked. Pairing uses a five-minute one-time
@@ -74,7 +74,11 @@ QR secret or high-entropy manual code. The relay stores one latest quota row
 per host; remote history, APNs, and iOS UI implementation remain deferred.
 
 Development for this work is isolated on `dev/mobile-relay`; it does not
-modify the published Beta 1 tag.
+modify the published Beta 1 tag. Relay development is local-first on COXON,
+with Git/GitHub as the canonical schema and code source. Hosted Supabase is a
+deployment target. A separate scheduled COXON backup archive will retain
+logical copies of hosted relay data without mixing live state into the
+disposable development database.
 
 ## Public identity and compatibility
 
