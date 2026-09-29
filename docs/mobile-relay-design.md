@@ -269,7 +269,31 @@ I-01 defines:
 - `relay_pairing_sessions`
 - `relay_quota_state`
 
-See `supabase/migrations/0001_mobile_relay.sql`.
+See `supabase/migrations/20260929173100_mobile_relay.sql`.
+
+## Development and backup model
+
+Relay development is local-first. The canonical schema, Edge Function source,
+tests, seed data, and configuration live in the FlightMargin Git repository.
+Developers run Supabase locally on COXON (or another development machine), test
+migrations/functions there, commit them to the active development branch, and
+push to GitHub before deploying the same committed revision to the hosted
+Supabase project.
+
+The local development database and the hosted relay database have different
+roles:
+
+- local development database: disposable and reproducible from Git migrations
+  plus development seed data;
+- hosted Supabase database: operational relay state;
+- COXON backup archive: scheduled logical copies of hosted relay data for
+  disaster recovery.
+
+Hosted production/staging data is never used as the normal development
+database. Backups are not committed to Git and must be stored outside the
+repository with restricted filesystem permissions.
+
+See `docs/mobile-relay-development.md`.
 
 ## Retention
 
