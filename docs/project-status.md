@@ -56,7 +56,7 @@ The Windows shell communicates with its sidecar on an OS-assigned loopback
 port. The Linux browser deployment has no application-level authentication and
 must stay on localhost or a trusted private network.
 
-## Mobile companion relay — I-01 and I-02
+## Mobile companion relay — I-01 through I-03
 
 The approved mobile-companion architecture uses a central Supabase relay so the
 iPhone requires no VPN, port forwarding, third-party user account, router
@@ -95,16 +95,27 @@ point binds only to `127.0.0.1:18093` and is separate from the
 browser/dashboard API and its configuration. Its liveness endpoint does not
 claim PostgreSQL readiness.
 
-The relay is a local I-02 reference/test implementation, so setuptools package
+The relay is a local reference/test implementation, so setuptools package
 discovery remains limited to `app` and excludes `relay`; the relay still runs
 from the source checkout with `.venv/bin/python -m relay`.
 
-The existing I-01 migration required no change. I-02 integration tests use the
-disposable local PostgreSQL database, seed fake paired devices directly, and
-clean up unique test hosts. No pairing endpoint, Edge Function, hosted
-Supabase deployment, production service, or production data change is part of
-this milestone. The next relay milestone remains pairing plus deployment-path
-work after an explicit architecture/production decision gate.
+I-03 implements host-authenticated `POST /v1/pairings` and accountless
+`POST /v1/pairings/claim`. The relay generates a UUID, 32-byte QR secret, and
+10-character Crockford Base32 manual code, returns token/manual/deep-link
+values, and stores only contextual HMAC digests. Sessions expire exactly five
+minutes after creation and allow five session-addressable failed attempts.
+Claims use row locks and transactions, create the device and credential
+atomically, support same-device/same-credential retry, prevent a different
+claimant from reusing the session, and preserve host/device revocation.
+
+The existing I-01 migration supports I-03 and required no change. Focused
+tests cover strict validation, secret absence, expiry/exhaustion, both claim
+methods, idempotency, immediate quota access, revocation, and concurrent
+double claims. A manual code that matches no digest cannot identify a target
+session to increment; it receives the same generic error, and planned
+deployment-side per-IP claim rate limiting remains required before public
+exposure. No Edge Function, QR rendering, iPhone UI, hosted Supabase
+deployment, production service, or production data change is part of I-03.
 
 ## Public identity and compatibility
 

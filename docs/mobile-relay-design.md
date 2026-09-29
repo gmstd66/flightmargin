@@ -1,6 +1,6 @@
-# FlightMargin Mobile Relay — Design and I-02 Local API
+# FlightMargin Mobile Relay — Design and I-03 Local Pairing API
 
-Status: approved architecture, local I-02 implementation; not deployed
+Status: approved architecture, local I-03 implementation; not deployed
 
 ## Goal
 
@@ -104,6 +104,9 @@ HMAC-SHA256(
 ```
 
 The database stores the 64-character hexadecimal digest, never the raw secret.
+Pairing material uses separate `pairing-qr:<session-id>:<secret>` and
+`pairing-manual:<unhyphenated-code>` HMAC contexts so its digests cannot be
+reused as host or device credential digests.
 
 ## Local credential storage
 
@@ -205,8 +208,23 @@ POST /v1/pairings
 Authorization: Bearer fmh1.<credential-uuid>.<secret>
 ```
 
-The desktop generates a session UUID, high-entropy QR secret, and manual code.
-The relay stores only their HMAC digests and a five-minute expiration.
+The relay generates a UUID, a cryptographically random 32-byte QR secret, and
+a 10-character uppercase Crockford Base32 manual code. The response is:
+
+```json
+{
+  "api_version": 1,
+  "pairing_token": "fmp1.<session-uuid>.<base64url-secret>",
+  "manual_code": "ABCDE-FGHIJ",
+  "expires_at": "2026-09-29T17:05:00Z",
+  "deep_link": "flightmargin://pair/v1?token=fmp1.<session-uuid>.<base64url-secret>"
+}
+```
+
+The relay stores only contextual HMAC-SHA-256 digests. The expiration is
+exactly five minutes after the database creation timestamp, and every session
+starts with zero attempts and a maximum of five. Manual-code collisions are
+prevented under a transaction-scoped advisory lock and regenerated.
 
 QR payload:
 
@@ -236,10 +254,33 @@ Content-Type: application/json
 
 Manual-code claim uses `manual_code` instead of `pairing_token`.
 
-A successful claim atomically verifies expiry/attempts, creates the device,
-stores its credential digest, and marks the session claimed. The same
-device/credential may retry an already-completed claim after a lost response;
-a different device cannot claim the same session.
+Exactly one pairing method is required. Pairing tokens and manual codes must
+use their canonical forms; manual input is uppercase `XXXXX-XXXXX` and uses
+the Crockford alphabet without `I`, `L`, `O`, or `U`. Device UUID, credential,
+display name, and platform are strictly validated and bounded.
+
+A successful claim locks the pairing and host rows, verifies the digest in
+Python with `hmac.compare_digest`, creates one device and one credential row,
+stores only the contextual device-credential HMAC digest, and marks the
+session claimed in the same transaction. Advisory locks also serialize reuse
+of device and credential UUIDs across different sessions. The same active
+device with the same credential may retry an already-completed claim after a
+lost response; a different device or credential cannot reclaim it. A newly
+paired device can immediately authenticate to `GET /v1/quota`.
+
+An incorrect secret for a valid QR session increments `attempts` atomically;
+the fifth mismatch exhausts the session permanently. Because a manual code
+does not carry a session identifier, a code whose digest matches no row cannot
+be attributed to a particular session and therefore cannot increment that
+session. It is still rejected with the same response as every other claim
+failure. Deployment must apply the planned per-IP claim rate limit in addition
+to the 50-bit manual-code entropy.
+
+Malformed public input returns `422`. Unknown, incorrect, expired, exhausted,
+host-revoked, or already-claimed-for-another-device claims all return `400`
+with `Pairing could not be completed`; this prevents the API response from
+confirming whether a well-formed manual code exists. Missing or invalid host
+authentication on pairing creation retains the I-02 `401` behavior.
 
 ## iPhone quota read
 
@@ -369,7 +410,7 @@ Not part of I-01:
 - billing/subscription logic;
 - production-grade abuse scoring.
 
-## I-02 local implementation
+## I-02 and I-03 local implementation
 
 The first working relay API is separate source under `relay/`; it is excluded
 from normal FlightMargin package discovery and runs from a source checkout
@@ -383,10 +424,13 @@ The process reads only `FLIGHTMARGIN_RELAY_DATABASE_URL` and
 `FLIGHTMARGIN_RELAY_PEPPER`; the pepper must encode to at least 32 bytes.
 Runtime PostgreSQL connections use a five-second connection timeout, and
 credential digests are checked in process with constant-time comparison after
-credential-ID lookup. Local development startup is intentionally fixed to
+credential-ID lookup. I-03 adds host-authenticated pairing creation and
+accountless device claim using the existing I-01 tables and without a schema
+change. Local development startup is intentionally fixed to
 `127.0.0.1:18093`. `/health` is process liveness only and does not imply
-PostgreSQL readiness. Pairing, rate limiting, hosted Supabase deployment,
-device-management endpoints, and production operations remain outside I-02.
+PostgreSQL readiness. QR rendering, iPhone UI, rate limiting, hosted Supabase
+deployment, device-management endpoints, and production operations remain
+outside I-03.
 
 The credential and pairing design leaves room for adding payload encryption
 later without changing device identity.

@@ -1,6 +1,7 @@
 """PostgreSQL operations for the FlightMargin mobile relay."""
 
 from contextlib import contextmanager
+from datetime import datetime
 import hmac
 from typing import Iterator
 from uuid import UUID
@@ -9,8 +10,14 @@ import psycopg
 from psycopg.rows import dict_row
 
 from relay.config import RelayConfig
-from relay.credentials import ParsedCredential, credential_digest
-from relay.models import HostRegistration, QuotaReport
+from relay.credentials import (
+    ParsedCredential,
+    ParsedPairingToken,
+    credential_digest,
+    pairing_manual_digest,
+    pairing_qr_digest,
+)
+from relay.models import HostRegistration, PairingClaim, QuotaReport
 
 
 class RegistrationConflict(Exception):
@@ -19,6 +26,14 @@ class RegistrationConflict(Exception):
 
 class AuthenticationFailed(Exception):
     """The supplied credential is unknown, incorrect, or revoked."""
+
+
+class PairingFailed(Exception):
+    """A pairing claim cannot be completed without revealing why."""
+
+
+class PairingCodeCollision(Exception):
+    """A newly generated manual code duplicates an existing code digest."""
 
 
 class RelayDatabase:
@@ -104,7 +119,9 @@ class RelayDatabase:
     ) -> bool:
         digest = credential_digest(credential, self.config.pepper)
         with self.connect() as connection, connection.cursor() as cursor:
-            identity = self._authenticate_host(cursor, credential.credential_id, digest)
+            identity = self._authenticate_host(
+                cursor, credential.credential_id, digest
+            )
             cursor.execute(
                 "update relay_hosts set last_seen_at = now() where id = %s",
                 (identity["host_id"],),
@@ -152,6 +169,226 @@ class RelayDatabase:
                 {"host_id": identity["host_id"], **values},
             )
             return cursor.fetchone() is not None
+
+    def create_pairing(
+        self,
+        credential: ParsedCredential,
+        session_id: UUID,
+        qr_digest: str,
+        manual_digest: str,
+    ) -> datetime:
+        digest = credential_digest(credential, self.config.pepper)
+        with self.connect() as connection, connection.cursor() as cursor:
+            identity = self._authenticate_host(
+                cursor, credential.credential_id, digest
+            )
+            cursor.execute(
+                "select pg_advisory_xact_lock(hashtextextended(%s, 0))",
+                (f"relay-pairing-manual:{manual_digest}",),
+            )
+            cursor.execute(
+                "select 1 from relay_pairing_sessions where manual_code_digest = %s",
+                (manual_digest,),
+            )
+            if cursor.fetchone() is not None:
+                raise PairingCodeCollision
+            cursor.execute(
+                "update relay_host_credentials set last_used_at = now() where id = %s",
+                (identity["credential_id"],),
+            )
+            cursor.execute(
+                """
+                insert into relay_pairing_sessions (
+                    id, host_id, qr_secret_digest, manual_code_digest,
+                    expires_at, max_attempts
+                ) values (%s, %s, %s, %s, now() + interval '5 minutes', 5)
+                returning expires_at
+                """,
+                (session_id, identity["host_id"], qr_digest, manual_digest),
+            )
+            return cursor.fetchone()["expires_at"]
+
+    def claim_pairing(
+        self,
+        claim: PairingClaim,
+        device_credential: ParsedCredential,
+        *,
+        pairing_token: ParsedPairingToken | None = None,
+        normalized_manual_code: str | None = None,
+    ) -> UUID:
+        if pairing_token is not None:
+            supplied_pairing_digest = pairing_qr_digest(
+                pairing_token, self.config.pepper
+            )
+        else:
+            assert normalized_manual_code is not None
+            supplied_pairing_digest = pairing_manual_digest(
+                normalized_manual_code, self.config.pepper
+            )
+        supplied_device_digest = credential_digest(
+            device_credential, self.config.pepper
+        )
+
+        with self.connect() as connection, connection.cursor() as cursor:
+            if pairing_token is not None:
+                cursor.execute(
+                    """
+                    select p.*, h.revoked_at as host_revoked_at,
+                           p.expires_at > now() as unexpired
+                    from relay_pairing_sessions p
+                    join relay_hosts h on h.id = p.host_id
+                    where p.id = %s
+                    for update of p, h
+                    """,
+                    (pairing_token.session_id,),
+                )
+            else:
+                cursor.execute(
+                    """
+                    select p.*, h.revoked_at as host_revoked_at,
+                           p.expires_at > now() as unexpired
+                    from relay_pairing_sessions p
+                    join relay_hosts h on h.id = p.host_id
+                    where p.manual_code_digest = %s
+                    order by p.created_at desc
+                    limit 1
+                    for update of p, h
+                    """,
+                    (supplied_pairing_digest,),
+                )
+            session = cursor.fetchone()
+            if session is None:
+                hmac.compare_digest("0" * 64, supplied_pairing_digest)
+                raise PairingFailed
+
+            expected_digest = (
+                session["qr_secret_digest"]
+                if pairing_token is not None
+                else session["manual_code_digest"]
+            )
+            secret_matches = hmac.compare_digest(
+                expected_digest, supplied_pairing_digest
+            )
+
+            if session["claimed_at"] is not None:
+                if not secret_matches or session["host_revoked_at"] is not None:
+                    raise PairingFailed
+                return self._retry_claim(
+                    cursor,
+                    session,
+                    claim.device_id,
+                    device_credential.credential_id,
+                    supplied_device_digest,
+                )
+
+            if (
+                session["host_revoked_at"] is not None
+                or not session["unexpired"]
+                or session["attempts"] >= session["max_attempts"]
+            ):
+                raise PairingFailed
+
+            if not secret_matches:
+                cursor.execute(
+                    """
+                    update relay_pairing_sessions
+                    set attempts = least(attempts + 1, max_attempts)
+                    where id = %s
+                    """,
+                    (session["id"],),
+                )
+                # Preserve the bounded-attempt update even though the public
+                # operation returns an error. The row lock and increment are
+                # committed together before the generic failure is raised.
+                connection.commit()
+                raise PairingFailed
+
+            lock_names = sorted(
+                (
+                    f"relay-device:{claim.device_id}",
+                    f"relay-device-credential:{device_credential.credential_id}",
+                )
+            )
+            for lock_name in lock_names:
+                cursor.execute(
+                    "select pg_advisory_xact_lock(hashtextextended(%s, 0))",
+                    (lock_name,),
+                )
+            cursor.execute(
+                "select id from relay_devices where id = %s",
+                (claim.device_id,),
+            )
+            device_exists = cursor.fetchone() is not None
+            cursor.execute(
+                "select id from relay_device_credentials where id = %s",
+                (device_credential.credential_id,),
+            )
+            credential_exists = cursor.fetchone() is not None
+            if device_exists or credential_exists:
+                raise PairingFailed
+
+            cursor.execute(
+                """
+                insert into relay_devices (id, host_id, display_name, platform)
+                values (%s, %s, %s, %s)
+                """,
+                (
+                    claim.device_id,
+                    session["host_id"],
+                    claim.display_name,
+                    claim.platform,
+                ),
+            )
+            cursor.execute(
+                """
+                insert into relay_device_credentials (id, device_id, token_digest)
+                values (%s, %s, %s)
+                """,
+                (
+                    device_credential.credential_id,
+                    claim.device_id,
+                    supplied_device_digest,
+                ),
+            )
+            cursor.execute(
+                """
+                update relay_pairing_sessions
+                set claimed_at = now(), claimed_device_id = %s
+                where id = %s
+                """,
+                (claim.device_id, session["id"]),
+            )
+            return session["host_id"]
+
+    @staticmethod
+    def _retry_claim(
+        cursor,
+        session: dict,
+        device_id: UUID,
+        credential_id: UUID,
+        supplied_device_digest: str,
+    ) -> UUID:
+        if session["claimed_device_id"] != device_id:
+            raise PairingFailed
+        cursor.execute(
+            """
+            select c.id, c.token_digest
+            from relay_devices d
+            join relay_device_credentials c on c.device_id = d.id
+            where d.id = %s
+              and c.id = %s
+              and d.host_id = %s
+              and d.revoked_at is null
+              and c.revoked_at is null
+            """,
+            (device_id, credential_id, session["host_id"]),
+        )
+        stored = cursor.fetchone()
+        if stored is None or not hmac.compare_digest(
+            stored["token_digest"], supplied_device_digest
+        ):
+            raise PairingFailed
+        return session["host_id"]
 
     def get_quota(self, credential: ParsedCredential) -> dict:
         digest = credential_digest(credential, self.config.pepper)

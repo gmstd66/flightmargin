@@ -6,6 +6,13 @@ Notable changes to FlightMargin are documented here. This file summarizes produc
 
 ### Added
 
+- Added the I-03 accountless mobile pairing API with host-authenticated
+  five-minute pairing creation, QR token/manual code/deep-link responses,
+  atomic QR and manual claims, five-attempt session exhaustion, idempotent
+  lost-response retries, concurrent-claim protection, and immediate use of
+  newly issued device credentials. Pairing and device secrets are represented
+  in PostgreSQL only by context-separated HMAC-SHA-256 digests; the existing
+  I-01 schema required no migration.
 - Added the first working local mobile relay API as isolated reference source:
   accountless idempotent host registration, contextual HMAC-SHA-256 host and
   device authentication, monotonic latest-quota updates, and paired-device

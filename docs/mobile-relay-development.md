@@ -45,9 +45,9 @@ Never commit:
 - Edge Function HMAC pepper;
 - live database dumps.
 
-## I-02 local Python relay
+## I-03 local Python relay
 
-The local I-02 API lives in the separate `relay` Python package. Install its
+The local relay API lives in the separate `relay` Python package. Install its
 test dependencies into the development virtual environment:
 
 ```bash
@@ -83,11 +83,26 @@ Run the API for local HTTP validation:
 
 The development entry point is deliberately fixed to `127.0.0.1:18093`.
 Do not use port `8093`, a wildcard address, or a hosted Supabase target for
-local I-02 validation. Tests create unique hosts and fake paired-device rows
-directly in PostgreSQL and remove them through host cascade deletion. No
-pairing endpoints exist in I-02. The `relay/` source is intentionally excluded
-from the normal FlightMargin distributable package and remains runnable from
-the checkout with `.venv/bin/python -m relay`.
+local validation. I-03 tests create unique hosts and pairing sessions, exercise
+QR and manual claims through the API, and remove them through host cascade
+deletion. Pairing failures for well-formed values deliberately share one
+generic `400` response. Malformed input returns `422`; pairing creation keeps
+the existing host-authentication `401` response. The `relay/` source is
+intentionally excluded from the normal FlightMargin distributable package and
+remains runnable from the checkout with `.venv/bin/python -m relay`.
+
+The pairing transaction uses PostgreSQL row locks to serialize claims and
+transaction-scoped advisory locks to serialize device/credential identifiers
+and manual-code collision checks. QR failures that identify an existing
+session commit the increment before returning the generic error. The fifth
+failure exhausts the session. An unknown manual code cannot identify which
+session should be incremented; deployment-side claim rate limiting is still
+required before public exposure.
+
+For the I-03 HTTP smoke test, register a fake host, upload fake quota, create
+and claim a pairing, then read quota with the new device credential. Run only
+on `127.0.0.1:18093` against local PostgreSQL at `127.0.0.1:55432`, stop the
+relay afterward, and confirm that no listener remains.
 
 ## Local Supabase stack
 

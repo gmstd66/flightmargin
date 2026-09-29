@@ -4,9 +4,13 @@ from datetime import datetime
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from relay.credentials import CREDENTIAL_MAX_LENGTH
+from relay.credentials import (
+    CREDENTIAL_MAX_LENGTH,
+    MANUAL_CODE_LENGTH,
+    PAIRING_TOKEN_MAX_LENGTH,
+)
 
 
 class StrictModel(BaseModel):
@@ -66,3 +70,36 @@ class QuotaReport(StrictModel):
         if value is not None and value.utcoffset() is None:
             raise ValueError("timestamp must include a timezone")
         return value
+
+
+class PairingClaim(StrictModel):
+    pairing_token: str | None = Field(
+        default=None, strict=True, max_length=PAIRING_TOKEN_MAX_LENGTH
+    )
+    manual_code: str | None = Field(
+        default=None, strict=True, max_length=MANUAL_CODE_LENGTH
+    )
+    device_id: UUID
+    display_name: str = Field(strict=True, min_length=1, max_length=120)
+    platform: str = Field(strict=True, min_length=1, max_length=32)
+    credential: str = Field(strict=True, max_length=CREDENTIAL_MAX_LENGTH)
+
+    @field_validator("device_id", mode="before")
+    @classmethod
+    def require_uuid_string(cls, value):
+        if not isinstance(value, str):
+            raise ValueError("device_id must be a UUID string")
+        return value
+
+    @field_validator("display_name", "platform")
+    @classmethod
+    def reject_whitespace_only(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("must not contain only whitespace")
+        return value
+
+    @model_validator(mode="after")
+    def require_exactly_one_pairing_secret(self) -> "PairingClaim":
+        if (self.pairing_token is None) == (self.manual_code is None):
+            raise ValueError("provide exactly one of pairing_token or manual_code")
+        return self

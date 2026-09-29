@@ -1,5 +1,7 @@
 import base64
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
+import re
 import os
 import secrets
 from uuid import uuid4
@@ -49,6 +51,21 @@ def quota_payload(sampled_at=None, five_hour_used=42.5):
         "collector_state": "ok",
         "collector_message_code": None,
     }
+
+
+def pairing_claim_payload(pairing_token=None, manual_code=None, **overrides):
+    payload = {
+        "device_id": str(uuid4()),
+        "display_name": "Test iPhone",
+        "platform": "ios",
+        "credential": make_credential("device"),
+    }
+    if pairing_token is not None:
+        payload["pairing_token"] = pairing_token
+    if manual_code is not None:
+        payload["manual_code"] = manual_code
+    payload.update(overrides)
+    return payload
 
 
 def test_relay_config_rejects_short_pepper_without_exposing_it(monkeypatch):
@@ -527,3 +544,356 @@ def test_revoked_device_is_rejected(relay_context):
     )
 
     assert response.status_code == 401
+
+
+def create_pairing(relay_context, host_payload):
+    client, _config, _host_ids = relay_context
+    response = client.post(
+        "/v1/pairings",
+        headers={"Authorization": f"Bearer {host_payload['credential']}"},
+    )
+    assert response.status_code == 201
+    return response.json()
+
+
+def test_host_can_create_pairing_with_expected_formats_and_no_raw_secrets(
+    relay_context,
+):
+    host_payload, _response = register(relay_context)
+    _client, config, _host_ids = relay_context
+
+    before = datetime.now(timezone.utc)
+    pairing = create_pairing(relay_context, host_payload)
+    after = datetime.now(timezone.utc)
+
+    token_match = re.fullmatch(
+        r"fmp1\.([0-9a-f-]{36})\.([A-Za-z0-9_-]{43})",
+        pairing["pairing_token"],
+    )
+    assert token_match is not None
+    assert len(base64.urlsafe_b64decode(token_match.group(2) + "=")) == 32
+    assert re.fullmatch(
+        r"[0-9A-HJKMNP-TV-Z]{5}-[0-9A-HJKMNP-TV-Z]{5}",
+        pairing["manual_code"],
+    )
+    assert pairing["api_version"] == 1
+    assert pairing["deep_link"] == (
+        f"flightmargin://pair/v1?token={pairing['pairing_token']}"
+    )
+
+    session_id = token_match.group(1)
+    expires_at = datetime.fromisoformat(pairing["expires_at"])
+    with psycopg.connect(config.database_url) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                select created_at, expires_at, attempts, max_attempts,
+                       row_to_json(p)::text
+                from relay_pairing_sessions p where id = %s
+                """,
+                (session_id,),
+            )
+            created_at, stored_expires_at, attempts, max_attempts, stored = (
+                cursor.fetchone()
+            )
+    assert before + timedelta(minutes=5) <= expires_at <= after + timedelta(minutes=5)
+    assert stored_expires_at == created_at + timedelta(minutes=5)
+    assert attempts == 0
+    assert max_attempts == 5
+    assert token_match.group(2) not in stored
+    assert pairing["pairing_token"] not in stored
+    assert pairing["manual_code"] not in stored
+    assert pairing["manual_code"].replace("-", "") not in stored
+
+
+def test_unauthenticated_host_cannot_create_pairing(relay_context):
+    client, _config, _host_ids = relay_context
+    response = client.post("/v1/pairings")
+    assert response.status_code == 401
+
+
+@pytest.mark.parametrize("secret_field", ["pairing_token", "manual_code"])
+def test_pairing_claim_succeeds_and_stores_only_device_digest(
+    relay_context, secret_field
+):
+    host_payload, _response = register(relay_context)
+    client, config, _host_ids = relay_context
+    pairing = create_pairing(relay_context, host_payload)
+    claim = pairing_claim_payload(**{secret_field: pairing[secret_field]})
+
+    response = client.post("/v1/pairings/claim", json=claim)
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "api_version": 1,
+        "paired": True,
+        "device_id": claim["device_id"],
+        "host_id": host_payload["host_id"],
+    }
+    raw_device_secret = claim["credential"].rsplit(".", 1)[1]
+    with psycopg.connect(config.database_url) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                select count(*), min(c.token_digest),
+                       min(row_to_json(d)::text || row_to_json(c)::text)
+                from relay_devices d
+                join relay_device_credentials c on c.device_id = d.id
+                where d.id = %s
+                """,
+                (claim["device_id"],),
+            )
+            count, digest, stored = cursor.fetchone()
+    assert count == 1
+    assert re.fullmatch(r"[0-9a-f]{64}", digest)
+    assert claim["credential"] not in stored
+    assert raw_device_secret not in stored
+
+
+@pytest.mark.parametrize(
+    "included",
+    [(), ("pairing_token", "manual_code")],
+)
+def test_claim_requires_exactly_one_pairing_method(relay_context, included):
+    client, _config, _host_ids = relay_context
+    values = {
+        "pairing_token": f"fmp1.{uuid4()}.{'A' * 43}",
+        "manual_code": "12345-6789A",
+    }
+    claim = pairing_claim_payload(**{name: values[name] for name in included})
+    response = client.post("/v1/pairings/claim", json=claim)
+    assert response.status_code == 422
+
+
+def test_malformed_device_credential_is_rejected(relay_context):
+    client, _config, _host_ids = relay_context
+    response = client.post(
+        "/v1/pairings/claim",
+        json=pairing_claim_payload(
+            manual_code="12345-6789A", credential="not-a-device-credential"
+        ),
+    )
+    assert response.status_code == 422
+    assert response.json()["detail"] == "Malformed device credential"
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("device_id", 1),
+        ("display_name", "x" * 121),
+        ("platform", "x" * 33),
+        ("credential", "x" * 129),
+    ],
+)
+def test_pairing_claim_strictly_bounds_public_fields(
+    relay_context, field, value
+):
+    client, _config, _host_ids = relay_context
+    claim = pairing_claim_payload(manual_code="12345-6789A")
+    claim[field] = value
+    response = client.post("/v1/pairings/claim", json=claim)
+    assert response.status_code == 422
+
+
+def test_incorrect_qr_secret_is_rejected_and_increments_attempts(relay_context):
+    host_payload, _response = register(relay_context)
+    client, config, _host_ids = relay_context
+    pairing = create_pairing(relay_context, host_payload)
+    prefix = pairing["pairing_token"].rsplit(".", 1)[0]
+    incorrect_token = f"{prefix}.{make_credential('device').rsplit('.', 1)[1]}"
+
+    response = client.post(
+        "/v1/pairings/claim",
+        json=pairing_claim_payload(pairing_token=incorrect_token),
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Pairing could not be completed"
+    session_id = pairing["pairing_token"].split(".")[1]
+    with psycopg.connect(config.database_url) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "select attempts from relay_pairing_sessions where id = %s",
+                (session_id,),
+            )
+            assert cursor.fetchone()[0] == 1
+
+
+def test_incorrect_manual_code_is_rejected_generically(relay_context):
+    host_payload, _response = register(relay_context)
+    client, _config, _host_ids = relay_context
+    pairing = create_pairing(relay_context, host_payload)
+    incorrect_code = "00000-00000"
+    if pairing["manual_code"] == incorrect_code:
+        incorrect_code = "11111-11111"
+
+    response = client.post(
+        "/v1/pairings/claim",
+        json=pairing_claim_payload(manual_code=incorrect_code),
+    )
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Pairing could not be completed"
+
+
+def test_fifth_failed_attempt_exhausts_session_permanently(relay_context):
+    host_payload, _response = register(relay_context)
+    client, config, _host_ids = relay_context
+    pairing = create_pairing(relay_context, host_payload)
+    prefix = pairing["pairing_token"].rsplit(".", 1)[0]
+
+    for _ in range(5):
+        incorrect = f"{prefix}.{make_credential('device').rsplit('.', 1)[1]}"
+        response = client.post(
+            "/v1/pairings/claim",
+            json=pairing_claim_payload(pairing_token=incorrect),
+        )
+        assert response.status_code == 400
+
+    correct = client.post(
+        "/v1/pairings/claim",
+        json=pairing_claim_payload(pairing_token=pairing["pairing_token"]),
+    )
+    assert correct.status_code == 400
+    session_id = pairing["pairing_token"].split(".")[1]
+    with psycopg.connect(config.database_url) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "select attempts from relay_pairing_sessions where id = %s",
+                (session_id,),
+            )
+            assert cursor.fetchone()[0] == 5
+
+
+def test_expired_pairing_is_rejected(relay_context):
+    host_payload, _response = register(relay_context)
+    client, config, _host_ids = relay_context
+    pairing = create_pairing(relay_context, host_payload)
+    session_id = pairing["pairing_token"].split(".")[1]
+    with psycopg.connect(config.database_url) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "update relay_pairing_sessions set expires_at = now() where id = %s",
+                (session_id,),
+            )
+    response = client.post(
+        "/v1/pairings/claim",
+        json=pairing_claim_payload(pairing_token=pairing["pairing_token"]),
+    )
+    assert response.status_code == 400
+
+
+@pytest.mark.parametrize("secret_field", ["pairing_token", "manual_code"])
+def test_same_device_and_credential_retry_is_idempotent(
+    relay_context, secret_field
+):
+    host_payload, _response = register(relay_context)
+    client, config, _host_ids = relay_context
+    pairing = create_pairing(relay_context, host_payload)
+    claim = pairing_claim_payload(**{secret_field: pairing[secret_field]})
+
+    first = client.post("/v1/pairings/claim", json=claim)
+    retry = client.post("/v1/pairings/claim", json=claim)
+
+    assert first.status_code == retry.status_code == 200
+    assert first.json() == retry.json()
+    with psycopg.connect(config.database_url) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "select count(*) from relay_devices where host_id = %s",
+                (host_payload["host_id"],),
+            )
+            assert cursor.fetchone()[0] == 1
+
+
+def test_different_device_or_credential_cannot_reclaim_session(relay_context):
+    host_payload, _response = register(relay_context)
+    client, _config, _host_ids = relay_context
+    pairing = create_pairing(relay_context, host_payload)
+    claim = pairing_claim_payload(pairing_token=pairing["pairing_token"])
+    assert client.post("/v1/pairings/claim", json=claim).status_code == 200
+
+    different_device = pairing_claim_payload(pairing_token=pairing["pairing_token"])
+    changed_credential = {**claim, "credential": make_credential("device")}
+    assert client.post(
+        "/v1/pairings/claim", json=different_device
+    ).status_code == 400
+    assert client.post(
+        "/v1/pairings/claim", json=changed_credential
+    ).status_code == 400
+
+
+def test_newly_paired_device_can_immediately_read_quota(relay_context):
+    host_payload, _response = register(relay_context)
+    client, _config, _host_ids = relay_context
+    host_headers = {"Authorization": f"Bearer {host_payload['credential']}"}
+    assert client.put(
+        "/v1/quota", headers=host_headers, json=quota_payload(five_hour_used=64.0)
+    ).status_code == 200
+    pairing = create_pairing(relay_context, host_payload)
+    claim = pairing_claim_payload(pairing_token=pairing["pairing_token"])
+    assert client.post("/v1/pairings/claim", json=claim).status_code == 200
+
+    quota = client.get(
+        "/v1/quota",
+        headers={"Authorization": f"Bearer {claim['credential']}"},
+    )
+    assert quota.status_code == 200
+    assert quota.json()["quota"]["five_hour_used"] == 64.0
+
+
+def test_revoked_host_cannot_create_or_complete_pairing(relay_context):
+    first_host, _response = register(relay_context)
+    second_host, _response = register(relay_context)
+    client, config, _host_ids = relay_context
+    pairing = create_pairing(relay_context, first_host)
+    with psycopg.connect(config.database_url) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "update relay_hosts set revoked_at = now() where id = any(%s)",
+                ([first_host["host_id"], second_host["host_id"]],),
+            )
+
+    create_response = client.post(
+        "/v1/pairings",
+        headers={"Authorization": f"Bearer {second_host['credential']}"},
+    )
+    claim_response = client.post(
+        "/v1/pairings/claim",
+        json=pairing_claim_payload(pairing_token=pairing["pairing_token"]),
+    )
+    assert create_response.status_code == 401
+    assert claim_response.status_code == 400
+
+
+def test_concurrent_double_claim_creates_only_one_device(relay_context):
+    host_payload, _response = register(relay_context)
+    _client, config, _host_ids = relay_context
+    pairing = create_pairing(relay_context, host_payload)
+    claims = [
+        pairing_claim_payload(pairing_token=pairing["pairing_token"]),
+        pairing_claim_payload(pairing_token=pairing["pairing_token"]),
+    ]
+
+    concurrent_clients = [
+        TestClient(create_app(config)),
+        TestClient(create_app(config)),
+    ]
+
+    def submit(client_and_claim):
+        concurrent_client, claim = client_and_claim
+        response = concurrent_client.post("/v1/pairings/claim", json=claim)
+        return response.status_code
+
+    with concurrent_clients[0], concurrent_clients[1]:
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            statuses = list(executor.map(submit, zip(concurrent_clients, claims)))
+
+    assert sorted(statuses) == [200, 400]
+    with psycopg.connect(config.database_url) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "select count(*) from relay_devices where host_id = %s",
+                (host_payload["host_id"],),
+            )
+            assert cursor.fetchone()[0] == 1
