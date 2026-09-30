@@ -1,0 +1,135 @@
+name: Prepare or deploy mobile relay
+
+# Manual-only by design. Select the exact Git revision and one explicit phase;
+# pushes and pull requests never modify the hosted relay.
+on:
+  workflow_dispatch:
+    inputs:
+      phase:
+        description: Hosted relay operation to perform
+        required: true
+        type: choice
+        options:
+          - prepare
+          - deploy
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mobile-relay-deployment
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Apply relay migrations and prepare runtime role
+    if: ${{ inputs.phase == 'prepare' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out exact selected commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Set up Supabase CLI
+        uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359 # v3.0.1
+        with:
+          version: 2.84.2
+
+      - name: Verify required preparation secrets are configured
+        shell: bash
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: |
+          for variable_name in SUPABASE_ACCESS_TOKEN SUPABASE_PROJECT_REF SUPABASE_DB_PASSWORD; do
+            if [ -z "${!variable_name}" ]; then
+              echo "Required repository/environment secret is missing: ${variable_name}" >&2
+              exit 1
+            fi
+          done
+
+      - name: Link hosted project
+        shell: bash
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: supabase link --project-ref "$SUPABASE_PROJECT_REF"
+
+      - name: Apply committed migrations
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: supabase db push
+
+      - name: Report prepared revision and required next steps
+        run: |
+          echo "Applied FlightMargin relay migrations from selected commit ${GITHUB_SHA}"
+          echo "Next: set a strong password on flightmargin_relay outside Git/CI."
+          echo "Then construct the Supabase shared transaction-pooler URL using flightmargin_relay.<PROJECT_REF>."
+          echo "Save the complete URL as the GitHub secret FLIGHTMARGIN_RELAY_DATABASE_URL."
+          echo "Ensure FLIGHTMARGIN_RELAY_PEPPER is configured."
+          echo "Rerun this workflow with phase=deploy on the SAME Git revision: ${GITHUB_SHA}."
+
+  deploy:
+    name: Deploy prepared relay-v1 runtime
+    if: ${{ inputs.phase == 'deploy' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out exact selected commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Set up Supabase CLI
+        uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359 # v3.0.1
+        with:
+          version: 2.84.2
+
+      - name: Verify and validate required deployment secrets
+        shell: bash
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          FLIGHTMARGIN_RELAY_PEPPER: ${{ secrets.FLIGHTMARGIN_RELAY_PEPPER }}
+          FLIGHTMARGIN_RELAY_DATABASE_URL: ${{ secrets.FLIGHTMARGIN_RELAY_DATABASE_URL }}
+        run: |
+          for variable_name in SUPABASE_ACCESS_TOKEN SUPABASE_PROJECT_REF FLIGHTMARGIN_RELAY_PEPPER FLIGHTMARGIN_RELAY_DATABASE_URL; do
+            if [ -z "${!variable_name}" ]; then
+              echo "Required repository/environment secret is missing: ${variable_name}" >&2
+              exit 1
+            fi
+          done
+          if [ "$(printf %s "$FLIGHTMARGIN_RELAY_PEPPER" | wc -c)" -lt 32 ]; then
+            echo "FLIGHTMARGIN_RELAY_PEPPER must be at least 32 bytes" >&2
+            exit 1
+          fi
+          node scripts/validate-relay-database-url.mjs
+
+      - name: Configure server-only relay secrets
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          FLIGHTMARGIN_RELAY_PEPPER: ${{ secrets.FLIGHTMARGIN_RELAY_PEPPER }}
+          FLIGHTMARGIN_RELAY_DATABASE_URL: ${{ secrets.FLIGHTMARGIN_RELAY_DATABASE_URL }}
+        run: |
+          supabase secrets set \
+            FLIGHTMARGIN_RELAY_PEPPER="$FLIGHTMARGIN_RELAY_PEPPER" \
+            FLIGHTMARGIN_RELAY_DATABASE_URL="$FLIGHTMARGIN_RELAY_DATABASE_URL" \
+            --project-ref "$SUPABASE_PROJECT_REF"
+
+      - name: Deploy relay-v1 Edge Function
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: supabase functions deploy relay-v1 --project-ref "$SUPABASE_PROJECT_REF"
+
+      - name: Report deployed revision
+        run: echo "Deployed FlightMargin relay commit ${GITHUB_SHA}"
