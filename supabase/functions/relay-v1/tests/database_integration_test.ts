@@ -2,6 +2,10 @@ import { Pool } from "pg";
 import { randomSecret, rateLimitIdentityDigest } from "../crypto.ts";
 import { createPgClient, PostgresRelayRepository } from "../db.ts";
 import { createHandler } from "../router.ts";
+import {
+  RELAY_TEST_UNAVAILABLE_REASON,
+  relayTestConfigFromEnvironment,
+} from "./relay_test_config.ts";
 
 function assert(condition: unknown, message = "assertion failed"): asserts condition {
   if (!condition) throw new Error(message);
@@ -15,9 +19,11 @@ function assertEquals(actual: unknown, expected: unknown): void {
   }
 }
 
-const databaseUrl = Deno.env.get("FLIGHTMARGIN_RELAY_DATABASE_URL");
-const pepperValue = Deno.env.get("FLIGHTMARGIN_RELAY_PEPPER");
-const canIntegrate = Boolean(databaseUrl && pepperValue);
+const relayTestConfig = relayTestConfigFromEnvironment();
+const databaseUrl = relayTestConfig?.databaseUrl;
+const pepperValue = relayTestConfig?.pepper;
+const canIntegrate = relayTestConfig !== undefined;
+const skippedSuffix = canIntegrate ? "" : ` [${RELAY_TEST_UNAVAILABLE_REASON}]`;
 
 function credential(kind: "host" | "device", id = crypto.randomUUID()): string {
   return `${kind === "host" ? "fmh1" : "fmd1"}.${id}.${randomSecret()}`;
@@ -81,7 +87,8 @@ function request(
 
 Deno.test({
   name:
-    "PostgreSQL relay supports registration, auth, quota, pairing, retry, and revocation",
+    "PostgreSQL relay supports registration, auth, quota, pairing, retry, and revocation" +
+    skippedSuffix,
   ignore: !canIntegrate,
   sanitizeResources: false,
   async fn() {
@@ -278,7 +285,8 @@ Deno.test({
 
 Deno.test({
   name:
-    "PostgreSQL public buckets are atomic, isolated HMAC identities without raw IPs",
+    "PostgreSQL public buckets are atomic, isolated HMAC identities without raw IPs" +
+    skippedSuffix,
   ignore: !canIntegrate,
   sanitizeResources: false,
   async fn() {
@@ -335,7 +343,8 @@ Deno.test({
 });
 
 Deno.test({
-  name: "node-postgres executes and rolls back a multi-query transaction",
+  name: "node-postgres executes and rolls back a multi-query transaction" +
+    skippedSuffix,
   ignore: !canIntegrate,
   sanitizeResources: false,
   async fn() {

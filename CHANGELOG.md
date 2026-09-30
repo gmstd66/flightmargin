@@ -62,6 +62,11 @@ Notable changes to FlightMargin are documented here. This file summarizes produc
 
 ### Fixed
 
+- Prevented Python and Deno relay database integration tests from inheriting a
+  hosted database target from normal runtime configuration. Automated tests now
+  accept only syntactically loopback PostgreSQL URLs through dedicated test
+  variables, with a loopback-only runtime-variable fallback for existing local
+  development workflows.
 - Strengthened the manual relay deployment check to require the
   `flightmargin_relay.<SUPABASE_PROJECT_REF>` custom-role username, a Supabase
   shared-pooler host, and port 6543 before installing the runtime database URL

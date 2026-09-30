@@ -257,11 +257,28 @@ rate-limit, native DPAPI, or Windows package validation. Real mobile QR/manual
 pairing, revocation/authentication recovery, and remote device-management UX
 remain later explicit gates.
 
-Local I-05B tooling validation passes 194 Python tests with 38 database-backed
-tests skipped when relay credentials are deliberately absent, plus 12 Deno
-tests with 3 database integrations ignored. The Linux wheel builds and passes
-the expanded release-content verifier. Native DPAPI, PyInstaller/Tauri/NSIS,
-and hosted threshold results remain unclaimed until the manual workflow runs.
+Current local I-05B tooling validation passes 208 Python tests with 38
+database-backed tests skipped when relay test credentials are deliberately
+absent, plus 17 Deno tests with 3 database integrations ignored. With dedicated
+loopback test configuration, 80 focused Python relay/configuration tests and all
+20 Deno tests pass against PostgreSQL at `127.0.0.1:55432`. The Linux wheel
+builds and passes the expanded release-content verifier. Native DPAPI,
+PyInstaller/Tauri/NSIS, and hosted threshold results remain unclaimed until the
+manual workflow runs.
+
+After the I-05B validation incident, relay automated-test configuration is
+separated from application runtime configuration. Central Python and Deno test
+helpers prefer `FLIGHTMARGIN_RELAY_TEST_DATABASE_URL` and
+`FLIGHTMARGIN_RELAY_TEST_PEPPER`; both reject every database URL whose parsed
+host is not syntactically `localhost`, in `127.0.0.0/8`, or exactly `::1`.
+Dedicated test variables are required as a pair and are never mixed with
+runtime credential sources. Existing runtime variables remain a compatibility
+fallback only when the runtime database target is loopback. The check performs
+no DNS lookup and skip output contains no URL, hostname, username, password, or
+pepper. A fake `.invalid` runtime target passed the full Python and Deno suites
+with traced connection syscalls proving no attempt to its relay port.
+Application runtime, deployment, and the explicitly confirmed hosted I-05B
+validator retain their existing configuration behavior.
 
 ## Public identity and compatibility
 

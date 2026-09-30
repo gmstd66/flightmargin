@@ -54,9 +54,9 @@ test dependencies into the development virtual environment:
 .venv/bin/python -m pip install -r requirements-relay-dev.txt
 ```
 
-Set the database URL and HMAC pepper only through the approved environment
-variables; do not place either value in a command, committed file, test output,
-or application log:
+Application runtime continues to read the database URL and HMAC pepper through
+the approved runtime environment variables; do not place either value in a
+command, committed file, test output, or application log:
 
 ```text
 FLIGHTMARGIN_RELAY_DATABASE_URL
@@ -74,6 +74,25 @@ Run focused integration tests against the disposable local relay database:
 .venv/bin/python -m pytest -q \
   tests/test_mobile_relay_schema.py tests/test_mobile_relay_api.py
 ```
+
+Automated Python and Deno database tests use the dedicated test-only variables
+`FLIGHTMARGIN_RELAY_TEST_DATABASE_URL` and
+`FLIGHTMARGIN_RELAY_TEST_PEPPER`. When either dedicated variable is used, both
+must be set; test and runtime credential sources are never mixed. The test
+database URL is accepted only when
+its parsed host is syntactically `localhost`, in `127.0.0.0/8`, or exactly
+`::1`; tests never DNS-resolve a hostname for this decision. For compatibility
+with existing local development, tests may fall back to the runtime variables
+shown above only when that database URL passes the same loopback check. Missing,
+malformed, or non-loopback configuration causes database-backed tests to skip
+without displaying connection or credential material. This boundary exists so
+a normal developer shell configured for relay runtime cannot accidentally send
+automated test traffic to a hosted database.
+
+For the standard disposable local database, configure the test variables for
+PostgreSQL on `127.0.0.1:55432`. Runtime application behavior is unchanged, and
+the explicitly confirmed hosted I-05B validator continues to use the runtime
+database variable in its isolated manual workflow.
 
 Run the API for local HTTP validation:
 
@@ -217,8 +236,9 @@ deno task check
 deno task test
 ```
 
-Integration tests use `FLIGHTMARGIN_RELAY_DATABASE_URL` and
-`FLIGHTMARGIN_RELAY_PEPPER` against the disposable local PostgreSQL database.
+Integration tests use `FLIGHTMARGIN_RELAY_TEST_DATABASE_URL` and
+`FLIGHTMARGIN_RELAY_TEST_PEPPER` against the disposable local PostgreSQL
+database, with the loopback-only compatibility fallback described above.
 The hosted function uses that same explicit database variable; its value must
 be the Supabase shared transaction-pooler connection string on port 6543, not
 the built-in direct `SUPABASE_DB_URL`. Hosted connections require TLS. The
