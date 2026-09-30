@@ -1,8 +1,8 @@
 # FlightMargin — Project Status
 
-Updated: 2026-09-29
+Updated: 2026-09-30
 
-Branch: `dev/mobile-relay`
+Branch: `dev/mobile-host-integration`
 
 This is the primary continuity record. Read it with `AGENTS.md` and verify it
 against the working tree and Git history before making changes.
@@ -34,7 +34,7 @@ Unofficial community tool. Not affiliated with or endorsed by OpenAI.
 
 ## Architecture
 
-The approved architecture is unchanged:
+The core local architecture is retained and the relay is an optional side path:
 
 ```text
 browser / CLI -> FastAPI or CLI -> Codex app-server JSON-RPC
@@ -47,6 +47,8 @@ browser / CLI -> FastAPI or CLI -> Codex app-server JSON-RPC
 - `app/core`: configuration, environment discovery, quota normalization, and
   derived pacing metrics.
 - `app/storage/sqlite_store.py`: local SQLite history.
+- `app/mobile_relay/`: optional host identity, relay configuration/transport,
+  latest-only synchronization, retry state, and pairing coordination.
 - `app/cli.py`: `flightmargin` CLI and legacy `codex-quota` alias.
 - `app/systemd.py`: systemd unit rendering.
 - `desktop/`: Tauri 2 shell, PyInstaller sidecar build, tray/startup behavior,
@@ -203,6 +205,48 @@ lint, and type checks, and 17 focused schema/least-privilege/workflow tests
 replay. The full migration chain applied cleanly, the I-04B migration replayed
 idempotently, and the focused current-tree secret scan found no high-confidence
 secret.
+
+I-05A adds opt-in desktop/Linux host integration on
+`dev/mobile-host-integration`. Relay remains disabled by default. When enabled,
+the application creates one stable host identity, idempotently registers it,
+and sends only the latest successful normalized quota sample. The collector,
+SQLite history, dashboard, and tray continue normally during relay failure or
+disablement. Duplicate sample notifications are suppressed, concurrent relay
+operations are serialized, and retry uses bounded 2/5/15/30/60/300-second
+steps that reset on success.
+
+`app/mobile_relay/config.py` owns persisted opt-in state and endpoint policy;
+`identity.py` owns the stable UUID/credential and native Windows DPAPI or Linux
+owner-only `0600` storage; `client.py` owns five-second verified-TLS standard-
+library transport with redirects rejected; and `sync.py` owns registration,
+the exact allowlisted v1 serializer, latest-only upload, pairing, and sanitized
+status/backoff. The browser can toggle only `enabled`; it cannot supply an
+endpoint. Production uses the hosted HTTPS constant, while local I-05A work
+uses the developer-only `FLIGHTMARGIN_RELAY_ENDPOINT` override and permits
+cleartext only on loopback.
+
+Settings includes Mobile Relay state, last successful sync, and an explicit
+**Pair mobile device** action. A five-minute manual code, countdown, and QR of
+the returned deep link are held only in browser memory/DOM and cleared on
+expiry, disablement, or replacement. Vendored MIT QRCode.js avoids runtime CDN
+or Python dependencies. The UI does not claim an iPhone app exists. Host and
+pairing credentials never enter `quota.db`, logs, HTML source, or persisted
+pairing state.
+
+I-05A automated validation passes 223 Python tests, including live disposable-
+PostgreSQL relay contract tests, plus JavaScript syntax and wheel/package
+checks. A process-level smoke against only `127.0.0.1:18093` and PostgreSQL
+`127.0.0.1:55432` registered a disposable host, uploaded an approved synthetic
+snapshot, created and claimed a pairing with a fake device, and read back the
+latest quota. Its host cascade and temporary application data were removed and
+the listener stopped. No hosted Supabase request/change or production
+FlightMargin change occurred.
+
+I-05B remains the explicit hosted-validation gate: exercise the deployed
+endpoint and public rate limits, validate a real packaged Windows DPAPI path,
+pair a real mobile client by QR/manual code, test revocation/authentication
+recovery, and decide future remote device-management UX. Those steps require
+separate authorization and are not part of I-05A.
 
 ## Public identity and compatibility
 

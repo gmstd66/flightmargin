@@ -1,6 +1,7 @@
-# FlightMargin Mobile Relay — Design and I-04B Hosted Preparation
+# FlightMargin Mobile Relay — Design through I-05A Host Integration
 
-Status: production-oriented Edge Function and deployment path implemented; not deployed
+Status: hosted relay live; opt-in desktop/Linux host integration implemented and
+validated against the local reference relay only
 
 ## Goal
 
@@ -111,9 +112,76 @@ reused as host or device credential digests.
 ## Local credential storage
 
 - iOS: Keychain.
-- Windows: Windows Credential Manager/DPAPI-backed storage.
+- Windows: the host credential is encrypted for the current user with native
+  Windows DPAPI and the protected blob is stored in
+  `mobile-relay-host.json` under the FlightMargin application-data directory.
 - Linux: owner-only credential file (`0600`) under the FlightMargin data
   directory until a portable keyring strategy is adopted.
+
+I-05A creates the host UUID, credential UUID, and 32-byte random secret once,
+only after the user enables Mobile Relay. It reuses that identity across
+restarts and transient registration failures. A malformed identity file fails
+closed and is not silently replaced. On Linux the containing directory is
+created with `0700` where FlightMargin creates it; the identity file is always
+written with `0600`. On Windows plaintext is passed to DPAPI only in process
+and is never written to disk. The host token is independent of Codex/OpenAI
+authentication and can be revoked independently at the relay. Disabling relay
+sync preserves the identity and all local quota/history data; reset/revocation
+UI remains deferred.
+
+## I-05A host integration
+
+The packaged application contains four separated responsibilities under
+`app/mobile_relay/`:
+
+- `config.py`: persistent opt-in state and strict endpoint validation;
+- `identity.py`: stable host identity and DPAPI/Linux secret storage;
+- `client.py`: bounded standard-library HTTP/TLS transport with redirects
+  rejected;
+- `sync.py`: registration, latest-only uploads, pairing, and retry state.
+
+Relay support defaults off. The normal endpoint is
+`https://samcdyrwfwrlxzypzgmj.supabase.co/functions/v1/relay-v1`. Developers
+may set `FLIGHTMARGIN_RELAY_ENDPOINT` before application startup; HTTPS is
+required except for loopback HTTP (`localhost`, `127.0.0.0/8`, or `::1`). The
+dashboard API accepts only an `enabled` boolean and cannot change the endpoint.
+HTTPS uses the platform trust store with certificate verification, timeouts are
+bounded at five seconds, and redirects are rejected rather than following an
+untrusted destination.
+
+After each successful local collector result, the coordinator retains one
+in-memory latest sample. It registers the stable identity idempotently, then
+uploads only that sample. It never queues history and never changes local
+collection or SQLite behavior. Duplicate notification of the same SQLite
+sample ID/timestamp does not trigger a second upload, and one operation lock
+prevents concurrent upload/pairing transport. Failures do not propagate into
+the collector or dashboard. Retry delays step through 2, 5, 15, 30, 60, and
+300 seconds, remain capped at five minutes, and reset after success.
+
+The host upload serializer has an explicit allowlist and emits exactly:
+
+```text
+schema_version, sampled_at,
+five_hour_used, five_hour_reset_at,
+weekly_used, weekly_reset_at,
+plan_type, reset_credits_available, credits_balance,
+spend_control_reached, rate_limit_reached_type,
+collector_state, collector_message_code
+```
+
+It cannot serialize database IDs, local paths, usernames, history, Codex
+credentials, prompts, transcripts, source, or agent output. The host credential
+is used only in registration JSON or the Authorization header and is never
+returned by the dashboard API, placed in a URL, or logged.
+
+Settings now has a **Mobile Relay** tab showing Disabled, Registering,
+Connected, or Offline / Retry scheduled plus the last successful upload.
+Pairing is available only when connected and only after an explicit button
+press. The returned manual code, expiry countdown, and QR encoding the returned
+deep link remain in browser memory and DOM only until expiry, disablement, or
+replacement. QRCode.js is packaged locally; no CDN request is made. Pairing
+material is never stored in SQLite or the relay settings/identity files. The UI
+does not claim that a mobile application is currently available.
 
 ## Host registration
 
@@ -457,7 +525,7 @@ Not part of I-01:
 - billing/subscription logic;
 - production-grade abuse scoring.
 
-## Implementations through I-04B
+## Implementations through I-05A
 
 The first working relay API is separate source under `relay/`; it is excluded
 from normal FlightMargin package discovery and runs from a source checkout
@@ -509,3 +577,11 @@ only `phase=deploy`, unless new migrations first require `phase=prepare`.
 
 The credential and pairing design leaves room for adding payload encryption
 later without changing device identity.
+
+I-05A adds the optional packaged host client described above without bundling
+the local Python relay server or adding a Python runtime dependency. Its
+automated and process-level integration validation uses only the local Python
+reference at `127.0.0.1:18093` and disposable PostgreSQL at
+`127.0.0.1:55432`. Hosted endpoint validation, deployed-rate-limit behavior,
+real device pairing, and remote credential/device management remain I-05B or
+later work.

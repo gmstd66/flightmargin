@@ -6,7 +6,8 @@ FlightMargin is a local-first browser dashboard and Windows desktop shell for
 monitoring OpenAI Codex usage limits. The architecture predates and is retained
 through the public identity migration.
 
-The implementation began as a Linux/server prototype and now also includes a Windows-first desktop shell.
+The implementation began as a Linux/server prototype and now also includes a
+Windows-first desktop shell plus optional Mobile Relay host synchronization.
 
 ## Data source
 
@@ -52,6 +53,22 @@ Browser
 → normalized quota data
 → SQLite history
 → API/dashboard
+
+After a successful collector result and normal SQLite insertion, the optional
+Mobile Relay coordinator receives the latest sample. When explicitly enabled,
+it registers a dedicated host identity and sends only the allowlisted
+normalized v1 fields over verified HTTPS. It keeps no upload history or queue;
+relay failure is isolated from collection, local storage, and the dashboard.
+
+Relay responsibilities remain separated under `app/mobile_relay/`:
+
+- configuration and endpoint policy;
+- DPAPI/Linux host identity storage;
+- standard-library relay API transport;
+- latest-only synchronization, bounded backoff, and pairing.
+
+The reference server under `relay/` is development-only and excluded from the
+normal wheel and Windows application package.
 
 ## Sampling
 

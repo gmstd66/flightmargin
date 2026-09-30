@@ -128,3 +128,11 @@ def test_package_data():
         "static/*"
         in package_data
     )
+
+
+def test_mobile_relay_client_is_packaged_but_reference_server_is_not():
+    packages = load_pyproject()["tool"]["setuptools"]["packages"]["find"]
+
+    assert packages["include"] == ["app", "app.*"]
+    assert (PROJECT_ROOT / "app" / "mobile_relay" / "client.py").is_file()
+    assert (PROJECT_ROOT / "app" / "static" / "qrcode.min.js").is_file()

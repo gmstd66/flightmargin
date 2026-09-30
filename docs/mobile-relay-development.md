@@ -104,6 +104,67 @@ and claim a pairing, then read quota with the new device credential. Run only
 on `127.0.0.1:18093` against local PostgreSQL at `127.0.0.1:55432`, stop the
 relay afterward, and confirm that no listener remains.
 
+## I-05A desktop/Linux host client
+
+The packaged host client lives in `app/mobile_relay/`; unlike the reference
+server under `relay/`, it is included in normal wheels and the Windows sidecar.
+It uses only the Python standard library in addition to existing application
+dependencies. QRCode.js is vendored under `app/static/` with its MIT license,
+so pairing does not use a CDN.
+
+Relay is opt-in and defaults disabled. Normal enabled operation uses the
+production endpoint constant. For local development only, set this before the
+application starts:
+
+```text
+FLIGHTMARGIN_RELAY_ENDPOINT=http://127.0.0.1:18093
+```
+
+The endpoint is configuration/developer input, not a browser setting. HTTP is
+accepted only for a loopback host. Never set this variable to the hosted URL
+for I-05A tests; leaving it unset is safe only while relay remains disabled.
+
+Persistent non-secret state is in `mobile-relay.json`. Stable host identity is
+in `mobile-relay-host.json` beneath the normal FlightMargin application-data
+directory. Windows stores only the current-user DPAPI blob; Linux stores the
+host credential in the owner-only `0600` file and creates its directory as
+`0700` when practical. Do not copy this token into logs, URLs, issue reports,
+environment dumps, `quota.db`, or source control. It is a dedicated,
+independently revocable FlightMargin credential, not a Codex/OpenAI token.
+
+The local I-05A smoke procedure is:
+
+1. confirm PostgreSQL is listening only at the disposable local target on
+   `127.0.0.1:55432` and the committed migrations are present;
+2. start `.venv/bin/python -m relay` on `127.0.0.1:18093`;
+3. create a temporary application-data directory and configure the loopback
+   endpoint through `RelaySettingsStore` or the development override;
+4. enable relay, register the generated host, and upload one synthetic approved
+   normalized snapshot;
+5. explicitly create a pairing, claim it with a fake device credential, and
+   read the latest quota with that credential;
+6. delete the disposable host row (cascade removes its quota/pairing/device
+   records), remove the temporary application directory, and stop the relay;
+7. verify nothing listens on `18093`, while protected port `8093` and the
+   production service/configuration were unchanged.
+
+The host test suite covers identity persistence and permissions, test-double
+Windows protection, endpoint policy, request boundaries, sanitized errors,
+retry progression/reset, duplicate suppression, explicit/nonpersistent
+pairing, UI expiry behavior, and package inclusion/exclusion. Run it with:
+
+```bash
+.venv/bin/python -m pytest -q \
+  tests/test_mobile_relay_host.py tests/test_mobile_relay_ui.py \
+  tests/test_packaging.py tests/test_desktop.py tests/test_linux_installer.py
+```
+
+I-05B must validate the same client against the hosted endpoint under explicit
+authorization, including deployed gateway/rate-limit behavior, TLS/pooler
+operation, real mobile QR/manual claim, revocation recovery, and Windows DPAPI
+behavior in a packaged native build. I-05A does not contact or modify hosted
+Supabase.
+
 ## I-04A/I-04B TypeScript hosted relay
 
 The production-oriented Supabase implementation is

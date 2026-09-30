@@ -254,7 +254,7 @@ def test_nsis_upgrade_hook_prompts_for_clean_tray_quit_without_killing():
 
 def test_dashboard_assets_are_revisioned_for_desktop_webview_cache():
     template = (PROJECT_ROOT / "app" / "templates" / "index.html").read_text(encoding="utf-8")
-    assert '/static/app.css?v=14' in template
+    assert '/static/app.css?v=15' in template
     assert '/static/app.js?v=14' in template
 
 
@@ -351,7 +351,7 @@ def test_tray_settings_and_about_reuse_the_native_settings_window():
     assert 'url.set_query(Some(&format!("section={}"' in rust
     assert "window.openSettingsSection = openSettingsSection" in settings_source
     assert 'new URLSearchParams(window.location.search).get("section")' in settings_source
-    assert '/static/settings.js?v=5' in SETTINGS_TEMPLATE.read_text(encoding="utf-8")
+    assert '/static/settings.js?v=6' in SETTINGS_TEMPLATE.read_text(encoding="utf-8")
     assert "settingsDialog" not in dashboard
     assert "showModal" not in DESKTOP_JS.read_text(encoding="utf-8")
 

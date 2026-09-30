@@ -6,6 +6,15 @@ Notable changes to FlightMargin are documented here. This file summarizes produc
 
 ### Added
 
+- Added I-05A opt-in desktop/Linux Mobile Relay integration. FlightMargin now
+  creates a stable dedicated host identity, uses Windows DPAPI or an owner-only
+  Linux credential file, registers idempotently, uploads only the latest exact
+  normalized v1 quota payload, and retries failures with bounded backoff while
+  local collection/history remain unaffected. Relay remains off by default.
+- Added a Mobile Relay Settings tab with Disabled/Registering/Connected/Offline
+  status, last successful sync, and explicit five-minute mobile pairing. The
+  manual code and locally generated QR presentation are cleared after expiry
+  and are never persisted; packaged QRCode.js avoids a CDN/runtime dependency.
 - Added I-04B pre-deployment database hardening with a dedicated non-elevated
   `flightmargin_relay` login, exact relay-table grants, and matching explicit
   RLS policies. The role can delete only rate-limit buckets; its operational
