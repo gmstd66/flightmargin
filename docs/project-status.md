@@ -257,7 +257,11 @@ sidecar with isolated state and no real Codex quota window. No artifact is
 uploaded or released. The Windows job in run `36783584246` reached pytest but
 the former repository-wide selection collected separate relay-server tests
 whose development dependencies are intentionally absent. Native DPAPI and
-Windows package evidence remain pending a rerun. Real mobile QR/manual
+Windows package evidence remain pending a rerun. The corrected selection in
+run `36788962223` collected all 155 intended Python tests and passed 154. Its
+only failure was a Linux-only exact-`0600` permission assertion incorrectly
+executed on Windows, which does not provide POSIX mode-bit semantics. Native
+DPAPI and package evidence remains pending the next rerun. Real mobile QR/manual
 pairing, revocation/authentication recovery, and remote device-management UX
 remain later explicit gates.
 

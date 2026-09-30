@@ -1,7 +1,9 @@
 import asyncio
 import json
+import os
 import re
 import stat
+import sys
 from urllib.error import URLError
 
 import pytest
@@ -66,6 +68,10 @@ def test_identity_is_created_once_and_stable_across_restart(tmp_path):
     )
 
 
+@pytest.mark.skipif(
+    not (sys.platform.startswith("linux") and os.name == "posix"),
+    reason="requires Linux POSIX file-mode semantics",
+)
 def test_linux_identity_file_is_owner_only(tmp_path):
     store = HostIdentityStore(tmp_path, system="linux")
     store.load_or_create()

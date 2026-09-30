@@ -187,7 +187,12 @@ push/pull-request events. In GitHub Actions run `36783584246`, the hosted job
 passed health, both public rate-limit thresholds, and scoped cleanup. The
 Windows job reached pytest collection, where its former repository-wide test
 selection incorrectly included the separate relay-server development surface;
-native DPAPI and package validation therefore remain pending a rerun.
+native DPAPI and package validation therefore remain pending a rerun. The
+corrected selection in run `36788962223` collected all 155 intended Python
+tests and passed 154; its sole failure was a Linux-only exact-`0600` permission
+assertion incorrectly executed on Windows, whose filesystem APIs do not expose
+POSIX mode semantics. Native DPAPI and package evidence remains pending the
+next rerun.
 
 The Ubuntu job runs `scripts/validate-hosted-mobile-relay.py` against the fixed
 hosted relay URL. It checks health, sends small deliberately invalid JSON so

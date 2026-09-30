@@ -65,6 +65,10 @@ Notable changes to FlightMargin are documented here. This file summarizes produc
 
 ### Fixed
 
+- Scoped the Linux host-identity exact-`0600` permission assertion to Linux,
+  where POSIX mode bits are meaningful, so Windows validation can continue to
+  the separate native DPAPI and package checks without weakening Linux
+  credential-file coverage.
 - Prevented Python and Deno relay database integration tests from inheriting a
   hosted database target from normal runtime configuration. Automated tests now
   accept only syntactically loopback PostgreSQL URLs through dedicated test
