@@ -1,4 +1,4 @@
-# FlightMargin Mobile Relay — Design and I-04A Hosted Implementation
+# FlightMargin Mobile Relay — Design and I-04B Hosted Preparation
 
 Status: production-oriented Edge Function and deployment path implemented; not deployed
 
@@ -351,8 +351,10 @@ connection per warm isolate, no named/prepared statements, bounded
 connection/query behavior, and TLS certificate verification for hosted
 connections. It reads only `FLIGHTMARGIN_RELAY_DATABASE_URL`. Hosted
 deployment must set that secret to the Supabase shared transaction-pooler URL
-on port 6543; local tests set it to the local PostgreSQL URL. There is no
-fallback to the built-in direct `SUPABASE_DB_URL`. All SQL values are
+on port 6543 with the custom-role username
+`flightmargin_relay.<SUPABASE_PROJECT_REF>`; local tests set it to the local
+PostgreSQL URL. There is no fallback to the built-in direct `SUPABASE_DB_URL`.
+All SQL values are
 parameterized. Explicit `BEGIN`/`COMMIT`/`ROLLBACK`, transactional row locks,
 and advisory transaction locks preserve the registration, authentication,
 monotonic quota, and pairing concurrency semantics established by the Python
@@ -380,6 +382,15 @@ I-01 defines:
 - `relay_quota_state`
 
 See `supabase/migrations/20260929173100_mobile_relay.sql`.
+
+I-04B adds the dedicated `flightmargin_relay` PostgreSQL login role. It cannot
+inherit privileges, bypass RLS, create roles or databases, replicate, or act as
+a superuser. It has schema `USAGE` but not `CREATE`; it can select, insert, and
+update the seven relay tables, and can delete only from
+`relay_rate_limit_buckets`. Explicit role-specific RLS policies match that
+table privilege surface. The migration contains no password. The role password
+is a hosted operational secret configured outside Git and used only in the
+`FLIGHTMARGIN_RELAY_DATABASE_URL` function secret.
 
 ## Development and backup model
 
@@ -446,7 +457,7 @@ Not part of I-01:
 - billing/subscription logic;
 - production-grade abuse scoring.
 
-## Implementations through I-04A
+## Implementations through I-04B
 
 The first working relay API is separate source under `relay/`; it is excluded
 from normal FlightMargin package discovery and runs from a source checkout
@@ -475,11 +486,26 @@ limits required before exposure. The Python implementation remains the local
 reference and is not replaced or packaged with the main FlightMargin app.
 
 The manual-only GitHub workflow `.github/workflows/deploy-mobile-relay.yml`
-defines the eventual hosted path: check out the selected exact commit, install
-the official Supabase CLI, link the project, apply committed migrations, set
-the HMAC pepper and shared transaction-pooler URL as function secrets, deploy
-`relay-v1`, and report the commit. I-04A does not run that workflow, create its
-required secrets, link a hosted project, or deploy anything.
+defines an explicit two-phase hosted path. `phase=prepare` checks out the exact
+selected commit, links the hosted project with the administrative database
+password, and runs committed migrations only. `phase=deploy` checks out the
+exact selected commit, validates and installs the HMAC pepper and shared
+transaction-pooler URL, and deploys `relay-v1`; it cannot access the
+administrative database password or run `supabase db push`. The URL validator
+requires username `flightmargin_relay.<SUPABASE_PROJECT_REF>`, a
+`*.pooler.supabase.com` host, port `6543`, and a password. I-04A/I-04B do not
+run the workflow, create its secrets, link a hosted project, or deploy
+anything.
+
+The exact first-deployment sequence is: (1) push the reviewed revision; (2)
+manually run `phase=prepare` on that exact revision; (3) let migrations create
+`flightmargin_relay`; (4) set its strong password outside Git/CI; (5) construct
+the transaction-pooler URL in the form
+`flightmargin_relay.<PROJECT_REF>@*.pooler.supabase.com:6543`; (6) save the
+complete URL as `FLIGHTMARGIN_RELAY_DATABASE_URL`; (7) configure
+`FLIGHTMARGIN_RELAY_PEPPER`; (8) manually run `phase=deploy` on the **same
+revision**; and (9) perform hosted smoke tests. Later releases normally run
+only `phase=deploy`, unless new migrations first require `phase=prepare`.
 
 The credential and pairing design leaves room for adding payload encryption
 later without changing device identity.

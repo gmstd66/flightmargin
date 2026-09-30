@@ -6,6 +6,10 @@ Notable changes to FlightMargin are documented here. This file summarizes produc
 
 ### Added
 
+- Added I-04B pre-deployment database hardening with a dedicated non-elevated
+  `flightmargin_relay` login, exact relay-table grants, and matching explicit
+  RLS policies. The role can delete only rate-limit buckets; its operational
+  password is intentionally absent from Git and migrations.
 - Added the I-04A production-oriented TypeScript/Deno Supabase Edge Function
   for the complete relay v1 contract, with direct transactional PostgreSQL
   access, FlightMargin-native authentication, strict public request handling,
@@ -14,10 +18,11 @@ Notable changes to FlightMargin are documented here. This file summarizes produc
   IP-HMAC per hour and 20 pairing claims per IP-HMAC per five minutes. A new
   additive migration stores no raw IPs and supports expired-bucket purging.
 - Added a manual-only GitHub-hosted deployment workflow that will apply
-  committed migrations, configure the server-only pepper and explicit shared
-  transaction-pooler URL, and deploy the exact selected `relay-v1` revision
-  after secrets and deployment are separately authorized. I-04A performs no
-  hosted deployment.
+  committed migrations in an explicit `prepare` phase, then configure the
+  server-only pepper and explicit shared transaction-pooler URL and deploy the
+  exact same selected `relay-v1` revision in a separate `deploy` phase. The
+  runtime phase has no administrative database credential or migration path.
+  I-04A/I-04B perform no hosted deployment.
 - Added the I-03 accountless mobile pairing API with host-authenticated
   five-minute pairing creation, QR token/manual code/deep-link responses,
   atomic QR and manual claims, five-attempt session exhaustion, idempotent
@@ -41,6 +46,10 @@ Notable changes to FlightMargin are documented here. This file summarizes produc
 
 ### Fixed
 
+- Strengthened the manual relay deployment check to require the
+  `flightmargin_relay.<SUPABASE_PROJECT_REF>` custom-role username, a Supabase
+  shared-pooler host, and port 6543 before installing the runtime database URL
+  as a function secret.
 - Hardened I-04A hosted database access by replacing pipelining Postgres.js
   with a one-client `node-postgres` pool, explicit transactions, unnamed
   parameterized queries, verified hosted TLS, and the required

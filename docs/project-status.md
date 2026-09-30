@@ -56,7 +56,7 @@ The Windows shell communicates with its sidecar on an OS-assigned loopback
 port. The Linux browser deployment has no application-level authentication and
 must stay on localhost or a trusted private network.
 
-## Mobile companion relay — I-01 through I-04A
+## Mobile companion relay — I-01 through I-04B
 
 The approved mobile-companion architecture uses a central Supabase relay so the
 iPhone requires no VPN, port forwarding, third-party user account, router
@@ -125,8 +125,9 @@ isolate, unnamed parameterized SQL, bounded connection/query behavior,
 constant-time digest comparisons, and explicit multi-query transactions that
 preserve the I-02/I-03 row/advisory locking and revocation semantics. It reads
 only `FLIGHTMARGIN_RELAY_DATABASE_URL`; hosted operation requires the Supabase
-shared transaction-pooler URL on port 6543 and never falls back to the built-in
-direct `SUPABASE_DB_URL`. `supabase/config.toml` explicitly sets
+shared transaction-pooler URL with the dedicated custom-role username on port
+6543 and never falls back to the built-in direct `SUPABASE_DB_URL`.
+`supabase/config.toml` explicitly sets
 `verify_jwt = false`. The Python implementation remains the local reference.
 
 The additive I-04A migration creates `relay_rate_limit_buckets`. Atomic
@@ -151,18 +152,17 @@ Python/TypeScript crypto vectors, routing/validation/error safety, and live
 PostgreSQL registration, authentication, quota, pairing, revocation,
 expiry/exhaustion, and rate limiting.
 
-The new GitHub-hosted Ubuntu workflow is manual-only. An authorized future run
-will check out the exact selected commit, install the official Supabase CLI,
-link the hosted project, apply committed migrations, set the server-only
-pepper and transaction-pooler connection URL, deploy `relay-v1`, and report
-the SHA. It requires
-`SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD`, and
-`FLIGHTMARGIN_RELAY_PEPPER`, plus `FLIGHTMARGIN_RELAY_DATABASE_URL` containing
-the shared transaction-pooler connection string on port 6543. The database
-password is scoped only to CLI link/migration steps; both function secrets are
-installed without printing them. I-04A creates none of those secrets and
-performs no push, hosted project link, workflow run, deployment, production
-change, or COXON backup operation.
+The GitHub-hosted Ubuntu workflow is manual-only and explicitly two-phase.
+`phase=prepare` requires the access token, project ref, and administrative
+database password; it checks out the exact selected commit, links the project,
+applies committed migrations, and reports the SHA, but cannot read runtime
+secrets or deploy. `phase=deploy` requires the access token, project ref,
+server-only pepper, and dedicated-role transaction-pooler URL; it validates and
+sets those two runtime secrets without printing them, deploys `relay-v1`, and
+reports the SHA, but cannot read the administrative password or apply
+migrations. I-04A creates none of those secrets and performs no push, hosted
+project link, workflow run, deployment, production change, or COXON backup
+operation.
 
 Local I-04A validation passed 185 Python tests, 15 standalone Deno tests with
 live disposable-PostgreSQL coverage, Deno format/lint/type checks, a clean
@@ -171,6 +171,38 @@ artifact verification. The COXON CPU cannot run the local Supabase Edge
 Runtime, so gateway behavior, hosted secret injection and transaction-pooler
 TLS connectivity, migration application through the Supabase CLI, and remote
 smoke tests remain deployment-time validation gates.
+
+I-04B prepares least-privilege hosted database access without touching hosted
+Supabase. The additive migration
+`supabase/migrations/20260930014000_relay_runtime_role.sql` creates the
+`flightmargin_relay` login as `NOINHERIT`, with no superuser, database/role
+creation, replication, or RLS-bypass attributes. It grants only `USAGE` on
+`public`; `SELECT`, `INSERT`, and `UPDATE` on all seven relay tables; and
+`DELETE` on `relay_rate_limit_buckets`. Explicit role-specific policies permit
+exactly those commands through the existing RLS boundaries. The workflow now
+requires the shared Transaction Pooler URL to use
+`flightmargin_relay.<SUPABASE_PROJECT_REF>` on a `*.pooler.supabase.com` host
+and port `6543`.
+
+The password remains deliberately outside the schema and CI. The exact first
+deployment sequence is: (1) push the reviewed revision; (2) manually run
+`phase=prepare` on that exact revision; (3) let migrations create
+`flightmargin_relay`; (4) have an operator set a strong role password outside
+Git/CI; (5) construct the transaction-pooler URL as
+`flightmargin_relay.<PROJECT_REF>@*.pooler.supabase.com:6543`; (6) save the
+complete URL as `FLIGHTMARGIN_RELAY_DATABASE_URL`; (7) configure
+`FLIGHTMARGIN_RELAY_PEPPER`; (8) manually run `phase=deploy` on the **same
+revision**; and (9) perform hosted smoke tests. Subsequent deployments normally
+need only `phase=deploy`, unless new migrations must first be applied with
+`phase=prepare`. No hosted migration, password change, secret update, push, or
+deployment is part of I-04B.
+
+Local I-04B validation passed 194 Python tests, 15 Deno tests, Deno format,
+lint, and type checks, and 17 focused schema/least-privilege/workflow tests
+(including six positive/negative URL cases) against a fresh PostgreSQL 17
+replay. The full migration chain applied cleanly, the I-04B migration replayed
+idempotently, and the focused current-tree secret scan found no high-confidence
+secret.
 
 ## Public identity and compatibility
 

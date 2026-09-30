@@ -104,7 +104,7 @@ and claim a pairing, then read quota with the new device credential. Run only
 on `127.0.0.1:18093` against local PostgreSQL at `127.0.0.1:55432`, stop the
 relay afterward, and confirm that no listener remains.
 
-## I-04A TypeScript hosted relay
+## I-04A/I-04B TypeScript hosted relay
 
 The production-oriented Supabase implementation is
 `supabase/functions/relay-v1/`. It is a separate TypeScript/Deno implementation
@@ -129,6 +129,13 @@ the built-in direct `SUPABASE_DB_URL`. Hosted connections require TLS. The
 HMAC pepper must be at least 32 UTF-8 bytes in both implementations. Neither
 database URL nor pepper belongs in source, output, logs, or committed
 environment files.
+
+I-04B adds the `flightmargin_relay` login used by the hosted function. The
+source-controlled migration owns its non-elevated attributes, grants, and RLS
+policies. It deliberately does not own a password. Local integration tests may
+continue to use the disposable database administrator URL when they need test
+cleanup privileges; least-privilege behavior is separately exercised with
+`SET ROLE flightmargin_relay`.
 
 The additive migration
 `supabase/migrations/20260929203000_relay_rate_limits.sql` owns fixed-window
@@ -165,35 +172,49 @@ is a development service, not the relay production endpoint.
 ## Manual hosted deployment rule
 
 The manual-only `.github/workflows/deploy-mobile-relay.yml` is the sole prepared
-I-04A deployment path. It never runs on push. Configure these GitHub repository
-secrets before an authorized deployment:
+I-04B deployment path. It never runs on push or pull request and requires an
+explicit `phase` choice. The two phases deliberately have separate secret and
+command scopes:
 
-- `SUPABASE_ACCESS_TOKEN`
-- `SUPABASE_PROJECT_REF`
-- `SUPABASE_DB_PASSWORD`
-- `FLIGHTMARGIN_RELAY_PEPPER` (at least 32 bytes)
-- `FLIGHTMARGIN_RELAY_DATABASE_URL` (the shared transaction-pooler URL on port
-  6543)
+- `phase=prepare` requires `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF`, and
+  `SUPABASE_DB_PASSWORD`. It links the project and runs `supabase db push`, but
+  cannot set function secrets or deploy `relay-v1`.
+- `phase=deploy` requires `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF`,
+  `FLIGHTMARGIN_RELAY_PEPPER`, and `FLIGHTMARGIN_RELAY_DATABASE_URL`. It
+  validates and installs the runtime secrets and deploys `relay-v1`, but has no
+  administrative database password and cannot run migrations.
 
-`SUPABASE_DB_PASSWORD` is available only to the CLI link/migration steps. The
-workflow installs both `FLIGHTMARGIN_RELAY_PEPPER` and
-`FLIGHTMARGIN_RELAY_DATABASE_URL` as function secrets without printing their
-values.
+The deploy phase requires a pepper of at least 32 bytes and a complete shared
+transaction-pooler URL whose username is exactly
+`flightmargin_relay.<SUPABASE_PROJECT_REF>`, host matches
+`*.pooler.supabase.com`, port is `6543`, and password is present. It installs
+both function secrets without printing their values.
 
-Once a revision is tested locally, pushed to GitHub, and deployment is
-explicitly approved, manually select that exact revision and run the workflow.
-It will:
+For the first future hosted deployment, preserve this order:
 
-1. check out the selected exact commit on a GitHub-hosted Ubuntu runner;
-2. install the official Supabase CLI action;
-3. link the dedicated hosted project;
-4. apply committed migrations with `supabase db push`;
-5. set `FLIGHTMARGIN_RELAY_PEPPER` and
-   `FLIGHTMARGIN_RELAY_DATABASE_URL` in the function secret store;
-6. deploy `relay-v1` and report the deployed commit SHA.
+1. push the reviewed revision;
+2. manually run the workflow with `phase=prepare` on that exact revision;
+3. allow the committed migrations to create `flightmargin_relay`;
+4. have an operator set a strong `flightmargin_relay` password outside Git/CI;
+5. construct the transaction-pooler URL as
+   `flightmargin_relay.<PROJECT_REF>@*.pooler.supabase.com:6543`;
+6. save the complete URL as `FLIGHTMARGIN_RELAY_DATABASE_URL`;
+7. configure `FLIGHTMARGIN_RELAY_PEPPER`;
+8. manually run the workflow with `phase=deploy` on the **same revision**;
+9. perform hosted smoke tests.
+
+The password must be configured once on the hosted database through an
+approved out-of-band administrative operation. Do not add it to a migration,
+Git, workflow command, or CI variable that tries to create/change the role.
+The complete URL exists only as the GitHub function secret.
+
+Both phases check out and report the exact selected commit and install the
+official Supabase CLI action. Subsequent deployments normally need only
+`phase=deploy`; run `phase=prepare` first when new committed migrations must be
+applied. The deploy phase never creates or changes the role password.
 
 Remote smoke tests and any promotion decision remain a human-controlled
-follow-up. I-04A neither configures those secrets nor runs the workflow.
+follow-up. I-04A/I-04B neither configure those secrets nor run the workflow.
 
 Do not make ad-hoc schema edits in the hosted Supabase Dashboard. Remote schema
 changes must originate from repository migrations so Git remains canonical.
