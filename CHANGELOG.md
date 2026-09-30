@@ -6,6 +6,13 @@ Notable changes to FlightMargin are documented here. This file summarizes produc
 
 ### Added
 
+- Added the manual-only I-05B validation workflow for independent hosted
+  public-rate-limit checks and native Windows DPAPI/package checks. Hosted
+  cleanup snapshots complete rate-bucket primary keys and deletes only newly
+  created keys; Windows uses the locked canonical Tauri/PyInstaller build,
+  cross-process real DPAPI checks, wheel asset verification, and an isolated
+  packaged-sidecar smoke. It does not deploy, migrate, publish, upload, or run
+  automatically, and has not yet been executed on GitHub-hosted runners.
 - Added I-05A opt-in desktop/Linux Mobile Relay integration. FlightMargin now
   creates a stable dedicated host identity, uses Windows DPAPI or an owner-only
   Linux credential file, registers idempotently, uploads only the latest exact

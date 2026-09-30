@@ -159,11 +159,46 @@ pairing, UI expiry behavior, and package inclusion/exclusion. Run it with:
   tests/test_packaging.py tests/test_desktop.py tests/test_linux_installer.py
 ```
 
-I-05B must validate the same client against the hosted endpoint under explicit
-authorization, including deployed gateway/rate-limit behavior, TLS/pooler
-operation, real mobile QR/manual claim, revocation recovery, and Windows DPAPI
-behavior in a packaged native build. I-05A does not contact or modify hosted
-Supabase.
+## I-05B GitHub-hosted validation
+
+`.github/workflows/validate-mobile-relay.yml` is a manual
+`workflow_dispatch` gate with `all`, `hosted-rate-limits`, and `windows`
+choices. It does not deploy, migrate, publish, upload an artifact, or receive
+push/pull-request events. The workflow has been implemented but **has not yet
+been run** on GitHub-hosted runners.
+
+The Ubuntu job runs `scripts/validate-hosted-mobile-relay.py` against the fixed
+hosted relay URL. It checks health, sends small deliberately invalid JSON so
+the first 10 host-registration and first 20 pairing-claim requests reach `422`
+validation without creating identities or pairing records, and then requires
+`429` plus `Retry-After` on requests 11 and 21. Before any HTTP request it
+snapshots every composite primary key in `relay_rate_limit_buckets`. Cleanup in
+a `finally` path selects the table again and issues parameterized deletes only
+for exact `(action, identity_digest, window_started_at)` keys absent from the
+original snapshot. It never truncates or deletes a pre-existing key. The job
+receives only `SUPABASE_PROJECT_REF` and
+`FLIGHTMARGIN_RELAY_DATABASE_URL`, and first applies the existing scoped-role/
+pooler URL validation; output excludes connection data, credentials, raw IPs,
+IP HMACs, and pepper values.
+
+The Windows job receives no Supabase secret and overrides the relay endpoint
+to unreachable loopback for defense in depth. It installs the existing locked
+Windows dependencies, runs the full Python suite, and uses
+`scripts/validate-windows-dpapi.py` with the real current-user
+`WindowsDPAPIProtector`. A new identity must contain no plaintext credential;
+a second Python process must recover the same host and credential; and another
+fresh process must reject a bit-tampered DPAPI blob. All state lives in an
+automatically removed temporary directory.
+
+Packaging continues through the canonical `npm run tauri:build` command. The
+job builds and verifies the wheel (including every `app/mobile_relay` module
+and both vendored QR assets), checks/tests the Rust shell, builds the actual
+unsigned NSIS package, and runs an isolated packaged-sidecar health/dashboard/
+QR-asset smoke with a missing Codex executable and relay disabled. Nothing is
+uploaded or released. A real GitHub-hosted workflow run is still required to
+establish hosted runner IP rate-limit behavior, native Windows DPAPI evidence,
+and Windows package/runtime evidence. Real mobile QR/manual pairing and
+revocation recovery remain later explicitly authorized validation gates.
 
 ## I-04A/I-04B TypeScript hosted relay
 

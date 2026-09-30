@@ -242,11 +242,26 @@ latest quota. Its host cascade and temporary application data were removed and
 the listener stopped. No hosted Supabase request/change or production
 FlightMargin change occurred.
 
-I-05B remains the explicit hosted-validation gate: exercise the deployed
-endpoint and public rate limits, validate a real packaged Windows DPAPI path,
-pair a real mobile client by QR/manual code, test revocation/authentication
-recovery, and decide future remote device-management UX. Those steps require
-separate authorization and are not part of I-05A.
+I-05B now has a manual-only GitHub Actions validation gate, but that workflow
+has **not yet been run**. Its isolated Ubuntu job snapshots the complete
+`relay_rate_limit_buckets` primary-key set, proves the hosted health and 10/20
+public thresholds with invalid non-persisting payloads, and deletes only the
+exact bucket keys created after the snapshot. Its Windows job receives no
+Supabase secrets or hosted endpoint, exercises real current-user DPAPI across
+fresh Python processes (including tamper rejection), runs the complete locked
+test/build toolchain, verifies wheel inclusion of all mobile-relay/QR assets,
+builds through canonical `npm run tauri:build`, and smokes the packaged
+sidecar with isolated state and no real Codex quota window. No artifact is
+uploaded or released. A GitHub-hosted run is required before claiming hosted
+rate-limit, native DPAPI, or Windows package validation. Real mobile QR/manual
+pairing, revocation/authentication recovery, and remote device-management UX
+remain later explicit gates.
+
+Local I-05B tooling validation passes 194 Python tests with 38 database-backed
+tests skipped when relay credentials are deliberately absent, plus 12 Deno
+tests with 3 database integrations ignored. The Linux wheel builds and passes
+the expanded release-content verifier. Native DPAPI, PyInstaller/Tauri/NSIS,
+and hosted threshold results remain unclaimed until the manual workflow runs.
 
 ## Public identity and compatibility
 

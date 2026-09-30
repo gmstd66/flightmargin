@@ -136,3 +136,16 @@ def test_mobile_relay_client_is_packaged_but_reference_server_is_not():
     assert packages["include"] == ["app", "app.*"]
     assert (PROJECT_ROOT / "app" / "mobile_relay" / "client.py").is_file()
     assert (PROJECT_ROOT / "app" / "static" / "qrcode.min.js").is_file()
+    verification = (PROJECT_ROOT / "scripts" / "verify-release.py").read_text(
+        encoding="utf-8"
+    )
+    for path in (
+        "app/mobile_relay/__init__.py",
+        "app/mobile_relay/client.py",
+        "app/mobile_relay/config.py",
+        "app/mobile_relay/identity.py",
+        "app/mobile_relay/sync.py",
+        "app/static/qrcode.min.js",
+        "app/static/qrcode.LICENSE.txt",
+    ):
+        assert f'"{path}"' in verification
