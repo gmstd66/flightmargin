@@ -5,23 +5,41 @@
 begin;
 
 do $$
+declare
+    relay_role record;
 begin
     if not exists (
         select 1 from pg_roles where rolname = 'flightmargin_relay'
     ) then
-        create role flightmargin_relay;
+        create role flightmargin_relay login noinherit;
+    end if;
+
+    select rolcanlogin, rolsuper, rolcreatedb, rolcreaterole,
+           rolreplication, rolbypassrls, rolinherit
+    into strict relay_role
+    from pg_roles
+    where rolname = 'flightmargin_relay';
+
+    if not relay_role.rolcanlogin then
+        raise exception
+            'flightmargin_relay exists but does not have LOGIN enabled';
+    end if;
+
+    if relay_role.rolsuper
+       or relay_role.rolcreatedb
+       or relay_role.rolcreaterole
+       or relay_role.rolreplication
+       or relay_role.rolbypassrls then
+        raise exception
+            'flightmargin_relay exists with unexpectedly elevated role attributes';
+    end if;
+
+    if relay_role.rolinherit then
+        raise exception
+            'flightmargin_relay exists with INHERIT enabled';
     end if;
 end
 $$;
-
-alter role flightmargin_relay with
-    login
-    nosuperuser
-    nocreatedb
-    nocreaterole
-    noreplication
-    nobypassrls
-    noinherit;
 
 revoke all privileges on schema public from flightmargin_relay;
 grant usage on schema public to flightmargin_relay;

@@ -105,18 +105,26 @@ def test_runtime_role_migration_is_additive_and_password_free():
     )
 
     assert RUNTIME_ROLE_MIGRATION.name == "20260930014000_relay_runtime_role.sql"
-    assert "create role flightmargin_relay" in sql
-    assert "alter role flightmargin_relay with" in sql
+    assert "create role flightmargin_relay login noinherit" in statements.lower()
+    assert "alter role flightmargin_relay" not in statements.lower()
     for attribute in (
-        "login",
+        "rolcanlogin",
+        "rolsuper",
+        "rolcreatedb",
+        "rolcreaterole",
+        "rolreplication",
+        "rolbypassrls",
+        "rolinherit",
+    ):
+        assert attribute in statements.lower()
+    for forbidden_attribute in (
         "nosuperuser",
         "nocreatedb",
         "nocreaterole",
         "noreplication",
         "nobypassrls",
-        "noinherit",
     ):
-        assert attribute in sql
+        assert forbidden_attribute not in statements.lower()
     assert "password" not in statements.lower()
     assert "grant usage on schema public to flightmargin_relay" in sql
     assert "grant create on schema public" not in sql
