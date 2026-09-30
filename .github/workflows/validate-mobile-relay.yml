@@ -93,7 +93,25 @@ jobs:
         run: npm ci
 
       - name: Run Windows and mobile-host tests
-        run: .\.venv\Scripts\python.exe -m pytest -v
+        shell: pwsh
+        run: |
+          .\.venv\Scripts\python.exe -m pytest -v `
+            tests/test_about.py `
+            tests/test_cli.py `
+            tests/test_config.py `
+            tests/test_desktop.py `
+            tests/test_desktop_preferences.py `
+            tests/test_environment.py `
+            tests/test_identity.py `
+            tests/test_metrics.py `
+            tests/test_mobile_relay_host.py `
+            tests/test_mobile_relay_ui.py `
+            tests/test_mobile_relay_validation.py `
+            tests/test_packaging.py `
+            tests/test_platform_parity.py `
+            tests/test_quota_normalization.py `
+            tests/test_resources.py `
+            tests/test_windows_subprocess.py
 
       - name: Validate native Windows DPAPI
         run: .\.venv\Scripts\python.exe scripts/validate-windows-dpapi.py

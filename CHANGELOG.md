@@ -10,9 +10,12 @@ Notable changes to FlightMargin are documented here. This file summarizes produc
   public-rate-limit checks and native Windows DPAPI/package checks. Hosted
   cleanup snapshots complete rate-bucket primary keys and deletes only newly
   created keys; Windows uses the locked canonical Tauri/PyInstaller build,
-  cross-process real DPAPI checks, wheel asset verification, and an isolated
-  packaged-sidecar smoke. It does not deploy, migrate, publish, upload, or run
-  automatically, and has not yet been executed on GitHub-hosted runners.
+  an explicit application/desktop/mobile-host Python test scope, cross-process
+  real DPAPI checks, wheel asset verification, and an isolated packaged-sidecar
+  smoke. It does not deploy, migrate, publish, upload, or run automatically.
+  Hosted rate-limit validation passed in run `36783584246`; native Windows
+  DPAPI and package evidence remain pending a rerun after correcting the test
+  scope exposed by that run.
 - Added I-05A opt-in desktop/Linux Mobile Relay integration. FlightMargin now
   creates a stable dedicated host identity, uses Windows DPAPI or an owner-only
   Linux credential file, registers idempotently, uploads only the latest exact

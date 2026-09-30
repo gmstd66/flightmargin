@@ -242,22 +242,26 @@ latest quota. Its host cascade and temporary application data were removed and
 the listener stopped. No hosted Supabase request/change or production
 FlightMargin change occurred.
 
-I-05B now has a manual-only GitHub Actions validation gate, but that workflow
-has **not yet been run**. Its isolated Ubuntu job snapshots the complete
+I-05B now has a manual-only GitHub Actions validation gate. Run `36783584246`
+passed hosted health, both public rate-limit thresholds, and scoped cleanup.
+Its isolated Ubuntu job snapshots the complete
 `relay_rate_limit_buckets` primary-key set, proves the hosted health and 10/20
 public thresholds with invalid non-persisting payloads, and deletes only the
 exact bucket keys created after the snapshot. Its Windows job receives no
 Supabase secrets or hosted endpoint, exercises real current-user DPAPI across
-fresh Python processes (including tamper rejection), runs the complete locked
-test/build toolchain, verifies wheel inclusion of all mobile-relay/QR assets,
+fresh Python processes (including tamper rejection), runs an explicit
+application/desktop/mobile-host test selection against the locked Windows
+dependencies, verifies wheel inclusion of all mobile-relay/QR assets,
 builds through canonical `npm run tauri:build`, and smokes the packaged
 sidecar with isolated state and no real Codex quota window. No artifact is
-uploaded or released. A GitHub-hosted run is required before claiming hosted
-rate-limit, native DPAPI, or Windows package validation. Real mobile QR/manual
+uploaded or released. The Windows job in run `36783584246` reached pytest but
+the former repository-wide selection collected separate relay-server tests
+whose development dependencies are intentionally absent. Native DPAPI and
+Windows package evidence remain pending a rerun. Real mobile QR/manual
 pairing, revocation/authentication recovery, and remote device-management UX
 remain later explicit gates.
 
-Current local I-05B tooling validation passes 208 Python tests with 38
+Current local I-05B tooling validation passes 210 Python tests with 38
 database-backed tests skipped when relay test credentials are deliberately
 absent, plus 17 Deno tests with 3 database integrations ignored. With dedicated
 loopback test configuration, 80 focused Python relay/configuration tests and all

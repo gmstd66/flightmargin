@@ -183,8 +183,11 @@ pairing, UI expiry behavior, and package inclusion/exclusion. Run it with:
 `.github/workflows/validate-mobile-relay.yml` is a manual
 `workflow_dispatch` gate with `all`, `hosted-rate-limits`, and `windows`
 choices. It does not deploy, migrate, publish, upload an artifact, or receive
-push/pull-request events. The workflow has been implemented but **has not yet
-been run** on GitHub-hosted runners.
+push/pull-request events. In GitHub Actions run `36783584246`, the hosted job
+passed health, both public rate-limit thresholds, and scoped cleanup. The
+Windows job reached pytest collection, where its former repository-wide test
+selection incorrectly included the separate relay-server development surface;
+native DPAPI and package validation therefore remain pending a rerun.
 
 The Ubuntu job runs `scripts/validate-hosted-mobile-relay.py` against the fixed
 hosted relay URL. It checks health, sends small deliberately invalid JSON so
@@ -202,7 +205,8 @@ IP HMACs, and pepper values.
 
 The Windows job receives no Supabase secret and overrides the relay endpoint
 to unreachable loopback for defense in depth. It installs the existing locked
-Windows dependencies, runs the full Python suite, and uses
+Windows dependencies, runs an explicit application, desktop, mobile-host,
+packaging, parity, and release-invariant Python test selection, and uses
 `scripts/validate-windows-dpapi.py` with the real current-user
 `WindowsDPAPIProtector`. A new identity must contain no plaintext credential;
 a second Python process must recover the same host and credential; and another
@@ -215,8 +219,8 @@ and both vendored QR assets), checks/tests the Rust shell, builds the actual
 unsigned NSIS package, and runs an isolated packaged-sidecar health/dashboard/
 QR-asset smoke with a missing Codex executable and relay disabled. Nothing is
 uploaded or released. A real GitHub-hosted workflow run is still required to
-establish hosted runner IP rate-limit behavior, native Windows DPAPI evidence,
-and Windows package/runtime evidence. Real mobile QR/manual pairing and
+establish native Windows DPAPI evidence and Windows package/runtime evidence.
+Real mobile QR/manual pairing and
 revocation recovery remain later explicitly authorized validation gates.
 
 ## I-04A/I-04B TypeScript hosted relay

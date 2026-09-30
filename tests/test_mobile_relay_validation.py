@@ -15,6 +15,24 @@ WORKFLOW = PROJECT_ROOT / ".github" / "workflows" / "validate-mobile-relay.yml"
 HOSTED_SCRIPT = PROJECT_ROOT / "scripts" / "validate-hosted-mobile-relay.py"
 DPAPI_SCRIPT = PROJECT_ROOT / "scripts" / "validate-windows-dpapi.py"
 SIDECAR_SMOKE = PROJECT_ROOT / "scripts" / "smoke-packaged-sidecar.py"
+WINDOWS_TESTS = (
+    "tests/test_about.py",
+    "tests/test_cli.py",
+    "tests/test_config.py",
+    "tests/test_desktop.py",
+    "tests/test_desktop_preferences.py",
+    "tests/test_environment.py",
+    "tests/test_identity.py",
+    "tests/test_metrics.py",
+    "tests/test_mobile_relay_host.py",
+    "tests/test_mobile_relay_ui.py",
+    "tests/test_mobile_relay_validation.py",
+    "tests/test_packaging.py",
+    "tests/test_platform_parity.py",
+    "tests/test_quota_normalization.py",
+    "tests/test_resources.py",
+    "tests/test_windows_subprocess.py",
+)
 
 
 def load_script(path: Path, name: str):
@@ -200,6 +218,40 @@ def test_windows_job_has_no_supabase_secrets_or_hosted_contact():
     assert "npm run tauri:build" in windows_job
     assert "scripts/verify-release.py" in windows_job
     assert "smoke-packaged-sidecar.py" in windows_job
+
+
+def test_windows_job_uses_explicit_application_test_scope():
+    windows_job = job_block("windows")
+    test_step = windows_job[
+        windows_job.index("      - name: Run Windows and mobile-host tests\n") :
+        windows_job.index("      - name: Validate native Windows DPAPI\n")
+    ]
+
+    assert re.findall(r"tests/test_[a-z0-9_]+\.py", test_step) == list(WINDOWS_TESTS)
+    assert not re.search(r"run: .* -m pytest -v\s*$", test_step, re.MULTILINE)
+    for relay_server_test in (
+        "tests/test_mobile_relay_api.py",
+        "tests/test_mobile_relay_crypto_vectors.py",
+        "tests/test_mobile_relay_schema.py",
+        "tests/test_relay_test_config.py",
+    ):
+        assert relay_server_test not in test_step
+
+
+def test_windows_job_preserves_application_dependencies_and_package_validation():
+    windows_job = job_block("windows")
+
+    assert "requirements-windows-build.txt" in windows_job
+    assert "requirements-relay-dev.txt" not in windows_job
+    assert "psycopg" not in windows_job.lower()
+    assert "httpx2" not in windows_job.lower()
+    assert "validate-windows-dpapi.py" in windows_job
+    assert "npm run tauri:build" in windows_job
+    assert "smoke-packaged-sidecar.py" in windows_job
+    assert (
+        "Get-ChildItem -LiteralPath desktop/src-tauri/target/release/bundle/nsis"
+        in windows_job
+    )
 
 
 def test_workflow_has_no_deploy_migration_publish_or_release_commands():
