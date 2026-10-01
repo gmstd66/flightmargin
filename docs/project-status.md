@@ -58,7 +58,7 @@ The Windows shell communicates with its sidecar on an OS-assigned loopback
 port. The Linux browser deployment has no application-level authentication and
 must stay on localhost or a trusted private network.
 
-## Mobile companion relay — I-01 through I-04B
+## Mobile companion relay — I-01 through I-05
 
 The approved mobile-companion architecture uses a central Supabase relay so the
 iPhone requires no VPN, port forwarding, third-party user account, router
@@ -75,7 +75,7 @@ secret/service-role credentials. Relay tables have RLS enabled and direct
 QR secret or high-entropy manual code. The relay stores one latest quota row
 per host; remote history, APNs, and iOS UI implementation remain deferred.
 
-Development for this work is isolated on `dev/mobile-relay`; it does not
+Host-integration work is isolated on `dev/mobile-host-integration`; it does not
 modify the published Beta 1 tag. Relay development is local-first on COXON,
 with Git/GitHub as the canonical schema and code source. Hosted Supabase is a
 deployment target. A separate scheduled COXON backup archive will retain
@@ -242,9 +242,12 @@ latest quota. Its host cascade and temporary application data were removed and
 the listener stopped. No hosted Supabase request/change or production
 FlightMargin change occurred.
 
-I-05B now has a manual-only GitHub Actions validation gate. Run `36783584246`
-passed hosted health, both public rate-limit thresholds, and scoped cleanup.
-Its isolated Ubuntu job snapshots the complete
+I-05A/I-05B host integration and validation are complete. The hosted relay is
+live, and the opt-in Linux host client has been validated against it. Relay
+remains disabled by default. Run `36783584246` passed hosted health, the public
+10-per-hour host-registration threshold, the public 20-per-five-minute
+pairing-claim threshold, and scoped rate-limit bucket cleanup. Its isolated
+Ubuntu job snapshots the complete
 `relay_rate_limit_buckets` primary-key set, proves the hosted health and 10/20
 public thresholds with invalid non-persisting payloads, and deletes only the
 exact bucket keys created after the snapshot. Its Windows job receives no
@@ -254,25 +257,26 @@ application/desktop/mobile-host test selection against the locked Windows
 dependencies, verifies wheel inclusion of all mobile-relay/QR assets,
 builds through canonical `npm run tauri:build`, and smokes the packaged
 sidecar with isolated state and no real Codex quota window. No artifact is
-uploaded or released. The Windows job in run `36783584246` reached pytest but
-the former repository-wide selection collected separate relay-server tests
-whose development dependencies are intentionally absent. Native DPAPI and
-Windows package evidence remain pending a rerun. The corrected selection in
-run `36788962223` collected all 155 intended Python tests and passed 154. Its
-only failure was a Linux-only exact-`0600` permission assertion incorrectly
-executed on Windows, which does not provide POSIX mode-bit semantics. Native
-DPAPI and package evidence remains pending the next rerun. Real mobile QR/manual
-pairing, revocation/authentication recovery, and remote device-management UX
-remain later explicit gates.
+uploaded or released.
 
-Current local I-05B tooling validation passes 210 Python tests with 38
+Final Windows run `36792359524` passed the application/mobile-host Python
+selection (154 passed, with one expected Linux-only skip), native Windows
+DPAPI host-identity validation, frontend JavaScript validation, wheel/package
+content verification, PyInstaller sidecar build, desktop manifest/version
+checks, `cargo check`, all 14 Cargo tests, the canonical Tauri release build,
+unsigned NSIS installer build/verification, and an isolated packaged-sidecar
+runtime smoke. Its hosted public-rate-limit job was intentionally skipped
+because the run used `validation=windows`; hosted evidence comes from run
+`36783584246`.
+
+The pre-hosted local I-05B tooling baseline passed 210 Python tests with 38
 database-backed tests skipped when relay test credentials are deliberately
 absent, plus 17 Deno tests with 3 database integrations ignored. With dedicated
 loopback test configuration, 80 focused Python relay/configuration tests and all
 20 Deno tests pass against PostgreSQL at `127.0.0.1:55432`. The Linux wheel
-builds and passes the expanded release-content verifier. Native DPAPI,
-PyInstaller/Tauri/NSIS, and hosted threshold results remain unclaimed until the
-manual workflow runs.
+builds and passes the expanded release-content verifier. The two successful
+GitHub runs above now supply the native Windows package/runtime and hosted
+public-threshold evidence that local validation could not provide.
 
 After the I-05B validation incident, relay automated-test configuration is
 separated from application runtime configuration. Central Python and Deno test
@@ -287,6 +291,16 @@ pepper. A fake `.invalid` runtime target passed the full Python and Deno suites
 with traced connection syscalls proving no attempt to its relay port.
 Application runtime, deployment, and the explicitly confirmed hosted I-05B
 validator retain their existing configuration behavior.
+
+I-05 is therefore closed. There is no iPhone/mobile client yet. Real QR or
+manual pairing with an actual iOS client now belongs to **I-06 — iPhone
+companion client**, along with client-side credential storage, quota display,
+and any client-driven recovery or device-management requirements. I-06 should
+consume the already validated pairing/quota v1 API without changing its
+backend contract unless implementation against a real client exposes a defect.
+The hosted relay remains live and the host path remains opt-in/default-off.
+The protected `/opt/codex-quota` production installation is unchanged, and
+the published `v0.3.0-beta.1` release remains immutable.
 
 ## Public identity and compatibility
 

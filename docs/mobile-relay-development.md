@@ -10,7 +10,7 @@ COXON local checkout
       |
       | develop + test
       v
-Git commit on dev/mobile-relay
+Git commit on the active relay development branch
       |
       | push
       v
@@ -26,8 +26,9 @@ schema or function code is authored.
 
 ## Local source of truth
 
-Use the normal FlightMargin development checkout on COXON. Relay work stays on
-`dev/mobile-relay` until it is reviewed and intentionally integrated.
+Use the normal FlightMargin development checkout on COXON. Current host
+integration work stays on `dev/mobile-host-integration` until it is reviewed
+and intentionally integrated.
 
 The repository owns:
 
@@ -183,16 +184,21 @@ pairing, UI expiry behavior, and package inclusion/exclusion. Run it with:
 `.github/workflows/validate-mobile-relay.yml` is a manual
 `workflow_dispatch` gate with `all`, `hosted-rate-limits`, and `windows`
 choices. It does not deploy, migrate, publish, upload an artifact, or receive
-push/pull-request events. In GitHub Actions run `36783584246`, the hosted job
-passed health, both public rate-limit thresholds, and scoped cleanup. The
-Windows job reached pytest collection, where its former repository-wide test
-selection incorrectly included the separate relay-server development surface;
-native DPAPI and package validation therefore remain pending a rerun. The
-corrected selection in run `36788962223` collected all 155 intended Python
-tests and passed 154; its sole failure was a Linux-only exact-`0600` permission
-assertion incorrectly executed on Windows, whose filesystem APIs do not expose
-POSIX mode semantics. Native DPAPI and package evidence remains pending the
-next rerun.
+push/pull-request events. I-05A/I-05B host integration and validation are
+complete. The hosted relay is live, the Linux host client has been validated
+against it, and relay use remains opt-in and disabled by default.
+
+GitHub Actions run `36783584246` passed hosted health, the public 10-per-hour
+host-registration threshold, the public 20-per-five-minute pairing-claim
+threshold, and scoped cleanup. Final Windows run `36792359524` passed the
+application/mobile-host Python selection (154 passed and one expected
+Linux-only skip), native current-user DPAPI validation, frontend JavaScript,
+wheel/package content verification, PyInstaller sidecar build, desktop
+manifest/version checks, `cargo check`, all 14 Cargo tests, the canonical Tauri
+release build, unsigned NSIS installer build/verification, and isolated
+packaged-sidecar runtime smoke. The hosted job was intentionally skipped in
+that run because it used `validation=windows`; run `36783584246` is the hosted
+evidence.
 
 The Ubuntu job runs `scripts/validate-hosted-mobile-relay.py` against the fixed
 hosted relay URL. It checks health, sends small deliberately invalid JSON so
@@ -223,10 +229,14 @@ job builds and verifies the wheel (including every `app/mobile_relay` module
 and both vendored QR assets), checks/tests the Rust shell, builds the actual
 unsigned NSIS package, and runs an isolated packaged-sidecar health/dashboard/
 QR-asset smoke with a missing Codex executable and relay disabled. Nothing is
-uploaded or released. A real GitHub-hosted workflow run is still required to
-establish native Windows DPAPI evidence and Windows package/runtime evidence.
-Real mobile QR/manual pairing and
-revocation recovery remain later explicitly authorized validation gates.
+uploaded or released.
+
+There is no iPhone/mobile client yet. Real QR/manual pairing with an actual iOS
+client is not unfinished host validation; it moves to **I-06 — iPhone companion
+client**. I-06 should consume the validated pairing/quota v1 API and should not
+change the backend contract unless a real client requirement exposes a defect.
+The protected `/opt/codex-quota` production installation remains unchanged,
+and the published `v0.3.0-beta.1` release remains immutable.
 
 ## I-04A/I-04B TypeScript hosted relay
 
@@ -315,7 +325,7 @@ transaction-pooler URL whose username is exactly
 `*.pooler.supabase.com`, port is `6543`, and password is present. It installs
 both function secrets without printing their values.
 
-For the first future hosted deployment, preserve this order:
+For a clean first hosted deployment, preserve this order:
 
 1. push the reviewed revision;
 2. manually run the workflow with `phase=prepare` on that exact revision;
@@ -338,8 +348,9 @@ official Supabase CLI action. Subsequent deployments normally need only
 `phase=deploy`; run `phase=prepare` first when new committed migrations must be
 applied. The deploy phase never creates or changes the role password.
 
-Remote smoke tests and any promotion decision remain a human-controlled
-follow-up. I-04A/I-04B neither configure those secrets nor run the workflow.
+I-04A/I-04B did not configure those secrets or run the workflow. The relay is
+now live, and I-05B hosted validation has passed; later deployment or promotion
+decisions remain human-controlled.
 
 Do not make ad-hoc schema edits in the hosted Supabase Dashboard. Remote schema
 changes must originate from repository migrations so Git remains canonical.
@@ -422,6 +433,6 @@ Keeping a separate backup/mirror preserves both goals:
 | Python `relay/` | Local reference implementation | Only when pointed at the disposable local database |
 | TypeScript `supabase/functions/relay-v1/` | Hosted implementation, locally testable with Deno | Only after an authorized hosted deployment |
 | Local PostgreSQL on COXON/developer machine | Disposable migration and integration-test database | No hosted operational state |
-| Hosted Supabase PostgreSQL | Future operational relay database | Yes, after deployment |
+| Hosted Supabase PostgreSQL | Live operational relay database | Yes |
 | GitHub-hosted Ubuntu runner | Ephemeral manual deployment executor | No retained database or backup |
 | COXON backup archive | Future restricted disaster-recovery archive | Logical copies of hosted state; never a development database |

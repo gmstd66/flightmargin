@@ -13,9 +13,14 @@ Notable changes to FlightMargin are documented here. This file summarizes produc
   an explicit application/desktop/mobile-host Python test scope, cross-process
   real DPAPI checks, wheel asset verification, and an isolated packaged-sidecar
   smoke. It does not deploy, migrate, publish, upload, or run automatically.
-  Hosted rate-limit validation passed in run `36783584246`; native Windows
-  DPAPI and package evidence remain pending a rerun after correcting the test
-  scope exposed by that run.
+  I-05A/I-05B host integration and validation are complete. The hosted relay
+  is live and the Linux host client has been validated against it. Run
+  `36783584246` passed hosted health, both public rate-limit thresholds, and
+  scoped cleanup; final Windows run `36792359524` passed 154
+  application/mobile-host Python tests with one expected Linux-only skip,
+  native DPAPI, JavaScript, wheel/package verification, PyInstaller, desktop
+  metadata, 14 Cargo tests, canonical Tauri/NSIS build verification, and the
+  isolated packaged-sidecar smoke.
 - Added I-05A opt-in desktop/Linux Mobile Relay integration. FlightMargin now
   creates a stable dedicated host identity, uses Windows DPAPI or an owner-only
   Linux credential file, registers idempotently, uploads only the latest exact
@@ -25,6 +30,12 @@ Notable changes to FlightMargin are documented here. This file summarizes produc
   status, last successful sync, and explicit five-minute mobile pairing. The
   manual code and locally generated QR presentation are cleared after expiry
   and are never persisted; packaged QRCode.js avoids a CDN/runtime dependency.
+- Closed I-05 with the hosted relay live while host relay remains opt-in and
+  disabled by default. No iPhone/mobile client exists yet; real QR/manual
+  pairing moves to I-06 and should consume the validated v1 pairing/quota API
+  unless client implementation exposes a backend defect. The protected
+  `/opt/codex-quota` installation is unchanged and published
+  `v0.3.0-beta.1` remains immutable.
 - Added I-04B pre-deployment database hardening with a dedicated non-elevated
   `flightmargin_relay` login, exact relay-table grants, and matching explicit
   RLS policies. The role can delete only rate-limit buckets; its operational

@@ -1,7 +1,7 @@
-# FlightMargin Mobile Relay — Design through I-05A Host Integration
+# FlightMargin Mobile Relay — Design through I-05 Host Integration
 
-Status: hosted relay live; opt-in desktop/Linux host integration implemented and
-validated against the local reference relay only
+Status: I-05A/I-05B complete; hosted relay live; opt-in/default-off Linux host
+validated against the hosted relay; native Windows DPAPI/package path validated
 
 ## Goal
 
@@ -525,7 +525,7 @@ Not part of I-01:
 - billing/subscription logic;
 - production-grade abuse scoring.
 
-## Implementations through I-05A
+## Implementations through I-05
 
 The first working relay API is separate source under `relay/`; it is excluded
 from normal FlightMargin package discovery and runs from a source checkout
@@ -579,9 +579,17 @@ The credential and pairing design leaves room for adding payload encryption
 later without changing device identity.
 
 I-05A adds the optional packaged host client described above without bundling
-the local Python relay server or adding a Python runtime dependency. Its
-automated and process-level integration validation uses only the local Python
-reference at `127.0.0.1:18093` and disposable PostgreSQL at
-`127.0.0.1:55432`. Hosted endpoint validation, deployed-rate-limit behavior,
-real device pairing, and remote credential/device management remain I-05B or
-later work.
+the local Python relay server or adding a Python runtime dependency. Relay is
+opt-in and disabled by default. Local validation uses the Python reference at
+`127.0.0.1:18093` and disposable PostgreSQL at `127.0.0.1:55432`; completed
+I-05B validation additionally proves the Linux host against the live hosted
+relay, the public registration/claim thresholds and scoped bucket cleanup, and
+the native Windows DPAPI, wheel, PyInstaller, Tauri, NSIS, and packaged-sidecar
+path.
+
+No iPhone/mobile client exists yet. Real QR/manual pairing with an actual iOS
+client moves to **I-06 — iPhone companion client** and is not an unfinished
+I-05 host-validation item. I-06 should consume the validated pairing/quota v1
+API without changing the backend contract unless real client implementation
+exposes a defect. The protected `/opt/codex-quota` production installation is
+unchanged, and published `v0.3.0-beta.1` remains immutable.
