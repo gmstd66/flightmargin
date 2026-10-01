@@ -59,6 +59,23 @@ are not persisted locally. Relay errors shown to the UI are sanitized.
 Codex CLI communication with OpenAI remains subject to Codex/OpenAI behavior
 and policies outside this project's control.
 
+## iPhone companion source
+
+The I-06A iPhone client stores its stable device UUID and dedicated `fmd1`
+relay credential together in iOS Keychain using a ThisDeviceOnly,
+non-synchronizing accessibility class. The credential is not written to
+UserDefaults, iCloud Keychain, logs, URLs, UI, or diagnostics. Non-secret local
+state is limited to the paired host UUID, the cached latest-quota response,
+and last successful app refresh.
+
+The app sends only the approved accountless pairing claim and authenticated
+latest-quota read to the relay. It contains no analytics, telemetry, ads,
+crash-reporting SDK, Supabase SDK, OpenAI SDK, or third-party runtime library.
+It does not receive or transmit OpenAI/Codex credentials, prompts, transcripts,
+source code, agent output, usernames, filesystem paths, or remote history.
+Local reset deletes the Keychain identity and non-secret cache but cannot yet
+delete or revoke the remote relay device record.
+
 ## Uninstall
 
 A normal Windows uninstall preserves the FlightMargin data directory. Users

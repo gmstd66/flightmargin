@@ -6,6 +6,16 @@ Notable changes to FlightMargin are documented here. This file summarizes produc
 
 ### Added
 
+- Added the I-06A native iPhone companion foundation: an iOS 17 SwiftUI/Xcode
+  project with accountless QR/deep-link and manual-code pairing, a stable
+  pre-claim device identity protected by ThisDeviceOnly Keychain storage,
+  direct URLSession/Codable relay v1 access, latest-quota gauges, serialized
+  foreground and pull-to-refresh behavior, cached offline state, and confirmed
+  local reset. XCTest source covers identity, storage, parsing, endpoint
+  policy, mocked claim/quota transport, retries, caching, concurrency, and
+  reset; native Mac/Xcode validation and I-06B physical-device pairing remain
+  pending. No backend contract, hosted service, production, release, signing,
+  TestFlight, or App Store change was made.
 - Added the manual-only I-05B validation workflow for independent hosted
   public-rate-limit checks and native Windows DPAPI/package checks. Hosted
   cleanup snapshots complete rate-bucket primary keys and deletes only newly
@@ -31,9 +41,9 @@ Notable changes to FlightMargin are documented here. This file summarizes produc
   manual code and locally generated QR presentation are cleared after expiry
   and are never persisted; packaged QRCode.js avoids a CDN/runtime dependency.
 - Closed I-05 with the hosted relay live while host relay remains opt-in and
-  disabled by default. No iPhone/mobile client exists yet; real QR/manual
-  pairing moves to I-06 and should consume the validated v1 pairing/quota API
-  unless client implementation exposes a backend defect. The protected
+  disabled by default. I-06A now supplies the first iPhone client source;
+  I-06B real QR/manual pairing should continue using the validated v1 API.
+  The protected
   `/opt/codex-quota` installation is unchanged and published
   `v0.3.0-beta.1` remains immutable.
 - Added I-04B pre-deployment database hardening with a dedicated non-elevated

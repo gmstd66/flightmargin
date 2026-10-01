@@ -2,7 +2,7 @@
 
 Updated: 2026-09-30
 
-Branch: `dev/mobile-host-integration`
+Branch: `dev/ios-client`
 
 This is the primary continuity record. Read it with `AGENTS.md` and verify it
 against the working tree and Git history before making changes.
@@ -58,7 +58,7 @@ The Windows shell communicates with its sidecar on an OS-assigned loopback
 port. The Linux browser deployment has no application-level authentication and
 must stay on localhost or a trusted private network.
 
-## Mobile companion relay — I-01 through I-05
+## Mobile companion relay — I-01 through I-06A
 
 The approved mobile-companion architecture uses a central Supabase relay so the
 iPhone requires no VPN, port forwarding, third-party user account, router
@@ -259,6 +259,28 @@ builds through canonical `npm run tauri:build`, and smokes the packaged
 sidecar with isolated state and no real Codex quota window. No artifact is
 uploaded or released.
 
+I-06A adds the first native iPhone companion foundation under `ios/` on
+`dev/ios-client`. The iOS 17 SwiftUI application has separated app state,
+models, URLSession/Codable relay transport, strict endpoint policy, Keychain
+identity storage, pairing parsing, and views. It supports manual-code and
+custom-URL pairing, stable pre-claim `fmd1` identity creation, latest-quota
+gauges, pull-to-refresh, serialized approximately 60-second foreground
+refresh, cached offline presentation, and confirmed local reset. The device
+credential is a non-synchronizing
+`kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly` Keychain item; it is never
+stored in UserDefaults, URLs, logs, diagnostics, or UI.
+
+The development project targets iOS 17.0 with bundle identifier
+`com.gmstd.flightmargin.dev`, uses no Swift packages or third-party runtime
+libraries, and includes XCTest source for input parsing, endpoint rules,
+device identity/Keychain, mocked exact claim/quota requests, retry identity
+stability, cache/offline behavior, refresh serialization, and reset. COXON
+performs only Linux static validation. Native Xcode compilation, XCTest,
+Simulator, Keychain, and cold/warm deep-link validation are pending on the
+user's Mac, followed by I-06B real hosted pairing on a physical iPhone. No
+TestFlight/App Store release, production signing, public iPhone app, backend
+contract change, hosted operation, or production change exists in I-06A.
+
 Final Windows run `36792359524` passed the application/mobile-host Python
 selection (154 passed, with one expected Linux-only skip), native Windows
 DPAPI host-identity validation, frontend JavaScript validation, wheel/package
@@ -292,12 +314,11 @@ with traced connection syscalls proving no attempt to its relay port.
 Application runtime, deployment, and the explicitly confirmed hosted I-05B
 validator retain their existing configuration behavior.
 
-I-05 is therefore closed. There is no iPhone/mobile client yet. Real QR or
-manual pairing with an actual iOS client now belongs to **I-06 — iPhone
-companion client**, along with client-side credential storage, quota display,
-and any client-driven recovery or device-management requirements. I-06 should
-consume the already validated pairing/quota v1 API without changing its
-backend contract unless implementation against a real client exposes a defect.
+I-05 is therefore closed. I-06A now provides native iPhone source, project,
+tests, client-side credential storage, and quota display. Native validation is
+pending on the user's Mac; real QR/manual pairing with a physical iPhone is
+the I-06B follow-up. The client consumes the already validated pairing/quota
+v1 API without changing its backend contract.
 The hosted relay remains live and the host path remains opt-in/default-off.
 The protected `/opt/codex-quota` production installation is unchanged, and
 the published `v0.3.0-beta.1` release remains immutable.

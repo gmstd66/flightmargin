@@ -93,8 +93,11 @@ Windows protects the credential with current-user DPAPI. Linux stores it in a
 mode-`0600` file under the FlightMargin application-data directory. Relay
 outages do not interrupt local collection, history, dashboard, or tray use.
 Pairing is user-initiated from Settings and creates a five-minute manual
-code/QR session; FlightMargin does not yet claim availability of a mobile app.
-See [the relay design](docs/mobile-relay-design.md).
+code/QR session. Native iPhone companion source now exists as the I-06A
+foundation, but Mac/Xcode validation is pending and there is no TestFlight,
+App Store release, production signing, or public iPhone app. See
+[the relay design](docs/mobile-relay-design.md) and
+[iOS development handoff](docs/ios-development.md).
 
 ## Development
 
@@ -137,8 +140,8 @@ The build does not publish, sign, tag, or create a GitHub Release.
 The published FlightMargin `0.3.0-beta.1` artifact remains immutable. New work
 is developed on milestone branches without changing its tag or release assets.
 Multi-provider support, Claude/Gemini/Cursor support, transcript analytics,
-token-cost accounting, notifications, a mobile companion client, and
-auto-update remain possible future work based on user demand.
+token-cost accounting, notifications, iPhone distribution, and auto-update
+remain possible future work based on user demand.
 
 ## Contributing, security, and release status
 

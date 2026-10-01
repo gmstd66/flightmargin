@@ -1,7 +1,7 @@
-# FlightMargin Mobile Relay — Design through I-05 Host Integration
+# FlightMargin Mobile Relay — Design through I-06A iPhone Foundation
 
-Status: I-05A/I-05B complete; hosted relay live; opt-in/default-off Linux host
-validated against the hosted relay; native Windows DPAPI/package path validated
+Status: I-05A/I-05B complete; hosted relay live; I-06A native iPhone source and
+tests implemented with Mac/Xcode validation pending
 
 ## Goal
 
@@ -405,6 +405,28 @@ DELETE /v1/devices/<device-id>
 
 Revocation sets `revoked_at`; a revoked credential immediately loses access.
 
+## I-06A native iPhone client
+
+The repository now contains an iOS 17 SwiftUI client under `ios/`. It uses
+URLSession and Codable directly against the provider-independent v1 API; it
+does not embed a Supabase SDK or any third-party runtime package. The app
+accepts canonical `flightmargin://pair/v1` links and normalized Crockford
+manual codes. Before its first claim attempt it commits a stable device UUID
+and `fmd1` credential to a non-synchronizing ThisDeviceOnly Keychain item so a
+lost response can be retried with the exact same identity.
+
+Only the Keychain stores the device credential. UserDefaults may hold the
+paired host UUID, cached quota envelope, and last successful app refresh.
+Foreground quota reads are serialized, repeat approximately every 60 seconds,
+pause in the background, and preserve cached quota on failure. Reset removes
+all of that local state, but relay v1 currently has no device-side remote
+revocation endpoint; the UI says so explicitly.
+
+This source milestone does not claim native compilation from Linux. Xcode,
+XCTest, Simulator, Keychain, cold/warm URL, and later physical-iPhone testing
+are documented in `docs/ios-development.md`. The relay v1 contract and backend
+are unchanged.
+
 ## Edge Function layout
 
 The hosted implementation is one Supabase Edge Function named `relay-v1` under
@@ -587,9 +609,9 @@ relay, the public registration/claim thresholds and scoped bucket cleanup, and
 the native Windows DPAPI, wheel, PyInstaller, Tauri, NSIS, and packaged-sidecar
 path.
 
-No iPhone/mobile client exists yet. Real QR/manual pairing with an actual iOS
-client moves to **I-06 — iPhone companion client** and is not an unfinished
-I-05 host-validation item. I-06 should consume the validated pairing/quota v1
-API without changing the backend contract unless real client implementation
-exposes a defect. The protected `/opt/codex-quota` production installation is
-unchanged, and published `v0.3.0-beta.1` remains immutable.
+I-06A now provides native iPhone source and tests. Native Mac validation and
+I-06B real QR/manual physical-iPhone pairing remain, and are not unfinished
+I-05 host-validation items. The client consumes the validated pairing/quota v1
+API without changing the backend contract. The protected `/opt/codex-quota`
+production installation is unchanged, and published `v0.3.0-beta.1` remains
+immutable.

@@ -24,6 +24,19 @@ Hosted Supabase project
 The hosted Supabase project is a deployment target, not the primary place where
 schema or function code is authored.
 
+## I-06A iPhone development split
+
+COXON owns source implementation, repository/static tests, documentation, and
+commits for the iPhone client. It cannot run Xcode or an iOS Simulator. After
+the user pushes `dev/ios-client`, the separate Mac pulls that branch and runs
+native build, XCTest, Simulator, Keychain, and deep-link validation. No iOS
+GitHub workflow is part of I-06A.
+
+The exact commands and the boundary between safe I-06A loopback/mock testing
+and I-06B hosted physical-device pairing are in `docs/ios-development.md`.
+I-06A does not contact or modify hosted Supabase. The client consumes the
+existing v1 pairing and latest-quota contract without a backend change.
+
 ## Local source of truth
 
 Use the normal FlightMargin development checkout on COXON. Current host
@@ -231,10 +244,10 @@ unsigned NSIS package, and runs an isolated packaged-sidecar health/dashboard/
 QR-asset smoke with a missing Codex executable and relay disabled. Nothing is
 uploaded or released.
 
-There is no iPhone/mobile client yet. Real QR/manual pairing with an actual iOS
-client is not unfinished host validation; it moves to **I-06 — iPhone companion
-client**. I-06 should consume the validated pairing/quota v1 API and should not
-change the backend contract unless a real client requirement exposes a defect.
+I-06A now provides the iPhone client source and tests. Native Mac validation
+and I-06B real QR/manual physical-iPhone pairing are not unfinished host
+validation. The client consumes the validated pairing/quota v1 API without a
+backend contract change.
 The protected `/opt/codex-quota` production installation remains unchanged,
 and the published `v0.3.0-beta.1` release remains immutable.
 
