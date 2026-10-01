@@ -85,6 +85,16 @@ func response(_ request: URLRequest, status: Int = 200) -> HTTPURLResponse {
                     headerFields: ["Content-Type": "application/json"])!
 }
 
+func assertProductionRelayPath(
+    _ request: URLRequest,
+    appending route: String,
+    file: StaticString = #filePath,
+    line: UInt = #line
+) {
+    let expectedPath = RelayAPIClient.productionEndpoint.appendingPathComponent(route).path
+    XCTAssertEqual(request.url?.path, expectedPath, file: file, line: line)
+}
+
 let testIdentity = DeviceIdentity(
     deviceID: UUID(uuidString: "44444444-4444-4444-8444-444444444444")!,
     credential: "fmd1.22222222-2222-4222-8222-222222222222.Hx4dHBsaGRgXFhUUExIREA8ODQwLCgkIBwYFBAMCAQA"

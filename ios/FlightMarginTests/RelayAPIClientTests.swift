@@ -8,7 +8,7 @@ final class RelayAPIClientTests: XCTestCase {
     func testTokenClaimUsesExactBodyAndValidatesResponse() async throws {
         let token = "fmp1.33333333-3333-4333-8333-333333333333.UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFA"
         MockURLProtocol.handler = { request in
-            XCTAssertEqual(request.url?.path, "/relay-v1/v1/pairings/claim")
+            assertProductionRelayPath(request, appending: "v1/pairings/claim")
             XCTAssertEqual(request.httpMethod, "POST")
             let json = try XCTUnwrap(JSONSerialization.jsonObject(with: requestBodyData(request)) as? [String: Any])
             XCTAssertEqual(Set(json.keys), Set(["pairing_token", "device_id", "display_name", "platform", "credential"]))
@@ -28,7 +28,7 @@ final class RelayAPIClientTests: XCTestCase {
 
     func testManualClaimContainsNoToken() async throws {
         MockURLProtocol.handler = { request in
-            XCTAssertEqual(request.url?.path, "/relay-v1/v1/pairings/claim")
+            assertProductionRelayPath(request, appending: "v1/pairings/claim")
             XCTAssertEqual(request.httpMethod, "POST")
             let json = try XCTUnwrap(JSONSerialization.jsonObject(with: requestBodyData(request)) as? [String: Any])
             XCTAssertEqual(Set(json.keys), Set(["manual_code", "device_id", "display_name", "platform", "credential"]))
@@ -47,6 +47,7 @@ final class RelayAPIClientTests: XCTestCase {
 
     func testQuotaBearerAndNullableFieldsDecode() async throws {
         MockURLProtocol.handler = { request in
+            assertProductionRelayPath(request, appending: "v1/quota")
             XCTAssertEqual(request.value(forHTTPHeaderField: "Authorization"), "Bearer \(testIdentity.credential)")
             XCTAssertEqual(request.httpMethod, "GET")
             return (response(request), Data(quotaJSON.utf8))

@@ -282,11 +282,17 @@ unpaired UI. The first native XCTest run exposed an Apple Foundation
 through `httpBodyStream` rather than `httpBody`. Shared test support now reads
 either representation while preserving exact claim-body assertions; this did
 not prove a production networking defect and required no production Swift or
-backend change. Native XCTest, Keychain, and cold/warm deep-link validation
-remain pending a Mac rerun after this fix, followed by I-06B real hosted
-pairing on a physical iPhone. COXON performs only Linux static validation. No
-TestFlight/App Store release, production signing, public iPhone app, backend
-contract change, hosted operation, or production change exists in I-06A.
+backend change. A second native XCTest run executed all 19 tests and passed 17,
+confirming that the body-stream issue was resolved. The remaining two claim
+test failures were stale path expectations that omitted the Supabase Edge
+Function `/functions/v1` prefix; claim and quota request tests now derive their
+complete expected paths from the production endpoint without changing
+production Swift. Native XCTest remains pending one more Mac rerun; Keychain
+and cold/warm deep-link validation also remain pending, followed by I-06B real
+hosted pairing on a physical iPhone. COXON performs only Linux static
+validation. No TestFlight/App Store release, production signing, public iPhone
+app, backend contract change, hosted operation, or production change exists in
+I-06A.
 
 Final Windows run `36792359524` passed the application/mobile-host Python
 selection (154 passed, with one expected Linux-only skip), native Windows

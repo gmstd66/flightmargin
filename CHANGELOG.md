@@ -89,8 +89,12 @@ Notable changes to FlightMargin are documented here. This file summarizes produc
 - Made the native iOS URLProtocol XCTest harness read intercepted POST bodies
   from either `httpBody` or Apple Foundation's `httpBodyStream`
   representation, while retaining exact token-claim and manual-claim payload
-  assertions. Production networking and the backend contract are unchanged;
-  native XCTest remains pending a Mac rerun.
+  assertions. A second native run executed all 19 tests and passed 17,
+  confirming that fix; corrected the two remaining claim-test path expectations
+  to include the Supabase Edge Function `/functions/v1` prefix, and added the
+  same strict production-derived path check to the quota test. Production
+  networking and the backend contract are unchanged; native XCTest remains
+  pending one more Mac rerun.
 - Scoped the Linux host-identity exact-`0600` permission assertion to Linux,
   where POSIX mode bits are meaningful, so Windows validation can continue to
   the separate native DPAPI and package checks without weakening Linux

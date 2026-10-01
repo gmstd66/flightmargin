@@ -127,3 +127,21 @@ def test_url_protocol_claim_tests_accept_streamed_request_bodies():
     assert "request.httpBodyStream" in support
     assert "requestBodyData(request)" in client_tests
     assert "request.httpBody!" not in client_tests
+
+
+def test_relay_request_tests_assert_complete_production_paths():
+    support = (IOS / "FlightMarginTests" / "TestSupport.swift").read_text(
+        encoding="utf-8"
+    )
+    client_tests = (
+        IOS / "FlightMarginTests" / "RelayAPIClientTests.swift"
+    ).read_text(encoding="utf-8")
+    assert (
+        "RelayAPIClient.productionEndpoint.appendingPathComponent(route).path"
+        in support
+    )
+    assert client_tests.count(
+        'assertProductionRelayPath(request, appending: "v1/pairings/claim")'
+    ) == 2
+    assert 'assertProductionRelayPath(request, appending: "v1/quota")' in client_tests
+    assert '"/relay-v1/v1/pairings/claim"' not in client_tests

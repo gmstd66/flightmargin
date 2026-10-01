@@ -9,9 +9,13 @@ launched into the expected first-run unpaired UI. The first Product > Test run
 then exposed a test-harness portability issue: Apple Foundation presented an
 intercepted POST body through `httpBodyStream` rather than `httpBody`. The
 shared XCTest support now accepts either representation without changing
-production networking. Native XCTest, Keychain, and URL-opening validation
-remain pending a Mac rerun after this fix; COXON cannot compile or execute
-iOS XCTest.
+production networking. A second native run executed all 19 tests: 17 passed,
+confirming that the body-stream issue was resolved, while the two claim tests
+failed because their stale expected paths omitted the Supabase Edge Function
+`/functions/v1` prefix. Those expectations now derive the complete path from
+the production endpoint, and the quota test uses the same strict path check.
+Native XCTest remains pending one more Mac rerun; Keychain and URL-opening
+validation also remain pending. COXON cannot compile or execute iOS XCTest.
 
 There is no TestFlight or App Store build, production signing configuration,
 or public iPhone application. The development bundle identifier is
