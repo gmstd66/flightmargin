@@ -6,6 +6,36 @@ Notable changes to FlightMargin are documented here. This file summarizes produc
 
 ### Added
 
+- Added the manual-only I-05B validation workflow for independent hosted
+  public-rate-limit checks and native Windows DPAPI/package checks. Hosted
+  cleanup snapshots complete rate-bucket primary keys and deletes only newly
+  created keys; Windows uses the locked canonical Tauri/PyInstaller build,
+  an explicit application/desktop/mobile-host Python test scope, cross-process
+  real DPAPI checks, wheel asset verification, and an isolated packaged-sidecar
+  smoke. It does not deploy, migrate, publish, upload, or run automatically.
+  I-05A/I-05B host integration and validation are complete. The hosted relay
+  is live and the Linux host client has been validated against it. Run
+  `36783584246` passed hosted health, both public rate-limit thresholds, and
+  scoped cleanup; final Windows run `36792359524` passed 154
+  application/mobile-host Python tests with one expected Linux-only skip,
+  native DPAPI, JavaScript, wheel/package verification, PyInstaller, desktop
+  metadata, 14 Cargo tests, canonical Tauri/NSIS build verification, and the
+  isolated packaged-sidecar smoke.
+- Added I-05A opt-in desktop/Linux Mobile Relay integration. FlightMargin now
+  creates a stable dedicated host identity, uses Windows DPAPI or an owner-only
+  Linux credential file, registers idempotently, uploads only the latest exact
+  normalized v1 quota payload, and retries failures with bounded backoff while
+  local collection/history remain unaffected. Relay remains off by default.
+- Added a Mobile Relay Settings tab with Disabled/Registering/Connected/Offline
+  status, last successful sync, and explicit five-minute mobile pairing. The
+  manual code and locally generated QR presentation are cleared after expiry
+  and are never persisted; packaged QRCode.js avoids a CDN/runtime dependency.
+- Closed I-05 with the hosted relay live while host relay remains opt-in and
+  disabled by default. No iPhone/mobile client exists yet; real QR/manual
+  pairing moves to I-06 and should consume the validated v1 pairing/quota API
+  unless client implementation exposes a backend defect. The protected
+  `/opt/codex-quota` installation is unchanged and published
+  `v0.3.0-beta.1` remains immutable.
 - Added I-04B pre-deployment database hardening with a dedicated non-elevated
   `flightmargin_relay` login, exact relay-table grants, and matching explicit
   RLS policies. The role can delete only rate-limit buckets; its operational
@@ -46,6 +76,15 @@ Notable changes to FlightMargin are documented here. This file summarizes produc
 
 ### Fixed
 
+- Scoped the Linux host-identity exact-`0600` permission assertion to Linux,
+  where POSIX mode bits are meaningful, so Windows validation can continue to
+  the separate native DPAPI and package checks without weakening Linux
+  credential-file coverage.
+- Prevented Python and Deno relay database integration tests from inheriting a
+  hosted database target from normal runtime configuration. Automated tests now
+  accept only syntactically loopback PostgreSQL URLs through dedicated test
+  variables, with a loopback-only runtime-variable fallback for existing local
+  development workflows.
 - Strengthened the manual relay deployment check to require the
   `flightmargin_relay.<SUPABASE_PROJECT_REF>` custom-role username, a Supabase
   shared-pooler host, and port 6543 before installing the runtime database URL

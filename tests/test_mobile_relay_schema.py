@@ -7,6 +7,8 @@ import uuid
 import psycopg
 import pytest
 
+from tests.relay_test_config import relay_test_config_or_skip
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 MIGRATION = (
@@ -256,10 +258,8 @@ def test_relay_database_url_workflow_validation(url, valid):
 
 
 def _relay_database_connection():
-    database_url = os.environ.get("FLIGHTMARGIN_RELAY_DATABASE_URL")
-    if not database_url:
-        pytest.skip("local relay PostgreSQL configuration is unavailable")
-    return psycopg.connect(database_url)
+    config = relay_test_config_or_skip()
+    return psycopg.connect(config.database_url)
 
 
 def test_runtime_role_attributes_privileges_and_policies():

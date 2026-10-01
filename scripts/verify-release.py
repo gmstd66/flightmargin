@@ -18,8 +18,17 @@ PROJECT_NAME = "flightmargin"
 WHEEL_PREFIX = "flightmargin-"
 REQUIRED_FILES = {
     "app/templates/index.html",
+    "app/templates/settings.html",
     "app/static/app.css",
     "app/static/app.js",
+    "app/static/settings.js",
+    "app/static/qrcode.min.js",
+    "app/static/qrcode.LICENSE.txt",
+    "app/mobile_relay/__init__.py",
+    "app/mobile_relay/client.py",
+    "app/mobile_relay/config.py",
+    "app/mobile_relay/identity.py",
+    "app/mobile_relay/sync.py",
 }
 
 

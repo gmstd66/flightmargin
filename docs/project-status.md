@@ -1,8 +1,8 @@
 # FlightMargin — Project Status
 
-Updated: 2026-09-29
+Updated: 2026-09-30
 
-Branch: `dev/mobile-relay`
+Branch: `dev/mobile-host-integration`
 
 This is the primary continuity record. Read it with `AGENTS.md` and verify it
 against the working tree and Git history before making changes.
@@ -34,7 +34,7 @@ Unofficial community tool. Not affiliated with or endorsed by OpenAI.
 
 ## Architecture
 
-The approved architecture is unchanged:
+The core local architecture is retained and the relay is an optional side path:
 
 ```text
 browser / CLI -> FastAPI or CLI -> Codex app-server JSON-RPC
@@ -47,6 +47,8 @@ browser / CLI -> FastAPI or CLI -> Codex app-server JSON-RPC
 - `app/core`: configuration, environment discovery, quota normalization, and
   derived pacing metrics.
 - `app/storage/sqlite_store.py`: local SQLite history.
+- `app/mobile_relay/`: optional host identity, relay configuration/transport,
+  latest-only synchronization, retry state, and pairing coordination.
 - `app/cli.py`: `flightmargin` CLI and legacy `codex-quota` alias.
 - `app/systemd.py`: systemd unit rendering.
 - `desktop/`: Tauri 2 shell, PyInstaller sidecar build, tray/startup behavior,
@@ -56,7 +58,7 @@ The Windows shell communicates with its sidecar on an OS-assigned loopback
 port. The Linux browser deployment has no application-level authentication and
 must stay on localhost or a trusted private network.
 
-## Mobile companion relay — I-01 through I-04B
+## Mobile companion relay — I-01 through I-05
 
 The approved mobile-companion architecture uses a central Supabase relay so the
 iPhone requires no VPN, port forwarding, third-party user account, router
@@ -73,7 +75,7 @@ secret/service-role credentials. Relay tables have RLS enabled and direct
 QR secret or high-entropy manual code. The relay stores one latest quota row
 per host; remote history, APNs, and iOS UI implementation remain deferred.
 
-Development for this work is isolated on `dev/mobile-relay`; it does not
+Host-integration work is isolated on `dev/mobile-host-integration`; it does not
 modify the published Beta 1 tag. Relay development is local-first on COXON,
 with Git/GitHub as the canonical schema and code source. Hosted Supabase is a
 deployment target. A separate scheduled COXON backup archive will retain
@@ -203,6 +205,102 @@ lint, and type checks, and 17 focused schema/least-privilege/workflow tests
 replay. The full migration chain applied cleanly, the I-04B migration replayed
 idempotently, and the focused current-tree secret scan found no high-confidence
 secret.
+
+I-05A adds opt-in desktop/Linux host integration on
+`dev/mobile-host-integration`. Relay remains disabled by default. When enabled,
+the application creates one stable host identity, idempotently registers it,
+and sends only the latest successful normalized quota sample. The collector,
+SQLite history, dashboard, and tray continue normally during relay failure or
+disablement. Duplicate sample notifications are suppressed, concurrent relay
+operations are serialized, and retry uses bounded 2/5/15/30/60/300-second
+steps that reset on success.
+
+`app/mobile_relay/config.py` owns persisted opt-in state and endpoint policy;
+`identity.py` owns the stable UUID/credential and native Windows DPAPI or Linux
+owner-only `0600` storage; `client.py` owns five-second verified-TLS standard-
+library transport with redirects rejected; and `sync.py` owns registration,
+the exact allowlisted v1 serializer, latest-only upload, pairing, and sanitized
+status/backoff. The browser can toggle only `enabled`; it cannot supply an
+endpoint. Production uses the hosted HTTPS constant, while local I-05A work
+uses the developer-only `FLIGHTMARGIN_RELAY_ENDPOINT` override and permits
+cleartext only on loopback.
+
+Settings includes Mobile Relay state, last successful sync, and an explicit
+**Pair mobile device** action. A five-minute manual code, countdown, and QR of
+the returned deep link are held only in browser memory/DOM and cleared on
+expiry, disablement, or replacement. Vendored MIT QRCode.js avoids runtime CDN
+or Python dependencies. The UI does not claim an iPhone app exists. Host and
+pairing credentials never enter `quota.db`, logs, HTML source, or persisted
+pairing state.
+
+I-05A automated validation passes 223 Python tests, including live disposable-
+PostgreSQL relay contract tests, plus JavaScript syntax and wheel/package
+checks. A process-level smoke against only `127.0.0.1:18093` and PostgreSQL
+`127.0.0.1:55432` registered a disposable host, uploaded an approved synthetic
+snapshot, created and claimed a pairing with a fake device, and read back the
+latest quota. Its host cascade and temporary application data were removed and
+the listener stopped. No hosted Supabase request/change or production
+FlightMargin change occurred.
+
+I-05A/I-05B host integration and validation are complete. The hosted relay is
+live, and the opt-in Linux host client has been validated against it. Relay
+remains disabled by default. Run `36783584246` passed hosted health, the public
+10-per-hour host-registration threshold, the public 20-per-five-minute
+pairing-claim threshold, and scoped rate-limit bucket cleanup. Its isolated
+Ubuntu job snapshots the complete
+`relay_rate_limit_buckets` primary-key set, proves the hosted health and 10/20
+public thresholds with invalid non-persisting payloads, and deletes only the
+exact bucket keys created after the snapshot. Its Windows job receives no
+Supabase secrets or hosted endpoint, exercises real current-user DPAPI across
+fresh Python processes (including tamper rejection), runs an explicit
+application/desktop/mobile-host test selection against the locked Windows
+dependencies, verifies wheel inclusion of all mobile-relay/QR assets,
+builds through canonical `npm run tauri:build`, and smokes the packaged
+sidecar with isolated state and no real Codex quota window. No artifact is
+uploaded or released.
+
+Final Windows run `36792359524` passed the application/mobile-host Python
+selection (154 passed, with one expected Linux-only skip), native Windows
+DPAPI host-identity validation, frontend JavaScript validation, wheel/package
+content verification, PyInstaller sidecar build, desktop manifest/version
+checks, `cargo check`, all 14 Cargo tests, the canonical Tauri release build,
+unsigned NSIS installer build/verification, and an isolated packaged-sidecar
+runtime smoke. Its hosted public-rate-limit job was intentionally skipped
+because the run used `validation=windows`; hosted evidence comes from run
+`36783584246`.
+
+The pre-hosted local I-05B tooling baseline passed 210 Python tests with 38
+database-backed tests skipped when relay test credentials are deliberately
+absent, plus 17 Deno tests with 3 database integrations ignored. With dedicated
+loopback test configuration, 80 focused Python relay/configuration tests and all
+20 Deno tests pass against PostgreSQL at `127.0.0.1:55432`. The Linux wheel
+builds and passes the expanded release-content verifier. The two successful
+GitHub runs above now supply the native Windows package/runtime and hosted
+public-threshold evidence that local validation could not provide.
+
+After the I-05B validation incident, relay automated-test configuration is
+separated from application runtime configuration. Central Python and Deno test
+helpers prefer `FLIGHTMARGIN_RELAY_TEST_DATABASE_URL` and
+`FLIGHTMARGIN_RELAY_TEST_PEPPER`; both reject every database URL whose parsed
+host is not syntactically `localhost`, in `127.0.0.0/8`, or exactly `::1`.
+Dedicated test variables are required as a pair and are never mixed with
+runtime credential sources. Existing runtime variables remain a compatibility
+fallback only when the runtime database target is loopback. The check performs
+no DNS lookup and skip output contains no URL, hostname, username, password, or
+pepper. A fake `.invalid` runtime target passed the full Python and Deno suites
+with traced connection syscalls proving no attempt to its relay port.
+Application runtime, deployment, and the explicitly confirmed hosted I-05B
+validator retain their existing configuration behavior.
+
+I-05 is therefore closed. There is no iPhone/mobile client yet. Real QR or
+manual pairing with an actual iOS client now belongs to **I-06 — iPhone
+companion client**, along with client-side credential storage, quota display,
+and any client-driven recovery or device-management requirements. I-06 should
+consume the already validated pairing/quota v1 API without changing its
+backend contract unless implementation against a real client exposes a defect.
+The hosted relay remains live and the host path remains opt-in/default-off.
+The protected `/opt/codex-quota` production installation is unchanged, and
+the published `v0.3.0-beta.1` release remains immutable.
 
 ## Public identity and compatibility
 

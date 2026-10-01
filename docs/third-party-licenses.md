@@ -1,6 +1,6 @@
 # Third-party dependency and license inventory
 
-Inventory date: 2026-09-27. This is an engineering review, not legal advice.
+Inventory date: 2026-09-30. This is an engineering review, not legal advice.
 Exact resolved versions are recorded in `requirements-windows-build.txt`,
 `desktop/package-lock.json`, and `desktop/src-tauri/Cargo.lock`.
 
@@ -50,8 +50,10 @@ FlightMargin itself is the expected AGPL-3.0-or-later package.
 
 ## JavaScript and installer tooling
 
-The dashboard bundles no third-party JavaScript library. It uses repository
-HTML/CSS/vanilla JavaScript.
+The dashboard uses repository HTML/CSS/vanilla JavaScript. The Mobile Relay
+pairing view vendors QRCode.js by davidshimjs (MIT, copyright 2012) solely to
+render the relay-returned deep link without a CDN or runtime dependency. Its
+license is packaged beside the source as `app/static/qrcode.LICENSE.txt`.
 
 `@tauri-apps/cli` is locked to 2.11.5 and declares `Apache-2.0 OR MIT`; its
 platform packages carry the same expression. Tauri downloads/uses NSIS to build
@@ -72,8 +74,8 @@ by Microsoft and is not bundled by FlightMargin; the installer may invoke
 Microsoft's network bootstrapper if the runtime is absent. NSIS and the Tauri
 CLI are build tools rather than application JavaScript dependencies.
 
-No remaining third-party attribution blocker was identified for Beta 1 by this
-engineering review. This concise inventory is intentionally used instead of a
-large vendored license dump; the public source and exact lockfiles preserve the
-complete reproducible dependency record. Changing dependencies, lockfiles,
-vendored source, or WebView2 delivery mode requires refreshing this review.
+No remaining third-party attribution blocker was identified by this engineering
+review. QRCode.js is the one vendored runtime source and its full license ships
+beside it; the public source, packaged notice, and exact lockfiles preserve the
+reproducible dependency record. Changing dependencies, lockfiles, vendored
+source, or WebView2 delivery mode requires refreshing this review.

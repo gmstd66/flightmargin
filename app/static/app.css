@@ -87,6 +87,17 @@ button:disabled {
 .technical-details dt { color:#9ca1a9; }
 .technical-details dd { min-width:0; margin:0; overflow-wrap:anywhere; }
 .copy-diagnostics-row { display:flex; align-items:center; gap:10px; }
+.relay-toggle { display:block; margin:16px 0 4px; }
+.relay-status-list { margin:14px 0; }
+.relay-status-list div { display:grid; grid-template-columns:80px minmax(0,1fr); gap:8px; margin:5px 0; }
+.relay-status-list dt { color:#9ca1a9; }
+.relay-status-list dd { margin:0; }
+.pairing-session { display:flex; align-items:center; gap:18px; margin-top:14px; }
+.pairing-session[hidden] { display:none; }
+.pairing-qr { width:196px; height:196px; padding:8px; background:#fff; border-radius:8px; }
+.pairing-qr canvas,.pairing-qr img,.pairing-qr svg { width:180px; height:180px; display:block; }
+.pairing-label { margin:0; color:#9ca1a9; font-size:12px; }
+.pairing-code { margin:6px 0; font:600 22px ui-monospace,Consolas,monospace; letter-spacing:.08em; color:#f2f2f2; }
 
 .card {
     background: #181a1e;

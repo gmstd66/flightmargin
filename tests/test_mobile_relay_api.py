@@ -2,7 +2,6 @@ import base64
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 import re
-import os
 import secrets
 from uuid import uuid4
 
@@ -14,6 +13,7 @@ from relay.config import RelayConfig
 from relay.credentials import credential_digest, parse_credential
 from relay.database import RelayDatabase
 from relay.main import create_app
+from tests.relay_test_config import relay_test_config_or_skip
 
 
 def make_credential(kind, credential_id=None, secret_bytes=None):
@@ -191,12 +191,12 @@ def test_quota_rejects_coerced_scalar_types(validation_client, field, value):
 
 @pytest.fixture
 def relay_context():
-    database_url = os.environ.get("FLIGHTMARGIN_RELAY_DATABASE_URL")
-    pepper = os.environ.get("FLIGHTMARGIN_RELAY_PEPPER")
-    if not database_url or not pepper:
-        pytest.skip("local relay PostgreSQL configuration is unavailable")
-
-    config = RelayConfig(database_url=database_url, pepper=pepper.encode("utf-8"))
+    test_config = relay_test_config_or_skip()
+    database_url = test_config.database_url
+    config = RelayConfig(
+        database_url=database_url,
+        pepper=test_config.pepper.encode("utf-8"),
+    )
     host_ids = []
     with TestClient(create_app(config)) as client:
         yield client, config, host_ids

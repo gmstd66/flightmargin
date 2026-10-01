@@ -11,6 +11,10 @@ const preferenceChannel = "BroadcastChannel" in window
     : null;
 let preferences = null;
 let aboutInformation = null;
+let relayInformation = null;
+let pairingInformation = null;
+let pairingTimer = null;
+let pairingDeadline = null;
 
 function nativeInvoke() {
     return window.__TAURI__?.core?.invoke
@@ -65,8 +69,8 @@ function showSettingsSection(sectionName) {
 function openSettingsSection(sectionName) {
     const availableSections = new Set(
         nativeInvoke()
-            ? ["dashboard", "startup", "tray", "about"]
-            : ["dashboard", "about"]
+            ? ["dashboard", "startup", "tray", "relay", "about"]
+            : ["dashboard", "relay", "about"]
     );
     const targetSection = availableSections.has(sectionName) ? sectionName : "dashboard";
     showSettingsSection(targetSection);
@@ -75,6 +79,9 @@ function openSettingsSection(sectionName) {
             document.getElementById("settingsStatus").textContent =
                 `About information unavailable: ${error.message}`;
         });
+    }
+    if (targetSection === "relay") {
+        loadRelay().catch(showRelayError);
     }
 }
 
@@ -109,6 +116,89 @@ async function loadAbout() {
     renderAbout(aboutInformation);
 }
 
+function formatSyncTime(timestamp) {
+    if (!timestamp) return "Never";
+    return new Date(timestamp * 1000).toLocaleString();
+}
+
+function clearPairing(message = "") {
+    pairingInformation = null;
+    if (pairingTimer !== null) window.clearInterval(pairingTimer);
+    pairingTimer = null;
+    pairingDeadline = null;
+    const pairingQr = document.getElementById("pairingQr");
+    pairingQr.replaceChildren();
+    pairingQr.removeAttribute("title");
+    document.getElementById("pairingCode").textContent = "";
+    document.getElementById("pairingExpiry").textContent = "";
+    document.getElementById("pairingSession").hidden = true;
+    if (message) document.getElementById("relayMessage").textContent = message;
+}
+
+function renderRelay(information) {
+    relayInformation = information;
+    document.getElementById("relayEnabled").checked = information.enabled;
+    document.getElementById("relayState").textContent = information.state;
+    document.getElementById("relayLastSync").textContent =
+        formatSyncTime(information.last_successful_upload);
+    document.getElementById("pairDevice").disabled = information.state !== "Connected";
+    const message = document.getElementById("relayMessage");
+    if (!information.enabled) message.textContent = "Mobile access is not enabled.";
+    else if (information.last_error) message.textContent = information.last_error;
+    else if (information.state === "Connected") message.textContent = "Latest quota sync is connected.";
+    else message.textContent = "Registering this host with Mobile Relay…";
+}
+
+async function loadRelay() {
+    const response = await fetch("/api/relay", { cache: "no-store" });
+    if (!response.ok) throw new Error("Mobile Relay status is unavailable");
+    renderRelay(await response.json());
+}
+
+function showRelayError(error) {
+    document.getElementById("relayMessage").textContent = error.message;
+}
+
+function updatePairingCountdown() {
+    if (!pairingInformation) return;
+    if (!Number.isFinite(pairingDeadline)) {
+        clearPairing("Pairing session is invalid. Request a new code.");
+        return;
+    }
+    const remaining = Math.max(0, Math.ceil((pairingDeadline - Date.now()) / 1000));
+    if (remaining === 0) {
+        clearPairing("Pairing session expired. Request a new code when ready.");
+        return;
+    }
+    const minutes = Math.floor(remaining / 60);
+    const seconds = String(remaining % 60).padStart(2, "0");
+    document.getElementById("pairingExpiry").textContent =
+        `Expires in ${minutes}:${seconds}`;
+}
+
+function renderPairing(information) {
+    clearPairing();
+    const relayExpiration = Date.parse(information.expires_at);
+    if (!Number.isFinite(relayExpiration)) {
+        clearPairing("Pairing session is invalid. Request a new code.");
+        return;
+    }
+    pairingInformation = information;
+    pairingDeadline = Math.min(relayExpiration, Date.now() + 5 * 60 * 1000);
+    document.getElementById("pairingSession").hidden = false;
+    document.getElementById("pairingCode").textContent = information.manual_code;
+    new QRCode(document.getElementById("pairingQr"), {
+        text: information.deep_link,
+        width: 180,
+        height: 180,
+        correctLevel: QRCode.CorrectLevel.M
+    });
+    updatePairingCountdown();
+    pairingTimer = window.setInterval(updatePairingCountdown, 1000);
+    document.getElementById("relayMessage").textContent =
+        "Scan the QR code or enter the manual code on the mobile device.";
+}
+
 async function copyText(text) {
     if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(text);
@@ -135,6 +225,42 @@ openSettingsSection(new URLSearchParams(window.location.search).get("section"));
 document.getElementById("trayIndicator").addEventListener("change", async event => {
     preferences.tray_indicator = event.target.checked;
     await savePreferences();
+});
+
+document.getElementById("relayEnabled").addEventListener("change", async event => {
+    const enabled = event.target.checked;
+    event.target.disabled = true;
+    if (!enabled) clearPairing();
+    try {
+        const response = await fetch("/api/relay", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ enabled })
+        });
+        if (!response.ok) throw new Error("Unable to update Mobile Relay");
+        renderRelay(await response.json());
+    } catch (error) {
+        showRelayError(error);
+        await loadRelay().catch(() => {});
+    } finally {
+        event.target.disabled = false;
+    }
+});
+
+document.getElementById("pairDevice").addEventListener("click", async event => {
+    event.target.disabled = true;
+    clearPairing("Creating a five-minute pairing session…");
+    try {
+        const response = await fetch("/api/relay/pairings", { method: "POST" });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.detail || "Unable to create pairing session");
+        renderPairing(result);
+    } catch (error) {
+        showRelayError(error);
+        await loadRelay().catch(() => {});
+    } finally {
+        event.target.disabled = relayInformation?.state !== "Connected";
+    }
 });
 
 document.getElementById("panelSettings").addEventListener("change", async event => {
@@ -192,3 +318,9 @@ document.getElementById("closeSettings").addEventListener("click", async () => {
 loadPreferences().catch(error => {
     document.getElementById("settingsStatus").textContent = `Settings unavailable: ${error.message}`;
 });
+
+window.setInterval(() => {
+    if (document.querySelector('[data-settings-section="relay"]:not([hidden])')) {
+        loadRelay().catch(showRelayError);
+    }
+}, 5000);

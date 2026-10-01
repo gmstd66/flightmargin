@@ -47,6 +47,9 @@ from app.storage.sqlite_store import (
 from app.version import (
     __version__,
 )
+from app.mobile_relay.config import RelaySettingsStore
+from app.mobile_relay.identity import HostIdentityStore
+from app.mobile_relay.sync import PairingUnavailable, RelayCoordinator
 
 
 config = load_config()
@@ -78,6 +81,13 @@ store = SQLiteQuotaStore(
 )
 
 collector_task = None
+
+relay_settings_store = RelaySettingsStore(config.data_dir)
+relay_coordinator = RelayCoordinator(
+    relay_settings_store,
+    HostIdentityStore(config.data_dir),
+    app_version=__version__,
+)
 
 collector_status = {
     "running": False,
@@ -153,9 +163,11 @@ def collect_sync():
 
 
 async def collect():
-    return await asyncio.to_thread(
+    sample = await asyncio.to_thread(
         collect_sync
     )
+    relay_coordinator.notify_sample(sample)
+    return sample
 
 
 async def collector_loop():
@@ -246,6 +258,7 @@ async def lifespan(
     global collector_task
 
     store.initialize()
+    await relay_coordinator.start()
 
     try:
         await collect()
@@ -273,6 +286,8 @@ async def lifespan(
 
         except asyncio.CancelledError:
             pass
+
+    await relay_coordinator.stop()
 
     codex.stop()
 
@@ -401,6 +416,31 @@ async def restore_all_panels():
         config.data_dir,
         show_all_panels(load_preferences(config.data_dir)),
     )
+
+
+@app.get("/api/relay")
+async def relay_status():
+    return relay_coordinator.public_status()
+
+
+@app.put("/api/relay")
+async def update_relay(settings: dict):
+    if set(settings) != {"enabled"} or not isinstance(settings["enabled"], bool):
+        raise HTTPException(status_code=422, detail="Expected an enabled boolean")
+    await relay_coordinator.set_enabled(settings["enabled"])
+    if settings["enabled"]:
+        latest = store.get_latest_sample()
+        if latest:
+            relay_coordinator.notify_sample(latest)
+    return relay_coordinator.public_status()
+
+
+@app.post("/api/relay/pairings")
+async def create_relay_pairing():
+    try:
+        return await relay_coordinator.request_pairing()
+    except PairingUnavailable as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from None
 
 
 @app.get(

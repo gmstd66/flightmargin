@@ -9,7 +9,10 @@ The desktop application stores these files beneath
 
 - `quota.db`: locally collected quota history;
 - `desktop-preferences.json`: panel and tray preferences;
-- `logs\`: bounded local diagnostics.
+- `logs\`: bounded local diagnostics;
+- `mobile-relay.json`: non-secret opt-in/sync state;
+- `mobile-relay-host.json`: host UUID and a current-user DPAPI-protected relay
+  credential, created only after Mobile Relay is enabled.
 
 At the first renamed launch, FlightMargin copies `quota.db` and
 `desktop-preferences.json` from `%LOCALAPPDATA%\Codex Quota Monitor` only when
@@ -33,15 +36,28 @@ Systemd diagnostics normally remain in the journal or process output. The
 browser service has no application-level authentication and must remain on
 localhost or a trusted private network.
 
+When Mobile Relay is enabled on Linux, `mobile-relay-host.json` contains the
+dedicated relay host token and is stored with mode `0600` under the normal
+FlightMargin data directory. The containing directory is restricted to `0700`
+when FlightMargin creates it. Treat this file as a secret. The token is
+independently revocable and is unrelated to Codex/OpenAI authentication.
+
 ## Codex authentication and network behavior
 
 FlightMargin discovers and runs the user's existing Codex CLI. Codex manages
 its own authentication. FlightMargin does not ask for, manage, store, or
 transmit OpenAI passwords, API tokens, API keys, or `auth.json` contents.
 
-FlightMargin contacts no project-operated service. Codex CLI communication
-with OpenAI remains subject to Codex/OpenAI behavior and policies outside this
-project's control.
+With Mobile Relay disabled (the default), FlightMargin contacts no project-
+operated service. When the user opts in, it sends only the latest normalized
+quota payload documented in `docs/mobile-relay-design.md` to the configured
+relay over verified HTTPS. It does not send Codex credentials, prompts,
+transcripts, source code, agent output, local history, usernames, or filesystem
+paths. Pairing secrets are held only for the active five-minute UI session and
+are not persisted locally. Relay errors shown to the UI are sanitized.
+
+Codex CLI communication with OpenAI remains subject to Codex/OpenAI behavior
+and policies outside this project's control.
 
 ## Uninstall
 

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FlightMargin Settings</title>
-    <link rel="stylesheet" href="/static/app.css?v=14">
+    <link rel="stylesheet" href="/static/app.css?v=15">
 </head>
 <body class="settings-window">
     <main class="settings-surface">
@@ -13,6 +13,7 @@
             <button class="settings-tab is-active" type="button" data-settings-tab="dashboard">Dashboard</button>
             <button class="settings-tab" type="button" data-settings-tab="startup" data-native-only>Startup</button>
             <button class="settings-tab" type="button" data-settings-tab="tray" data-native-only>System Tray</button>
+            <button class="settings-tab" type="button" data-settings-tab="relay">Mobile Relay</button>
             <button class="settings-tab" type="button" data-settings-tab="about">About</button>
         </nav>
 
@@ -20,6 +21,26 @@
             <h2>Dashboard panels</h2>
             <div id="panelSettings"></div>
             <button id="showAllPanels" type="button">Show all panels</button>
+        </section>
+
+        <section class="settings-section relay-section" data-settings-section="relay" hidden>
+            <h2>Mobile Relay</h2>
+            <label class="relay-toggle"><input id="relayEnabled" type="checkbox"> Enable Mobile Relay</label>
+            <p class="settings-help">Optional mobile access sends only the latest normalized quota state. Local monitoring continues when the relay is disabled or offline.</p>
+            <dl class="relay-status-list">
+                <div><dt>Status</dt><dd id="relayState">Disabled</dd></div>
+                <div><dt>Last sync</dt><dd id="relayLastSync">Never</dd></div>
+            </dl>
+            <p id="relayMessage" class="settings-help" role="status" aria-live="polite">Mobile access is not enabled.</p>
+            <button id="pairDevice" type="button" disabled>Pair mobile device</button>
+            <div id="pairingSession" class="pairing-session" hidden>
+                <div id="pairingQr" class="pairing-qr" aria-label="Pairing QR code"></div>
+                <div>
+                    <p class="pairing-label">Manual pairing code</p>
+                    <p id="pairingCode" class="pairing-code"></p>
+                    <p id="pairingExpiry" class="settings-help"></p>
+                </div>
+            </div>
         </section>
 
         <section class="settings-section" data-settings-section="startup" data-native-only hidden>
@@ -78,6 +99,7 @@
             <button id="closeSettings" type="button">Done</button>
         </div>
     </main>
-    <script src="/static/settings.js?v=5"></script>
+    <script src="/static/qrcode.min.js?v=1"></script>
+    <script src="/static/settings.js?v=6"></script>
 </body>
 </html>

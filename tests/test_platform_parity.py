@@ -112,7 +112,7 @@ def test_dashboard_order_and_browser_settings_match_platform_parity():
     assert "Credits: unavailable" in dashboard_script
     assert "Credits: 0 (depleted)" in dashboard_script
     assert settings.count("data-native-only") == 4
-    assert '["dashboard", "about"]' in settings_script
+    assert '["dashboard", "relay", "about"]' in settings_script
     assert 'window.location.assign("/")' in settings_script
     assert 'href="https://github.com/gmstd66/flightmargin"' in settings
     assert 'href="https://github.com/gmstd66/flightmargin/issues"' in settings
