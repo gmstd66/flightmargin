@@ -115,3 +115,15 @@ def test_no_obvious_committed_ios_secrets():
     )
     for pattern in patterns:
         assert re.search(pattern, text) is None
+
+
+def test_url_protocol_claim_tests_accept_streamed_request_bodies():
+    support = (IOS / "FlightMarginTests" / "TestSupport.swift").read_text(
+        encoding="utf-8"
+    )
+    client_tests = (
+        IOS / "FlightMarginTests" / "RelayAPIClientTests.swift"
+    ).read_text(encoding="utf-8")
+    assert "request.httpBodyStream" in support
+    assert "requestBodyData(request)" in client_tests
+    assert "request.httpBody!" not in client_tests

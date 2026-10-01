@@ -3,10 +3,15 @@
 ## Status and boundaries
 
 I-06A provides the native SwiftUI source, Xcode project, and XCTest suite for
-the first FlightMargin iPhone companion. COXON can validate repository and
-security structure but cannot compile an iOS app. Native compilation, XCTest,
-Simulator, Keychain, and URL-opening validation remain pending on the user's
-Mac.
+the first FlightMargin iPhone companion. On the user's Mac, Xcode 16.4 opened
+the generated project, an iPhone 16 Pro Simulator build succeeded, and the app
+launched into the expected first-run unpaired UI. The first Product > Test run
+then exposed a test-harness portability issue: Apple Foundation presented an
+intercepted POST body through `httpBodyStream` rather than `httpBody`. The
+shared XCTest support now accepts either representation without changing
+production networking. Native XCTest, Keychain, and URL-opening validation
+remain pending a Mac rerun after this fix; COXON cannot compile or execute
+iOS XCTest.
 
 There is no TestFlight or App Store build, production signing configuration,
 or public iPhone application. The development bundle identifier is

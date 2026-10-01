@@ -27,6 +27,59 @@ final class MockURLProtocol: URLProtocol {
     }
 }
 
+private enum RequestBodyError: Error {
+    case missing
+    case unreadableStream
+}
+
+func requestBodyData(
+    _ request: URLRequest,
+    file: StaticString = #filePath,
+    line: UInt = #line
+) throws -> Data {
+    if let body = request.httpBody {
+        return body
+    }
+
+    guard let stream = request.httpBodyStream else {
+        XCTFail("Expected the intercepted request to contain an HTTP body", file: file, line: line)
+        throw RequestBodyError.missing
+    }
+
+    switch stream.streamStatus {
+    case .notOpen:
+        stream.open()
+    case .opening, .open, .reading:
+        break
+    case .writing, .atEnd, .closed, .error:
+        XCTFail("The intercepted request body stream is not readable", file: file, line: line)
+        throw RequestBodyError.unreadableStream
+    @unknown default:
+        XCTFail("The intercepted request body stream has an unsupported state", file: file, line: line)
+        throw RequestBodyError.unreadableStream
+    }
+    defer { stream.close() }
+
+    var body = Data()
+    let buffer = UnsafeMutablePointer<UInt8>.allocate(capacity: 4_096)
+    defer { buffer.deallocate() }
+
+    while true {
+        let bytesRead = stream.read(buffer, maxLength: 4_096)
+        if bytesRead > 0 {
+            body.append(buffer, count: bytesRead)
+        } else if bytesRead == 0 {
+            return body
+        } else {
+            XCTFail("Failed to read the intercepted request body stream", file: file, line: line)
+            if let streamError = stream.streamError {
+                throw streamError
+            }
+            throw RequestBodyError.unreadableStream
+        }
+    }
+}
+
 func response(_ request: URLRequest, status: Int = 200) -> HTTPURLResponse {
     HTTPURLResponse(url: request.url!, statusCode: status, httpVersion: nil,
                     headerFields: ["Content-Type": "application/json"])!

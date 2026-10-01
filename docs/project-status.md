@@ -274,10 +274,17 @@ The development project targets iOS 17.0 with bundle identifier
 `com.gmstd.flightmargin.dev`, uses no Swift packages or third-party runtime
 libraries, and includes XCTest source for input parsing, endpoint rules,
 device identity/Keychain, mocked exact claim/quota requests, retry identity
-stability, cache/offline behavior, refresh serialization, and reset. COXON
-performs only Linux static validation. Native Xcode compilation, XCTest,
-Simulator, Keychain, and cold/warm deep-link validation are pending on the
-user's Mac, followed by I-06B real hosted pairing on a physical iPhone. No
+stability, cache/offline behavior, refresh serialization, and reset. Xcode
+16.4 opened the project successfully on the user's Mac; an iPhone 16 Pro
+Simulator build succeeded, and the app launched into the expected first-run
+unpaired UI. The first native XCTest run exposed an Apple Foundation
+`URLProtocol` test-harness difference: the intercepted POST body was available
+through `httpBodyStream` rather than `httpBody`. Shared test support now reads
+either representation while preserving exact claim-body assertions; this did
+not prove a production networking defect and required no production Swift or
+backend change. Native XCTest, Keychain, and cold/warm deep-link validation
+remain pending a Mac rerun after this fix, followed by I-06B real hosted
+pairing on a physical iPhone. COXON performs only Linux static validation. No
 TestFlight/App Store release, production signing, public iPhone app, backend
 contract change, hosted operation, or production change exists in I-06A.
 

@@ -10,10 +10,13 @@ final class RelayAPIClientTests: XCTestCase {
         MockURLProtocol.handler = { request in
             XCTAssertEqual(request.url?.path, "/relay-v1/v1/pairings/claim")
             XCTAssertEqual(request.httpMethod, "POST")
-            let json = try XCTUnwrap(JSONSerialization.jsonObject(with: request.httpBody!) as? [String: Any])
+            let json = try XCTUnwrap(JSONSerialization.jsonObject(with: requestBodyData(request)) as? [String: Any])
             XCTAssertEqual(Set(json.keys), Set(["pairing_token", "device_id", "display_name", "platform", "credential"]))
             XCTAssertEqual(json["pairing_token"] as? String, token)
+            XCTAssertNil(json["manual_code"])
             XCTAssertEqual(json["device_id"] as? String, testIdentity.deviceID.uuidString)
+            XCTAssertEqual(json["display_name"] as? String, "iPhone")
+            XCTAssertEqual(json["platform"] as? String, "ios")
             XCTAssertEqual(json["credential"] as? String, testIdentity.credential)
             let body = #"{"api_version":1,"paired":true,"device_id":"44444444-4444-4444-8444-444444444444","host_id":"11111111-1111-4111-8111-111111111111"}"#
             return (response(request), Data(body.utf8))
@@ -25,9 +28,16 @@ final class RelayAPIClientTests: XCTestCase {
 
     func testManualClaimContainsNoToken() async throws {
         MockURLProtocol.handler = { request in
-            let json = try XCTUnwrap(JSONSerialization.jsonObject(with: request.httpBody!) as? [String: Any])
+            XCTAssertEqual(request.url?.path, "/relay-v1/v1/pairings/claim")
+            XCTAssertEqual(request.httpMethod, "POST")
+            let json = try XCTUnwrap(JSONSerialization.jsonObject(with: requestBodyData(request)) as? [String: Any])
+            XCTAssertEqual(Set(json.keys), Set(["manual_code", "device_id", "display_name", "platform", "credential"]))
             XCTAssertEqual(json["manual_code"] as? String, "01234-56789")
             XCTAssertNil(json["pairing_token"])
+            XCTAssertEqual(json["device_id"] as? String, testIdentity.deviceID.uuidString)
+            XCTAssertEqual(json["display_name"] as? String, "iPhone")
+            XCTAssertEqual(json["platform"] as? String, "ios")
+            XCTAssertEqual(json["credential"] as? String, testIdentity.credential)
             let body = #"{"api_version":1,"paired":true,"device_id":"44444444-4444-4444-8444-444444444444","host_id":"11111111-1111-4111-8111-111111111111"}"#
             return (response(request), Data(body.utf8))
         }
