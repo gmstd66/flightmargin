@@ -72,15 +72,15 @@ final class AppState: ObservableObject {
         }
     }
 
-    func pair(manualInput: String) {
+    func pair(manualInput: String, onFailure: ((String) -> Void)? = nil) {
         guard let code = ManualCode.normalize(manualInput) else {
-            pairingError = "Enter a valid 10-character pairing code."
+            presentPairingError("Enter a valid 10-character pairing code.", onFailure: onFailure)
             return
         }
-        pair(using: .manualCode(code))
+        pair(using: .manualCode(code), onFailure: onFailure)
     }
 
-    func pair(using method: PairingMethod) {
+    func pair(using method: PairingMethod, onFailure: ((String) -> Void)? = nil) {
         guard !isPaired, refreshTask == nil else { return }
         pairingError = nil
         phase = .pairing
@@ -106,7 +106,7 @@ final class AppState: ObservableObject {
                 startForegroundRefresh()
             } catch {
                 phase = .unpaired
-                pairingError = sanitized(error)
+                presentPairingError(sanitized(error), onFailure: onFailure)
             }
         }
     }
@@ -188,5 +188,13 @@ final class AppState: ObservableObject {
     private func sanitized(_ error: Error) -> String {
         (error as? RelayClientError)?.errorDescription
             ?? "Pairing could not be completed. Check your connection and try again."
+    }
+
+    private func presentPairingError(_ message: String, onFailure: ((String) -> Void)?) {
+        if let onFailure {
+            onFailure(message)
+        } else {
+            pairingError = message
+        }
     }
 }

@@ -4,6 +4,7 @@ struct PairingView: View {
     @EnvironmentObject private var state: AppState
     @Environment(\.dismiss) private var dismiss
     @State private var code = ""
+    @State private var pairingError: String?
 
     var body: some View {
         NavigationStack {
@@ -19,7 +20,7 @@ struct PairingView: View {
                 footer: { Text("Enter the code shown by FlightMargin on your computer.") }
 
                 Button {
-                    state.pair(manualInput: code)
+                    state.pair(manualInput: code) { pairingError = $0 }
                 } label: {
                     HStack {
                         Spacer()
@@ -37,10 +38,10 @@ struct PairingView: View {
                 if phase == .connected || phase == .loading { dismiss() }
             }
             .alert("Pairing problem", isPresented: Binding(
-                get: { state.pairingError != nil },
-                set: { if !$0 { state.pairingError = nil } }
+                get: { pairingError != nil },
+                set: { if !$0 { pairingError = nil } }
             )) { Button("OK", role: .cancel) {} } message: {
-                Text(state.pairingError ?? "")
+                Text(pairingError ?? "")
             }
         }
     }

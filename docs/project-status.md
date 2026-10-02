@@ -1,6 +1,6 @@
 # FlightMargin — Project Status
 
-Updated: 2026-09-30
+Updated: 2026-10-02
 
 Branch: `dev/ios-client`
 
@@ -275,7 +275,12 @@ The development project targets iOS 17.0 with bundle identifier
 `com.gmstd.flightmargin.dev`, uses no Swift packages or third-party runtime
 libraries, and includes XCTest source for input parsing, endpoint rules,
 device identity/Keychain, mocked exact claim/quota requests, retry identity
-stability, cache/offline behavior, refresh serialization, and reset. Xcode
+stability, cache/offline behavior, refresh serialization, and reset. Failed
+manual-code claims now deliver their existing sanitized message to
+sheet-local alert state, so the pairing sheet remains the sole presenter until
+the user dismisses the alert; QR/deep-link errors retain the app-level alert on
+the main unpaired screen. No pairing, credential, transport, or API behavior
+changed. Xcode
 16.4 opened the project successfully on the user's Mac; an iPhone 16 Pro
 Simulator build succeeded, and the app launched into the expected first-run
 unpaired UI. The first native XCTest run exposed an Apple Foundation

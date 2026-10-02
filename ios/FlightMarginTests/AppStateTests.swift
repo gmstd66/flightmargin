@@ -4,6 +4,38 @@ import XCTest
 
 @MainActor
 final class AppStateTests: XCTestCase {
+    func testManualClaimFailureUsesLocalPresentationWithoutPublishingSharedError() async throws {
+        let api = FakeRelayAPI(claimResult: .failure(RelayClientError.unavailable))
+        let state = AppState(
+            identityStore: InMemoryDeviceIdentityStore(identity: testIdentity),
+            api: api,
+            defaults: isolatedDefaults()
+        )
+        var presentedError: String?
+
+        state.pair(manualInput: "01234-56789") { presentedError = $0 }
+        try await Task.sleep(for: .milliseconds(100))
+
+        XCTAssertEqual(presentedError, "FlightMargin Relay is unavailable. Try again shortly.")
+        XCTAssertNil(state.pairingError)
+        XCTAssertEqual(state.phase, .unpaired)
+    }
+
+    func testTokenClaimFailureStillPublishesSharedError() async throws {
+        let api = FakeRelayAPI(claimResult: .failure(RelayClientError.pairingRejected))
+        let state = AppState(
+            identityStore: InMemoryDeviceIdentityStore(identity: testIdentity),
+            api: api,
+            defaults: isolatedDefaults()
+        )
+
+        state.pair(using: .token("unused-by-fake-api"))
+        try await Task.sleep(for: .milliseconds(100))
+
+        XCTAssertEqual(state.pairingError, "Pairing code is invalid, expired, or already used.")
+        XCTAssertEqual(state.phase, .unpaired)
+    }
+
     func testFailedClaimKeepsStableIdentityAndDoesNotPersistSecret() async throws {
         let store = InMemoryDeviceIdentityStore()
         let api = FakeRelayAPI(claimResult: .failure(RelayClientError.unavailable))

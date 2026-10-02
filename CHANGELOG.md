@@ -90,6 +90,9 @@ Notable changes to FlightMargin are documented here. This file summarizes produc
 
 ### Fixed
 
+- Kept failed manual-code pairing errors visible in the iOS pairing sheet until
+  explicit dismissal by giving that sheet sole ownership of its alert state;
+  QR and deep-link failures continue to appear on the main unpaired screen.
 - Made the native iOS URLProtocol XCTest harness read intercepted POST bodies
   from either `httpBody` or Apple Foundation's `httpBodyStream`
   representation, while retaining exact token-claim and manual-claim payload
