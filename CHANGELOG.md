@@ -13,9 +13,13 @@ Notable changes to FlightMargin are documented here. This file summarizes produc
   foreground and pull-to-refresh behavior, cached offline state, and confirmed
   local reset. XCTest source covers identity, storage, parsing, endpoint
   policy, mocked claim/quota transport, retries, caching, concurrency, and
-  reset; native Mac/Xcode validation and I-06B physical-device pairing remain
-  pending. No backend contract, hosted service, production, release, signing,
-  TestFlight, or App Store change was made.
+  reset. I-06A native validation is complete: Xcode 16.4 built and launched on
+  an iPhone 16 Pro Simulator, all 19 XCTest cases passed, and loopback-only
+  validation passed for warm/cold deep links, Keychain persistence and reset
+  rotation, successful mock pairing/quota/dashboard display, and offline
+  recovery. I-06B physical-device and real hosted pairing remain. No backend
+  contract, hosted operation, production, release, signing, TestFlight, or App
+  Store change was made.
 - Added the manual-only I-05B validation workflow for independent hosted
   public-rate-limit checks and native Windows DPAPI/package checks. Hosted
   cleanup snapshots complete rate-bucket primary keys and deletes only newly
@@ -92,9 +96,9 @@ Notable changes to FlightMargin are documented here. This file summarizes produc
   assertions. A second native run executed all 19 tests and passed 17,
   confirming that fix; corrected the two remaining claim-test path expectations
   to include the Supabase Edge Function `/functions/v1` prefix, and added the
-  same strict production-derived path check to the quota test. Production
-  networking and the backend contract are unchanged; native XCTest remains
-  pending one more Mac rerun.
+  same strict production-derived path check to the quota test. The final
+  native rerun passed all 19 tests. Production networking and the backend
+  contract are unchanged.
 - Scoped the Linux host-identity exact-`0600` permission assertion to Linux,
   where POSIX mode bits are meaningful, so Windows validation can continue to
   the separate native DPAPI and package checks without weakening Linux

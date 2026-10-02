@@ -1,7 +1,7 @@
 # FlightMargin Mobile Relay — Design through I-06A iPhone Foundation
 
-Status: I-05A/I-05B complete; hosted relay live; I-06A native iPhone source and
-tests implemented with Mac/Xcode validation pending
+Status: I-05A/I-05B and I-06A complete; hosted relay live; I-06B real hosted
+relay and physical-iPhone validation is next
 
 ## Goal
 
@@ -422,10 +422,12 @@ pause in the background, and preserve cached quota on failure. Reset removes
 all of that local state, but relay v1 currently has no device-side remote
 revocation endpoint; the UI says so explicitly.
 
-This source milestone does not claim native compilation from Linux. Xcode,
-XCTest, Simulator, Keychain, cold/warm URL, and later physical-iPhone testing
-are documented in `docs/ios-development.md`. The relay v1 contract and backend
-are unchanged.
+Native Mac closure passed with Xcode 16.4: the iPhone 16 Pro Simulator build and
+launch succeeded, all 19 XCTest cases passed, and loopback-only validation
+covered cold/warm URL routing, Keychain persistence and reset rotation, local
+mock pairing/quota/dashboard behavior, and offline recovery. Physical-iPhone
+and real hosted-relay validation remain I-06B work documented in
+`docs/ios-development.md`. The relay v1 contract and backend are unchanged.
 
 ## Edge Function layout
 
@@ -609,9 +611,10 @@ relay, the public registration/claim thresholds and scoped bucket cleanup, and
 the native Windows DPAPI, wheel, PyInstaller, Tauri, NSIS, and packaged-sidecar
 path.
 
-I-06A now provides native iPhone source and tests. Native Mac validation and
-I-06B real QR/manual physical-iPhone pairing remain, and are not unfinished
-I-05 host-validation items. The client consumes the validated pairing/quota v1
-API without changing the backend contract. The protected `/opt/codex-quota`
+I-06A now provides native iPhone source and tests, and its native Mac validation
+is complete. I-06B real hosted QR/manual pairing on a physical iPhone remains;
+it is not an unfinished I-05 host-validation item. The client consumes the
+validated pairing/quota v1 API without changing the backend contract. No hosted
+Supabase operation occurred during I-06A. The protected `/opt/codex-quota`
 production installation is unchanged, and published `v0.3.0-beta.1` remains
 immutable.

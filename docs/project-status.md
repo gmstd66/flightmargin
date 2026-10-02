@@ -229,7 +229,8 @@ Settings includes Mobile Relay state, last successful sync, and an explicit
 **Pair mobile device** action. A five-minute manual code, countdown, and QR of
 the returned deep link are held only in browser memory/DOM and cleared on
 expiry, disablement, or replacement. Vendored MIT QRCode.js avoids runtime CDN
-or Python dependencies. The UI does not claim an iPhone app exists. Host and
+or Python dependencies. The UI does not claim that a publicly distributed
+iPhone app exists. Host and
 pairing credentials never enter `quota.db`, logs, HTML source, or persisted
 pairing state.
 
@@ -259,7 +260,7 @@ builds through canonical `npm run tauri:build`, and smokes the packaged
 sidecar with isolated state and no real Codex quota window. No artifact is
 uploaded or released.
 
-I-06A adds the first native iPhone companion foundation under `ios/` on
+I-06A is complete and adds the first native iPhone companion under `ios/` on
 `dev/ios-client`. The iOS 17 SwiftUI application has separated app state,
 models, URLSession/Codable relay transport, strict endpoint policy, Keychain
 identity storage, pairing parsing, and views. It supports manual-code and
@@ -287,12 +288,28 @@ confirming that the body-stream issue was resolved. The remaining two claim
 test failures were stale path expectations that omitted the Supabase Edge
 Function `/functions/v1` prefix; claim and quota request tests now derive their
 complete expected paths from the production endpoint without changing
-production Swift. Native XCTest remains pending one more Mac rerun; Keychain
-and cold/warm deep-link validation also remain pending, followed by I-06B real
-hosted pairing on a physical iPhone. COXON performs only Linux static
-validation. No TestFlight/App Store release, production signing, public iPhone
-app, backend contract change, hosted operation, or production change exists in
-I-06A.
+production Swift. The final native rerun passed all 19 tests.
+
+On the same Simulator, warm and cold `flightmargin://pair/v1` routing passed
+through the loopback-only Debug override, without displaying the raw token and
+with a sanitized unavailable-relay error. A loopback mock relay proved manual
+pairing, claim, authenticated quota retrieval, and dashboard rendering of host,
+plan, five-hour and weekly used/remaining values, reset times and credits,
+credit balance, sample timestamp, and app refresh timestamp. Pairing identity
+survived full termination/relaunch: two claims had the same SHA-256 fingerprint
+of device ID plus credential, while the raw identity was never printed. Local
+reset returned the app to unpaired state and the next pairing had a different
+fingerprint, proving Keychain identity deletion and regeneration.
+
+Stopping the mock relay and pulling to refresh preserved pairing, cached quota,
+and dashboard state with the sanitized message, **Unable to refresh. Showing
+the last available quota.** Restarting it cleared the banner and advanced the
+refresh timestamp without re-pairing. The expected stale indication was
+separately exercised with an intentionally old synthetic sample. The mock was
+stopped and the Simulator override removed afterward.
+No hosted Supabase operation occurred. No TestFlight/App Store release,
+production signing configuration, public iPhone app, backend contract change,
+or production change exists in I-06A.
 
 Final Windows run `36792359524` passed the application/mobile-host Python
 selection (154 passed, with one expected Linux-only skip), native Windows
@@ -327,11 +344,16 @@ with traced connection syscalls proving no attempt to its relay port.
 Application runtime, deployment, and the explicitly confirmed hosted I-05B
 validator retain their existing configuration behavior.
 
-I-05 is therefore closed. I-06A now provides native iPhone source, project,
-tests, client-side credential storage, and quota display. Native validation is
-pending on the user's Mac; real QR/manual pairing with a physical iPhone is
-the I-06B follow-up. The client consumes the already validated pairing/quota
-v1 API without changing its backend contract.
+I-05 and I-06A are therefore closed. The next work is I-06B: configure
+development signing on the Mac; install on a physical iPhone; enable Mobile
+Relay on a real host; verify a real hosted quota upload; create a real QR/manual
+pairing session; scan the QR in Camera; open `flightmargin://pair/v1`; claim and
+display real quota; repeat with manual pairing; verify pairing across relaunch;
+exercise offline/reconnect recovery, foreground 60-second refresh, and
+pull-to-refresh; and confirm that no OpenAI/Codex credential or prohibited data
+reaches the phone or relay. The client continues to consume the validated v1
+API without changing its backend contract. TestFlight and App Store work are
+not part of I-06B.
 The hosted relay remains live and the host path remains opt-in/default-off.
 The protected `/opt/codex-quota` production installation is unchanged, and
 the published `v0.3.0-beta.1` release remains immutable.

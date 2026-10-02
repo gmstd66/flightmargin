@@ -93,9 +93,10 @@ Windows protects the credential with current-user DPAPI. Linux stores it in a
 mode-`0600` file under the FlightMargin application-data directory. Relay
 outages do not interrupt local collection, history, dashboard, or tray use.
 Pairing is user-initiated from Settings and creates a five-minute manual
-code/QR session. Native iPhone companion source now exists as the I-06A
-foundation, but Mac/Xcode validation is pending and there is no TestFlight,
-App Store release, production signing, or public iPhone app. See
+code/QR session. The I-06A native iPhone companion and Mac/Simulator validation
+are complete; I-06B real hosted-relay validation on a physical iPhone is next.
+There is no TestFlight or App Store release, production signing configuration,
+or public iPhone app. See
 [the relay design](docs/mobile-relay-design.md) and
 [iOS development handoff](docs/ios-development.md).
 

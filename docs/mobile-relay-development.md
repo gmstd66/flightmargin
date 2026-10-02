@@ -24,18 +24,22 @@ Hosted Supabase project
 The hosted Supabase project is a deployment target, not the primary place where
 schema or function code is authored.
 
-## I-06A iPhone development split
+## I-06A iPhone development split (complete)
 
 COXON owns source implementation, repository/static tests, documentation, and
-commits for the iPhone client. It cannot run Xcode or an iOS Simulator. After
-the user pushes `dev/ios-client`, the separate Mac pulls that branch and runs
-native build, XCTest, Simulator, Keychain, and deep-link validation. No iOS
-GitHub workflow is part of I-06A.
+commits for the iPhone client. It cannot run Xcode or an iOS Simulator. The
+separate Mac completed the I-06A native gate with Xcode 16.4 and an iPhone 16
+Pro Simulator: build and launch passed, all 19 XCTest cases passed, and
+loopback-only checks passed for deep links, Keychain persistence/reset,
+successful mock pairing/quota display, and offline recovery. No iOS GitHub
+workflow is part of I-06A.
 
 The exact commands and the boundary between safe I-06A loopback/mock testing
 and I-06B hosted physical-device pairing are in `docs/ios-development.md`.
-I-06A does not contact or modify hosted Supabase. The client consumes the
-existing v1 pairing and latest-quota contract without a backend change.
+I-06A did not contact or modify hosted Supabase. The client consumes the
+existing v1 pairing and latest-quota contract without a backend change. I-06B
+owns real hosted-relay and physical-iPhone validation; it does not start
+TestFlight, App Store, or production-signing work.
 
 ## Local source of truth
 
@@ -244,10 +248,10 @@ unsigned NSIS package, and runs an isolated packaged-sidecar health/dashboard/
 QR-asset smoke with a missing Codex executable and relay disabled. Nothing is
 uploaded or released.
 
-I-06A now provides the iPhone client source and tests. Native Mac validation
-and I-06B real QR/manual physical-iPhone pairing are not unfinished host
-validation. The client consumes the validated pairing/quota v1 API without a
-backend contract change.
+I-06A now provides the iPhone client source and tests, and native Mac validation
+is complete. I-06B real hosted QR/manual pairing on a physical iPhone is the
+next milestone, not unfinished host validation. The client consumes the
+validated pairing/quota v1 API without a backend contract change.
 The protected `/opt/codex-quota` production installation remains unchanged,
 and the published `v0.3.0-beta.1` release remains immutable.
 

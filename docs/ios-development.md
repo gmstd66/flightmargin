@@ -2,20 +2,33 @@
 
 ## Status and boundaries
 
-I-06A provides the native SwiftUI source, Xcode project, and XCTest suite for
-the first FlightMargin iPhone companion. On the user's Mac, Xcode 16.4 opened
-the generated project, an iPhone 16 Pro Simulator build succeeded, and the app
-launched into the expected first-run unpaired UI. The first Product > Test run
-then exposed a test-harness portability issue: Apple Foundation presented an
-intercepted POST body through `httpBodyStream` rather than `httpBody`. The
-shared XCTest support now accepts either representation without changing
-production networking. A second native run executed all 19 tests: 17 passed,
-confirming that the body-stream issue was resolved, while the two claim tests
-failed because their stale expected paths omitted the Supabase Edge Function
-`/functions/v1` prefix. Those expectations now derive the complete path from
-the production endpoint, and the quota test uses the same strict path check.
-Native XCTest remains pending one more Mac rerun; Keychain and URL-opening
-validation also remain pending. COXON cannot compile or execute iOS XCTest.
+I-06A is complete. It provides the native SwiftUI source, Xcode project, and
+XCTest suite for the first FlightMargin iPhone companion. On the user's Mac,
+Xcode 16.4 opened the project, an iPhone 16 Pro Simulator build succeeded, the
+app launched, and the final native XCTest rerun passed all 19 tests. The
+earlier Apple Foundation request-body portability issue and stale Supabase
+Edge Function path assertions are fixed without changing production
+networking or the relay v1 contract.
+
+Simulator validation also passed for warm and cold
+`flightmargin://pair/v1` routing through a loopback-only Debug relay override.
+The raw pairing token was not shown, and the unavailable-relay error was
+sanitized. A local mock relay then proved successful manual pairing, claim,
+authenticated quota retrieval, and the complete dashboard presentation.
+Keychain identity persisted across full app termination and relaunch: two
+consecutive claims produced the same SHA-256 fingerprint of the device ID and
+credential without printing either raw value. Local reset returned the app to
+the unpaired state, and the next pairing produced a different fingerprint,
+confirming deletion and rotation of the Keychain identity.
+
+With the mock relay stopped, pull-to-refresh preserved pairing, cached quota,
+and dashboard state while showing the sanitized message, **Unable to refresh.
+Showing the last available quota.** Restarting the same relay and refreshing
+cleared the banner, retained pairing, and advanced the app refresh timestamp
+without re-pairing. The intentionally old synthetic sample independently
+showed the expected stale indication. Cleanup stopped the mock relay and
+removed the Simulator endpoint override. No hosted Supabase operation occurred
+during I-06A validation.
 
 There is no TestFlight or App Store build, production signing configuration,
 or public iPhone application. The development bundle identifier is
@@ -65,12 +78,12 @@ xcodebuild test \
   CODE_SIGNING_ALLOWED=NO
 ```
 
-Treat compile warnings and every XCTest failure as an I-06A finding to return
-to COXON. Do not report the native gate complete until both commands pass.
+These commands passed for the I-06A closure on Xcode 16.4 with an iPhone 16
+Pro Simulator. Treat future compile warnings or XCTest failures as regressions.
 
-## A. I-06A Simulator, mock, and native checks
+## A. I-06A Simulator, mock, and native checks (complete)
 
-Run or install the app from Xcode and verify:
+The completed validation covered:
 
 1. A fresh install opens on the unpaired FlightMargin screen with no account
    or login language.
@@ -129,28 +142,27 @@ reuse the same Keychain identity. Clear the injected environment afterward:
 xcrun simctl spawn booted launchctl unsetenv FLIGHTMARGIN_RELAY_ENDPOINT
 ```
 
-Do not create a real hosted pairing during I-06A. Manual-code network behavior
-and successful deep-link behavior are covered by mocked URLSession/XCTest;
-real hosted end-to-end validation belongs to I-06B.
+I-06A did not create a hosted pairing or contact hosted Supabase. Real hosted
+end-to-end validation belongs to I-06B.
 
 ## B. I-06B hosted relay and physical-iPhone plan
 
-I-06B should use a real FlightMargin desktop/Linux host and the already-live
-hosted relay:
+I-06B is the next milestone and should use a real FlightMargin desktop/Linux
+host and the already-live hosted relay:
 
 1. Configure development signing on the Mac and install the app on a physical
    iPhone.
-2. Enable Mobile Relay on the real host and confirm it has uploaded current
-   quota.
-3. Create a fresh pairing QR/manual code on the host.
+2. Enable Mobile Relay on the real host and confirm a real quota upload.
+3. Create a real pairing QR/manual session on the host.
 4. Scan the QR with Camera, verify the `flightmargin://pair/v1` link opens
    FlightMargin, claim the real pairing, and retrieve real latest quota.
 5. Locally reset, create a new session, and repeat with manual-code pairing.
-6. Relaunch the app and the host; verify stable pairing and refreshed quota.
+6. Relaunch the app and verify that pairing persists and real quota remains
+   available.
 7. Disable connectivity, confirm cached quota remains with an offline/stale
    indicator, reconnect, and confirm recovery without re-pairing.
-8. Verify foreground 60-second refresh, pull-to-refresh, background pause, and
-   no overlapping requests.
+8. Verify foreground 60-second refresh and pull-to-refresh; also confirm the
+   expected background pause and no overlapping requests.
 9. Confirm no OpenAI/Codex credential, prompt, transcript, source, agent output,
    username, filesystem path, or remote history reaches the iPhone or relay.
 
