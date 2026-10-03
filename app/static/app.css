@@ -226,6 +226,11 @@ button { padding: 6px 10px; }
 .history-heading h2 { margin:0; font-size:12px; line-height:1.1; }
 .history-card canvas { flex:1 1 auto; min-height:0; height:100%; }
 
+@media (min-width: 560px) and (min-height: 400px) {
+    .pace-card, .summary-card { height:88px; }
+    .dashboard-grid:has(.summary-card[hidden]) .summary-card:not([hidden]) { grid-column:span 2; }
+}
+
 @media (max-width: 520px) {
     .dashboard-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
     .quota-card, .pace-card { grid-column:span 2; }
