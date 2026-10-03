@@ -7,6 +7,10 @@ Branch: `dev/ios-client`
 This is the primary continuity record. Read it with `AGENTS.md` and verify it
 against the working tree and Git history before making changes.
 
+The external FlightMargin orchestration pilot validated a read-only
+advisor-to-worker round trip through the private control repository and
+Langflow.
+
 ## Product state
 
 FlightMargin is a lightweight, local-first monitor for OpenAI Codex usage
