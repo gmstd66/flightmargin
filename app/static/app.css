@@ -228,6 +228,11 @@ button { padding: 6px 10px; }
 
 @media (min-width: 560px) and (min-height: 400px) {
     .pace-card, .summary-card { height:88px; }
+    .pace-card { padding-block:2px; }
+    .pace-card > .label { line-height:1; }
+    .pace-card .pace { margin-top:2px; font-size:16px; }
+    .pace-card .pace-ratio { margin-top:1px; font-size:11px; }
+    .pace-card p { margin-top:1px; font-size:9px; line-height:1; }
     .dashboard-grid:has(.summary-card[hidden]) .summary-card:not([hidden]) { grid-column:span 2; }
 }
 

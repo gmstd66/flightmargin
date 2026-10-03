@@ -172,6 +172,8 @@ def test_dashboard_uses_fixed_reflowing_panels_and_visibility_only_controls():
     assert "grid-auto-flow:dense" in styles
     assert "@media (min-width: 560px) and (min-height: 400px)" in styles
     assert ".pace-card, .summary-card { height:88px; }" in styles
+    assert ".pace-card { padding-block:2px; }" in styles
+    assert ".pace-card p { margin-top:1px; font-size:9px; line-height:1; }" in styles
     assert ".dashboard-grid:has(.summary-card[hidden]) .summary-card:not([hidden]) { grid-column:span 2; }" in styles
     assert "draggable=" not in template
     assert 'id="showAllPanels"' not in template
@@ -258,8 +260,8 @@ def test_nsis_upgrade_hook_prompts_for_clean_tray_quit_without_killing():
 def test_dashboard_assets_are_revisioned_for_desktop_webview_cache():
     template = (PROJECT_ROOT / "app" / "templates" / "index.html").read_text(encoding="utf-8")
     settings = (PROJECT_ROOT / "app" / "templates" / "settings.html").read_text(encoding="utf-8")
-    assert '/static/app.css?v=16' in template
-    assert '/static/app.css?v=16' in settings
+    assert '/static/app.css?v=17' in template
+    assert '/static/app.css?v=17' in settings
     assert '/static/app.js?v=14' in template
 
 
