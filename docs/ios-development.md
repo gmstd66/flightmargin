@@ -43,8 +43,8 @@ After the user has pushed the reviewed branch from COXON:
 
 ```bash
 git fetch origin
-git switch dev/ios-client
-git pull --ff-only origin dev/ios-client
+git switch develop
+git pull --ff-only origin develop
 open ios/FlightMargin.xcodeproj
 ```
 

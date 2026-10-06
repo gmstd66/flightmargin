@@ -2,7 +2,7 @@
 
 Updated: 2026-10-02
 
-Branch: `dev/ios-client`
+Branch: `develop`
 
 This is the primary continuity record. Read it with `AGENTS.md` and verify it
 against the working tree and Git history before making changes.
@@ -265,7 +265,7 @@ sidecar with isolated state and no real Codex quota window. No artifact is
 uploaded or released.
 
 I-06A is complete and adds the first native iPhone companion under `ios/` on
-`dev/ios-client`. The iOS 17 SwiftUI application has separated app state,
+`develop`. The iOS 17 SwiftUI application has separated app state,
 models, URLSession/Codable relay transport, strict endpoint policy, Keychain
 identity storage, pairing parsing, and views. It supports manual-code and
 custom-URL pairing, stable pre-claim `fmd1` identity creation, latest-quota
