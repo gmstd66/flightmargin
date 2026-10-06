@@ -90,6 +90,8 @@ Notable changes to FlightMargin are documented here. This file summarizes produc
 
 ### Fixed
 
+- Reflowed visible desktop Pace, Full Resets, and Account cards to fill their
+  row when one or more panels are hidden, while retaining the compact height.
 - Kept failed manual-code pairing errors visible in the iOS pairing sheet until
   explicit dismissal by giving that sheet sole ownership of its alert state;
   QR and deep-link failures continue to appear on the main unpaired screen.
