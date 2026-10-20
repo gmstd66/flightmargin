@@ -6,6 +6,15 @@ Notable changes to FlightMargin are documented here. This file summarizes produc
 
 ### Added
 
+- Prepared the native iOS project for an Internal TestFlight demo: Debug keeps
+  `com.gmstd.flightmargin.dev`, Release uses
+  `io.github.gmstd66.flightmargin`, automatic signing remains enabled with no
+  development team committed, and the stable `flightmargin` URL scheme is
+  retained. Added the app-target privacy manifest with the app-private
+  UserDefaults reason `CA92.1` and declared non-exempt encryption use false for
+  the current Apple URLSession/HTTPS-only implementation. Native signing,
+  archive, hosted pairing retest, App Store Connect setup, and upload remain
+  pending on Mac; only Internal TestFlight is intended for the first demo.
 - Added the I-06A native iPhone companion foundation: an iOS 17 SwiftUI/Xcode
   project with accountless QR/deep-link and manual-code pairing, a stable
   pre-claim device identity protected by ThisDeviceOnly Keychain storage,
@@ -90,6 +99,13 @@ Notable changes to FlightMargin are documented here. This file summarizes produc
 
 ### Fixed
 
+- Encoded iOS pairing-claim `device_id` values as canonical lowercase UUID
+  text while preserving the internal `UUID` model. This fixes the concrete
+  casing mismatch found after I-06B1 reached the hosted claim endpoint, without
+  changing relay v1, validation, credentials, pairing semantics, or logging.
+  Native fixtures now contain A-F and assert exact lowercase token/manual
+  payloads plus response UUID comparison. Native Xcode and fresh hosted-pairing
+  validation remain pending; I-06B is not yet complete.
 - Reflowed visible desktop Pace, Full Resets, and Account cards to fill their
   row when one or more panels are hidden, while retaining the compact height.
 - Kept failed manual-code pairing errors visible in the iOS pairing sheet until

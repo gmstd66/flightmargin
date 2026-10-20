@@ -96,7 +96,7 @@ func assertProductionRelayPath(
 }
 
 let testIdentity = DeviceIdentity(
-    deviceID: UUID(uuidString: "44444444-4444-4444-8444-444444444444")!,
+    deviceID: UUID(uuidString: "AABBCCDD-EEFF-4A4B-8C8D-AABBCCDDEEFF")!,
     credential: "fmd1.22222222-2222-4222-8222-222222222222.Hx4dHBsaGRgXFhUUExIREA8ODQwLCgkIBwYFBAMCAQA"
 )
 

@@ -353,16 +353,27 @@ with traced connection syscalls proving no attempt to its relay port.
 Application runtime, deployment, and the explicitly confirmed hosted I-05B
 validator retain their existing configuration behavior.
 
-I-05 and I-06A are therefore closed. The next work is I-06B: configure
-development signing on the Mac; install on a physical iPhone; enable Mobile
-Relay on a real host; verify a real hosted quota upload; create a real QR/manual
-pairing session; scan the QR in Camera; open `flightmargin://pair/v1`; claim and
-display real quota; repeat with manual pairing; verify pairing across relaunch;
-exercise offline/reconnect recovery, foreground 60-second refresh, and
-pull-to-refresh; and confirm that no OpenAI/Codex credential or prohibited data
-reaches the phone or relay. The client continues to consume the validated v1
-API without changing its backend contract. TestFlight and App Store work are
-not part of I-06B.
+I-05 and I-06A remain closed. I-06B1 confirmed the COXON host relay was
+**Connected** to the production relay endpoint and confirmed Simulator
+internet/hosted-relay connectivity. A real manual pairing reached the hosted
+claim endpoint but was rejected. Source audit identified UUID casing
+interoperability as the concrete likely client defect: Foundation may encode a
+`UUID` with uppercase A-F, while relay v1 validates canonical lowercase UUID
+strings. The iOS claim request now preserves `DeviceIdentity.deviceID` as
+`UUID` internally and explicitly emits lowercase canonical `device_id` text.
+The relay v1 contract, hosted validation, credential storage/format, pairing
+semantics, and request logging remain unchanged.
+
+Native Xcode validation of the correction remains pending, and hosted pairing
+must be retested before claiming end-to-end success. I-06B is not complete.
+Physical-iPhone/TestFlight validation also remains pending. The user has an
+active paid Apple Developer Program membership, making Internal TestFlight the
+intended remote-Mac distribution path for the first physical-phone demo; no
+external TestFlight testing or public App Store release is authorized. The
+remaining work is native XCTest; fresh hosted QR/manual pairing and real quota
+display; pairing persistence; foreground 60-second and pull-to-refresh checks;
+offline/reconnect recovery; then signing, archive validation, and Internal
+TestFlight upload on the Mac. `docs/ios-testflight.md` records the handoff.
 The hosted relay remains live and the host path remains opt-in/default-off.
 The protected `/opt/codex-quota` production installation is unchanged, and
 the published `v0.3.0-beta.1` release remains immutable.

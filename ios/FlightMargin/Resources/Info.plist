@@ -24,11 +24,12 @@
             <key>CFBundleTypeRole</key>
             <string>Viewer</string>
             <key>CFBundleURLName</key>
-            <string>com.gmstd.flightmargin.pairing</string>
+            <string>io.github.gmstd66.flightmargin.pairing</string>
             <key>CFBundleURLSchemes</key>
             <array><string>flightmargin</string></array>
         </dict>
     </array>
+    <key>ITSAppUsesNonExemptEncryption</key><false/>
     <key>LSRequiresIPhoneOS</key><true/>
     <key>NSAppTransportSecurity</key>
     <dict>

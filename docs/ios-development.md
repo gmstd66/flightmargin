@@ -31,11 +31,31 @@ removed the Simulator endpoint override. No hosted Supabase operation occurred
 during I-06A validation.
 
 There is no TestFlight or App Store build, production signing configuration,
-or public iPhone application. The development bundle identifier is
-`com.gmstd.flightmargin.dev`; choose the final production identifier before
-TestFlight or App Store work. I-06A does not change the relay v1 contract and
-does not add a Supabase SDK, account, login, analytics, or third-party runtime
-dependency.
+or public iPhone application. Debug uses `com.gmstd.flightmargin.dev`; Release
+is prepared as `io.github.gmstd66.flightmargin`. Automatic signing remains on
+and `DEVELOPMENT_TEAM` remains unset for selection on the Mac. I-06A does not
+change the relay v1 contract and does not add a Supabase SDK, account, login,
+analytics, or third-party runtime dependency.
+
+I-06B1 confirmed that the COXON host relay was **Connected** to the production
+relay endpoint and that the Simulator had internet/hosted-relay connectivity.
+A real manual pairing reached the hosted claim endpoint but was rejected. The
+source audit then identified a concrete interoperability defect: Foundation's
+UUID encoding can emit uppercase A-F, while relay v1 accepts canonical
+lowercase UUID strings. The client now keeps `deviceID` as `UUID` internally
+but explicitly encodes lowercase canonical `device_id` text for both token and
+manual claims. Relay v1, hosted validation, credentials, and pairing semantics
+are unchanged. The credential's client-generated UUID component was already
+lowercased, and no other client-generated UUID field crosses this v1 request
+boundary. Native Xcode validation and a fresh hosted pairing retest remain
+pending, so I-06B is not complete.
+
+The privacy-manifest audit found only direct `UserDefaults` required-reason
+API use and declares `CA92.1`; no tracking or collected-data entry is declared.
+`ITSAppUsesNonExemptEncryption` is `NO` because the app currently relies on
+Apple `URLSession`/HTTPS and ships no proprietary or third-party cryptography.
+Revisit that declaration if crypto behavior or dependencies change. See
+`docs/ios-testflight.md` for the Internal TestFlight handoff.
 
 ## Get the branch on the Mac
 
@@ -43,8 +63,8 @@ After the user has pushed the reviewed branch from COXON:
 
 ```bash
 git fetch origin
-git switch develop
-git pull --ff-only origin develop
+git switch dev/ios-testflight-demo
+git pull --ff-only origin dev/ios-testflight-demo
 open ios/FlightMargin.xcodeproj
 ```
 
@@ -145,10 +165,12 @@ xcrun simctl spawn booted launchctl unsetenv FLIGHTMARGIN_RELAY_ENDPOINT
 I-06A did not create a hosted pairing or contact hosted Supabase. Real hosted
 end-to-end validation belongs to I-06B.
 
-## B. I-06B hosted relay and physical-iPhone plan
+## B. I-06B hosted relay and physical-iPhone plan (in progress)
 
-I-06B is the next milestone and should use a real FlightMargin desktop/Linux
-host and the already-live hosted relay:
+I-06B1 reached the live claim endpoint but did not complete pairing because of
+the client UUID casing defect described above. After native XCTest and hosted
+Simulator retesting, continue with a real FlightMargin desktop/Linux host and
+the already-live hosted relay:
 
 1. Configure development signing on the Mac and install the app on a physical
    iPhone.
@@ -166,5 +188,7 @@ host and the already-live hosted relay:
 9. Confirm no OpenAI/Codex credential, prompt, transcript, source, agent output,
    username, filesystem path, or remote history reaches the iPhone or relay.
 
-Physical-device validation does not authorize TestFlight, App Store work,
-production signing decisions, backend changes, or publication.
+The user has an active paid Apple Developer Program membership, so Internal
+TestFlight is the intended remote-Mac path for the first physical-phone demo.
+No external TestFlight testing or public App Store release is authorized.
+Backend changes and publication remain out of scope.
