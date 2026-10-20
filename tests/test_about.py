@@ -80,3 +80,4 @@ def test_linux_about_paths_do_not_expose_home_directory_identity():
     assert payload["log_directory"] == "systemd journal or process output"
     assert "private-name" not in payload["diagnostics"]
     assert payload["operating_system"] == "Linux 6.8.0"
+    assert payload["architecture"] == "x64"
