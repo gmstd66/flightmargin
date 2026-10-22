@@ -1,5 +1,7 @@
 import json
 
+import pytest
+
 from app.desktop_preferences import (
     LAYOUT_SCHEMA,
     PANEL_IDS,
@@ -30,6 +32,18 @@ def test_preferences_round_trip_and_preserve_hidden_panel(tmp_path):
 
     assert loaded["tray_indicator"] is False
     assert loaded["panels"]["history"] is False
+
+
+@pytest.mark.parametrize("tray_indicator", [None, 0, 1, "false", "true", [], {}])
+def test_non_boolean_tray_indicator_falls_back_to_true(tmp_path, tray_indicator):
+    raw = default_preferences()
+    raw["tray_indicator"] = tray_indicator
+    preferences_path(tmp_path).write_text(json.dumps(raw), encoding="utf-8")
+
+    loaded = load_preferences(tmp_path)
+
+    assert loaded["tray_indicator"] is True
+    assert json.loads(preferences_path(tmp_path).read_text(encoding="utf-8")) == loaded
 
 
 def test_show_all_panels_restores_visibility_without_changing_tray_choice():

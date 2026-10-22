@@ -26,7 +26,9 @@ def _validated(value):
     defaults = default_preferences()
     if not isinstance(value, dict):
         return defaults
-    defaults["tray_indicator"] = bool(value.get("tray_indicator", True))
+    tray_indicator = value.get("tray_indicator")
+    if isinstance(tray_indicator, bool):
+        defaults["tray_indicator"] = tray_indicator
     if value.get("layout_schema") != LAYOUT_SCHEMA:
         return defaults
     source_panels = value.get("panels", {})
