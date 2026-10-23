@@ -190,5 +190,8 @@ the already-live hosted relay:
 
 The user has an active paid Apple Developer Program membership, so Internal
 TestFlight is the intended remote-Mac path for the first physical-phone demo.
-No external TestFlight testing or public App Store release is authorized.
-Backend changes and publication remain out of scope.
+The explicit App ID, FlightMargin App Store Connect app record, internal
+TestFlight group `FlightMargin Internal`, and internal tester enrollment are
+already complete. No TestFlight build has been uploaded yet. No external
+TestFlight testing or public App Store release is authorized. Backend changes
+and publication remain out of scope.
