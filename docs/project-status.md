@@ -374,14 +374,13 @@ remaining work is native XCTest; fresh hosted QR/manual pairing and real quota
 display; pairing persistence; foreground 60-second and pull-to-refresh checks;
 offline/reconnect recovery; then signing, archive validation, and Internal
 TestFlight upload on the Mac. `docs/ios-testflight.md` records the handoff.
-The Apple-side steps immediately preceding the next native Xcode session are
-explicitly pending: register the explicit App ID
-`io.github.gmstd66.flightmargin`, create the corresponding FlightMargin iOS
-App Store Connect record, create the internal TestFlight group
+Apple Developer App ID registration is complete for the explicit identifier
+`io.github.gmstd66.flightmargin`. The Apple-side steps immediately preceding
+the next native Xcode session that remain pending are: create the corresponding
+FlightMargin iOS App Store Connect record, create the internal TestFlight group
 `FlightMargin Internal` and add the owner's account as an internal tester,
-and generate/configure the 1024x1024 iOS AppIcon. These steps have not yet been
-completed and do not authorize public App Store submission or external
-TestFlight testing.
+and generate/configure the 1024x1024 iOS AppIcon. These pending steps do not
+authorize public App Store submission or external TestFlight testing.
 
 The hosted relay remains live and the host path remains opt-in/default-off.
 The protected `/opt/codex-quota` production installation is unchanged, and
