@@ -22,17 +22,17 @@ does not upload a TestFlight or App Store build.
 
 ## Explicitly pending before the next Xcode session
 
-The following Apple-side/demo-preparation steps are intentionally pending and
-have not yet been completed:
+Apple Developer App ID registration is complete: `FlightMargin iOS` is
+registered as the explicit identifier `io.github.gmstd66.flightmargin`.
 
-1. Register the explicit App ID `io.github.gmstd66.flightmargin` in Apple
-   Developer Certificates, Identifiers & Profiles.
-2. Create the FlightMargin iOS app record in App Store Connect using that
-   bundle identifier.
-3. Create the internal TestFlight group `FlightMargin Internal` and add the
+The following Apple-side/demo-preparation steps remain pending:
+
+1. Create the FlightMargin iOS app record in App Store Connect using
+   `io.github.gmstd66.flightmargin`.
+2. Create the internal TestFlight group `FlightMargin Internal` and add the
    owner's App Store Connect account as an internal tester.
-4. Generate and configure the repository-owned 1024x1024 iOS AppIcon from the
-   existing FlightMargin artwork.
+3. Generate and configure the repository-owned 1024x1024 iOS AppIcon from the
+   approved FlightMargin artwork.
 
 After those items, continue with the native Mac sequence below. No public App
 Store submission or external TestFlight testing is part of this pending work.
