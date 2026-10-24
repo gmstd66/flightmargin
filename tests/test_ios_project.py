@@ -83,7 +83,7 @@ def test_ios_build_identity_and_deployment_target_are_fixed():
     assert tests_debug["PRODUCT_BUNDLE_IDENTIFIER"] == "com.gmstd.flightmargin.dev.tests"
     assert tests_release["PRODUCT_BUNDLE_IDENTIFIER"] == "io.github.gmstd66.flightmargin.tests"
     assert app_debug["MARKETING_VERSION"] == app_release["MARKETING_VERSION"] == "0.1.0"
-    assert app_debug["CURRENT_PROJECT_VERSION"] == app_release["CURRENT_PROJECT_VERSION"] == "1"
+    assert app_debug["CURRENT_PROJECT_VERSION"] == app_release["CURRENT_PROJECT_VERSION"] == "2"
     assert app_debug["CODE_SIGN_STYLE"] == "Automatic"
     assert "PROVISIONING_PROFILE_SPECIFIER" not in app_debug
     assert app_release["CODE_SIGN_STYLE"] == "Manual"
@@ -109,7 +109,8 @@ def test_widget_target_app_group_embedding_and_signing_are_configured():
     assert "PROVISIONING_PROFILE_SPECIFIER" not in widget_debug
     assert widget_release["CODE_SIGN_STYLE"] == "Manual"
     assert widget_release["DEVELOPMENT_TEAM"] == "JL2WCD3FDQ"
-    assert "PROVISIONING_PROFILE_SPECIFIER" not in widget_release
+    assert widget_release["PROVISIONING_PROFILE_SPECIFIER"] == "FlightMargin Widget App Store"
+    assert widget_debug["CURRENT_PROJECT_VERSION"] == widget_release["CURRENT_PROJECT_VERSION"] == "2"
     assert "FlightMarginWidget.appex in Embed App Extensions" in project
     assert "dstSubfolderSpec = 13" in project
 

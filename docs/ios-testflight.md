@@ -10,36 +10,47 @@
 - Widget Release bundle: `io.github.gmstd66.flightmargin.widget`
 - App Group: `group.io.github.gmstd66.flightmargin`
 - Marketing version: `0.1.0`
-- Initial build: `1`
+- Accepted checkpoint: `0.1.0 (2)`
 - Distribution target: Internal TestFlight only for the first physical-phone demo
 
 Release app signing remains manual: `iPhone Distribution`, team `JL2WCD3FDQ`,
-and profile `FlightMargin App Store`. Debug remains automatic and does not use
-that profile. The widget Release target is manual but intentionally has no
-fabricated profile specifier until its Apple-side profile exists.
+bundle `io.github.gmstd66.flightmargin`, and profile
+`FlightMargin App Store`. Widget Release signing is also manual:
+`iPhone Distribution`, team `JL2WCD3FDQ`, bundle
+`io.github.gmstd66.flightmargin.widget`, and profile
+`FlightMargin Widget App Store`. Debug remains independent from App Store
+profiles.
 
 No public App Store release is authorized. No external TestFlight testing is
 authorized yet. This COXON task does not contact Apple or App Store Connect and
 does not upload a TestFlight or App Store build.
 
-## Current physical result and pending correction retest
+## Accepted physical result
 
-Build 0.1.0 (1) installed through Internal TestFlight on a physical iPhone,
-paired successfully with the hosted relay, displayed real quota, and preserved
-pairing across relaunch. Relaunch could show offline until pull-to-refresh due
-to competing launch/active foreground-loop starts. I-06B makes loop startup
-idempotent; build 2 must retest relaunch before the correction is closed.
+Internal TestFlight build 0.1.0 (2) installed and launched on a physical iPhone
+and is the accepted checkpoint. I-06B is complete: real hosted manual pairing,
+quota display, pairing persistence, corrected automatic reconnect on relaunch,
+pull-to-refresh, 60-second foreground refresh, background/foreground resume,
+cached offline/stale presentation, and recovery without re-pairing all passed.
+This does not claim background 60-second execution.
 
-## Widget Apple Developer work still required
+I-07A is also complete. The medium Home Screen widget displayed current
+five-hour and weekly utilization and its bounded local five-hour history graph,
+handled fresh/stale/offline-cached states, reflected app refreshes under
+WidgetKit scheduling, shared data through the App Group, and opened
+FlightMargin when tapped. No stronger update cadence than WidgetKit provides
+is claimed.
 
-The following steps have not been performed by this source task:
+## Apple Developer configuration
 
-1. Create App Group `group.io.github.gmstd66.flightmargin`.
-2. Enable it for `io.github.gmstd66.flightmargin`.
-3. Register `io.github.gmstd66.flightmargin.widget`.
-4. Enable the same App Group for that widget identifier.
-5. Regenerate `FlightMargin App Store` with the new App Group entitlement.
-6. Create a widget profile, suggested name `FlightMargin Widget App Store`.
+Apple-side configuration is complete for this checkpoint:
+
+- App Group `group.io.github.gmstd66.flightmargin` exists.
+- Main App ID `io.github.gmstd66.flightmargin` has the App Group entitlement.
+- Widget App ID `io.github.gmstd66.flightmargin.widget` exists and has the same
+  App Group entitlement.
+- Main profile `FlightMargin App Store` was regenerated.
+- Widget profile `FlightMargin Widget App Store` exists.
 
 Existing Apple-side registration for the first app build includes:
 
@@ -49,7 +60,7 @@ Existing Apple-side registration for the first app build includes:
 - The internal TestFlight group `FlightMargin Internal` exists.
 - The owner's App Store Connect account has been added as an internal tester.
 
-The repository now contains the approved AppIcon. No public App Store
+The repository contains the approved AppIcon. No public App Store
 submission or external TestFlight testing is authorized.
 
 ## Privacy and export compliance
@@ -71,26 +82,15 @@ this declaration whenever cryptographic behavior or dependencies change.
 
 ## App icon
 
-The repository's source artwork remains
-`desktop/src-tauri/icons/app-icon.svg`. COXON has no already-installed suitable
-SVG rasterizer, and no package or runtime dependency was added.
+The repository contains the approved iOS AppIcon and the application target is
+configured to use it. Do not change it as part of checkpoint closure.
 
-APP ICON PNG: DEFERRED TO MAC
+## Completed native evidence
 
-Before archiving, create the repository-owned square 1024x1024 iOS icon from
-that source, without transparent rounded outer corners; add it to an
-`AppIcon.appiconset`, and configure the application target to use `AppIcon`.
+Xcode 27.1 native tests passed on the Mac before the archive. The accepted
+build-2 app and widget results above were validated through Internal TestFlight
+on the physical iPhone. They are external validation evidence and are not
+rerun on COXON.
 
-## Native Mac sequence
-
-1. Pull `dev/ios-testflight-demo` on Mac and open with Xcode 27.1.
-2. Complete the App Group/widget identifier/profile steps above.
-3. Assign the new widget profile without changing the app's known-good Release
-   signing or applying App Store profiles to Debug.
-4. Run all native XCTest and Simulator build/test validation.
-5. Manually increment build 1 to build 2.
-6. Archive, validate, and upload Internal TestFlight build 2.
-7. On the physical iPhone, verify paired relaunch immediately reconnects,
-   foreground 60-second refresh, pull-to-refresh, and cached offline recovery.
-8. Add the medium widget and validate current, stale, offline/cached, empty,
-   history graph, reset context, and tap-to-open states.
+No networking, pairing, credentials, device IDs, tokens, prompts, transcripts,
+source code, or agent output are stored in the widget shared snapshot.

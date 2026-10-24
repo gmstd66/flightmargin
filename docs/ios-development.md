@@ -30,12 +30,17 @@ showed the expected stale indication. Cleanup stopped the mock relay and
 removed the Simulator endpoint override. No hosted Supabase operation occurred
 during I-06A validation.
 
-Internal TestFlight build 0.1.0 (1) has now installed on a physical iPhone,
-paired successfully with the hosted relay, displayed real quota, and retained
-pairing across relaunch. Release signing is intentionally manual with team
+Internal TestFlight build 0.1.0 (2) is the accepted physical-device checkpoint
+and completes I-06B. On a real iPhone it installed and launched, paired with
+the hosted relay, displayed real quota, retained pairing across relaunch, and
+performed the corrected automatic foreground reconnect without requiring a
+manual refresh. Pull-to-refresh, 60-second foreground refresh,
+background/foreground resume, cached offline/stale presentation, and recovery
+without re-pairing all passed. Release signing is intentionally manual with team
 `JL2WCD3FDQ`, bundle `io.github.gmstd66.flightmargin`, identity
 `iPhone Distribution`, and profile `FlightMargin App Store`; Debug remains
-automatic and independent. No public App Store release is authorized.
+independent from App Store profiles. No external TestFlight testing or public
+App Store submission/release is authorized.
 
 I-06B hosted diagnostics confirmed that the COXON host relay was **Connected**
 to the production relay endpoint and that the Simulator had
@@ -59,8 +64,8 @@ performing the immediate fetch, then its replacement returned because the
 serialized refresh was still marked active and slept for 60 seconds. Startup
 is now idempotent while a periodic task exists; stop cancels and clears it.
 Pull-to-refresh, cached/offline behavior, persistence, Keychain identity, and
-the relay contract are unchanged. A corrected build-2 physical relaunch retest
-remains pending.
+the relay contract are unchanged. Build 2 passed the corrected physical
+relaunch and complete I-06B validation described above.
 
 I-07A adds `FlightMarginWidget`, a medium-only iOS 17 WidgetKit extension. The
 main app stores only a sanitized `WidgetSnapshot` in App Group
@@ -73,7 +78,18 @@ client source, and uses an honest 15-minute timeline request while displaying
 fresh/stale/offline status because WidgetKit controls actual scheduling.
 Credentials, pairing values, device identifiers, bearer tokens, raw relay
 bodies, prompts, transcripts, source code, and agent output never enter the
-App Group. Native and physical widget validation remain pending.
+App Group. I-07A is complete: on the physical iPhone the widget was available,
+showed current five-hour and weekly utilization and accumulating local history,
+handled fresh/stale/offline-cached states, reflected refreshed app data under
+WidgetKit scheduling, and opened FlightMargin when tapped.
+
+Apple-side configuration is complete for this checkpoint. App Group
+`group.io.github.gmstd66.flightmargin` exists and is enabled for both the main
+App ID and widget App ID `io.github.gmstd66.flightmargin.widget`. The main
+profile `FlightMargin App Store` was regenerated, and widget profile
+`FlightMargin Widget App Store` was created. Widget Release signing is manual
+with `iPhone Distribution`, team `JL2WCD3FDQ`, its widget bundle ID, and that
+widget profile.
 
 The privacy-manifest audit found only direct `UserDefaults` required-reason
 API use and declares `CA92.1`; no tracking or collected-data entry is declared.
@@ -190,39 +206,31 @@ xcrun simctl spawn booted launchctl unsetenv FLIGHTMARGIN_RELAY_ENDPOINT
 I-06A did not create a hosted pairing or contact hosted Supabase. Real hosted
 end-to-end validation belongs to I-06B.
 
-## B. I-06B physical-iPhone correction and retest (in progress)
+## B. I-06B physical-iPhone correction and retest (complete)
 
-Build 0.1.0 (1) proved installation, real hosted pairing and quota, and pairing
-persistence. After native XCTest, archive build 2 and continue with:
+Internal TestFlight build 0.1.0 (2) passed on a physical iPhone:
 
-1. Relaunch the paired app and verify the corrected immediate foreground fetch
-   restores real quota without pull-to-refresh.
-2. Verify repeated active callbacks do not overlap or cancel that request.
-3. Disable connectivity, confirm cached quota remains with an offline/stale
-   indicator, reconnect, and confirm recovery without re-pairing.
-4. Verify foreground 60-second refresh and pull-to-refresh; also confirm the
-   expected background pause and no overlapping requests.
-5. Confirm no OpenAI/Codex credential, prompt, transcript, source, agent output,
-   username, filesystem path, or remote history reaches the iPhone or relay.
+1. Installation, launch, real hosted manual pairing, quota display, and pairing
+   persistence passed.
+2. Relaunch performed the corrected automatic foreground reconnect without
+   pull-to-refresh.
+3. Pull-to-refresh, 60-second foreground refresh, and background/foreground
+   resume passed. This does not claim background 60-second execution.
+4. Cached data remained available with appropriate offline/stale presentation,
+   and connectivity recovery succeeded without re-pairing.
 
-## C. I-07A widget Apple-side setup and validation (pending)
+## C. I-07A widget Apple-side setup and validation (complete)
 
-1. Create App Group `group.io.github.gmstd66.flightmargin`.
-2. Enable it for app identifier `io.github.gmstd66.flightmargin`.
-3. Register widget identifier `io.github.gmstd66.flightmargin.widget`.
-4. Enable the same App Group for the widget identifier.
-5. Regenerate `FlightMargin App Store` because the app entitlement changed.
-6. Create a widget App Store profile, suggested name
-   `FlightMargin Widget App Store`, then assign it to the widget Release target.
-7. Run native tests/builds, add the medium widget on a physical iPhone, and
-   validate current, stale, offline/cached, empty, graph, and tap-to-open states.
-
-These Apple Developer steps are not complete in source validation on COXON.
+The App Group, both entitled App IDs, regenerated main profile, and widget
+profile are complete as recorded above. The medium widget passed physical
+iPhone checks for five-hour/weekly display, bounded local history graph,
+freshness, stale/offline-cached presentation, propagation of refreshed app data
+under WidgetKit scheduling, App Group sharing, and tap-to-open.
 
 The user has an active paid Apple Developer Program membership, so Internal
 TestFlight is the intended remote-Mac path for the first physical-phone demo.
 The explicit App ID, FlightMargin App Store Connect app record, internal
 TestFlight group `FlightMargin Internal`, and internal tester enrollment are
-already complete, and build 0.1.0 (1) completed its initial physical validation
-described above. No external TestFlight testing or public App Store release is
+complete. Build 0.1.0 (2) is the accepted internal physical checkpoint. No
+external TestFlight testing or public App Store submission/release is
 authorized. Backend changes and publication remain out of scope.
