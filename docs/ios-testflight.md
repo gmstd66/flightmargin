@@ -20,6 +20,23 @@ No public App Store release is authorized. No external TestFlight testing is
 authorized yet. This COXON task does not contact Apple or App Store Connect and
 does not upload a TestFlight or App Store build.
 
+## Explicitly pending before the next Xcode session
+
+Apple-side registration for the internal demo is complete:
+
+- Apple Developer App ID `FlightMargin iOS` is registered as the explicit
+  identifier `io.github.gmstd66.flightmargin`.
+- The FlightMargin iOS app record exists in App Store Connect.
+- The internal TestFlight group `FlightMargin Internal` exists.
+- The owner's App Store Connect account has been added as an internal tester.
+
+The remaining pre-Xcode/demo-preparation item is to generate/configure the
+repository-owned 1024x1024 iOS AppIcon from the approved FlightMargin artwork.
+No TestFlight build has been uploaded yet.
+
+After those items, continue with the native Mac sequence below. No public App
+Store submission or external TestFlight testing is part of this pending work.
+
 ## Privacy and export compliance
 
 `PrivacyInfo.xcprivacy` declares the app-private `UserDefaults` access used for
