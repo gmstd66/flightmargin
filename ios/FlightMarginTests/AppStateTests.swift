@@ -151,6 +151,50 @@ final class AppStateTests: XCTestCase {
         XCTAssertEqual(state.phase, .connected)
     }
 
+    func testSuccessfulRefreshUpdatesSanitizedWidgetSnapshotAndReloads() async throws {
+        let defaults = isolatedDefaults()
+        defaults.set(UUID().uuidString, forKey: "paired_host_id")
+        let widgetStore = SpyWidgetStore()
+        let reloader = SpyWidgetReloader()
+        let state = AppState(
+            identityStore: InMemoryDeviceIdentityStore(identity: testIdentity),
+            api: FakeRelayAPI(),
+            defaults: defaults,
+            widgetStore: widgetStore,
+            widgetReloader: reloader
+        )
+
+        await state.refresh()
+
+        XCTAssertEqual(widgetStore.successfulResponses.count, 1)
+        XCTAssertEqual(widgetStore.successfulResponses.first?.0.host.displayName, "COXON")
+        XCTAssertEqual(reloader.reloadCount, 1)
+        XCTAssertFalse(String(describing: WidgetSnapshot.self).lowercased().contains("credential"))
+    }
+
+    func testFailedRefreshOnlyRequestsWidgetReloadWhenCachedStateWasUpdated() async throws {
+        let defaults = isolatedDefaults()
+        defaults.set(UUID().uuidString, forKey: "paired_host_id")
+        let widgetStore = SpyWidgetStore()
+        widgetStore.shouldWrite = false
+        let reloader = SpyWidgetReloader()
+        let api = FakeRelayAPI(quotaResult: .failure(RelayClientError.unavailable))
+        let state = AppState(
+            identityStore: InMemoryDeviceIdentityStore(identity: testIdentity),
+            api: api,
+            defaults: defaults,
+            widgetStore: widgetStore,
+            widgetReloader: reloader
+        )
+
+        await state.refresh()
+
+        XCTAssertEqual(widgetStore.offlineDates.count, 1)
+        XCTAssertEqual(reloader.reloadCount, 0)
+        XCTAssertTrue(state.isPaired)
+        if case .offline = state.phase {} else { XCTFail("Expected offline state") }
+    }
+
     func testResetRemovesIdentityMetadataQuotaAndReturnsUnpaired() async throws {
         let defaults = isolatedDefaults()
         let store = InMemoryDeviceIdentityStore(identity: testIdentity)
@@ -164,5 +208,24 @@ final class AppStateTests: XCTestCase {
         XCTAssertEqual(state.phase, .unpaired)
         XCTAssertNil(defaults.object(forKey: "paired_host_id"))
         XCTAssertNil(defaults.object(forKey: "cached_quota_v1"))
+    }
+
+    func testResetClearsWidgetSnapshotAndReloadsTimeline() throws {
+        let defaults = isolatedDefaults()
+        defaults.set(UUID().uuidString, forKey: "paired_host_id")
+        let widgetStore = SpyWidgetStore()
+        let reloader = SpyWidgetReloader()
+        let state = AppState(
+            identityStore: InMemoryDeviceIdentityStore(identity: testIdentity),
+            api: FakeRelayAPI(),
+            defaults: defaults,
+            widgetStore: widgetStore,
+            widgetReloader: reloader
+        )
+
+        try state.resetPairing()
+
+        XCTAssertEqual(widgetStore.clearCount, 1)
+        XCTAssertEqual(reloader.reloadCount, 1)
     }
 }

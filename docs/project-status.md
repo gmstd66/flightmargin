@@ -353,41 +353,45 @@ with traced connection syscalls proving no attempt to its relay port.
 Application runtime, deployment, and the explicitly confirmed hosted I-05B
 validator retain their existing configuration behavior.
 
-I-05 and I-06A remain closed. I-06B hosted diagnostics confirmed the COXON host
-relay was **Connected** to the production relay endpoint and confirmed
-Simulator internet/hosted-relay connectivity. A real manual pairing reached
-the hosted claim endpoint but was rejected. The earlier source audit found and
-fixed lowercase `device_id` wire encoding while preserving the internal
-`UUID`, credential storage, pairing semantics, relay v1 contract, and logging.
+I-05 and I-06A remain closed. Internal TestFlight build 0.1.0 (1) installed on
+a physical iPhone, paired successfully with the hosted relay, displayed real
+quota, and preserved pairing across relaunch. This validates Keychain identity,
+paired-host persistence, hosted credentials, transport, and manual refresh.
+Relaunch could nevertheless appear offline until pull-to-refresh. Both
+`launch()` and the active scene callback could restart the foreground task; the
+second call canceled the immediate fetch, and its replacement returned through
+the serialization guard before sleeping for 60 seconds. I-06B now makes
+foreground-loop startup idempotent, while stop still cancels and clears the
+task. Cached quota, offline presentation, pull-to-refresh, pairing, Keychain,
+relay v1, and quota semantics are unchanged. Corrected build-2 physical
+relaunch validation remains pending.
 
-Subsequent captured Simulator traffic proved that a previously entered
-full-length manual code was actually transmitted after the user entered a new
-code. `PairingView` had retained ten valid characters after failure, and its
-display formatter's ten-character limit discarded newly appended characters,
-leaving the stale value unchanged. A controlled direct claim against the
-hosted relay independently succeeded, isolating this failure to the iOS manual
-input path. The client now clears the sheet-local manual input on failure
-before presenting the same sanitized sheet-local alert; QR/deep-link errors
-remain app-level, and successful pairing is unchanged.
+I-07A adds the first Home Screen widget as the embedded iOS 17
+`FlightMarginWidget` extension, bundle
+`io.github.gmstd66.flightmargin.widget`, limited to `.systemMedium`. It shows
+five-hour and weekly utilization/remaining values, reset context, explicit
+fresh/stale/offline status, and a compact SwiftUI-native history path. The app
+atomically writes a versioned sanitized snapshot to
+`group.io.github.gmstd66.flightmargin` after successful quota refreshes and
+meaningful cached/offline transitions, then requests a WidgetKit reload. Local
+history is limited to the newest 72 timestamped five-hour samples and exact
+duplicate final points are suppressed. The widget does no networking,
+pairing, or Keychain work; shared data excludes all credentials, tokens,
+device identifiers, raw relay bodies, prompts, transcripts, source code, and
+agent output. Its timeline request is 15 minutes, but actual refresh is
+explicitly system-budgeted.
 
-Native Xcode validation and a fresh hosted Simulator pairing retest remain
-pending before claiming end-to-end success. I-06B is not complete, and no
-physical-device or TestFlight validation has been completed.
-The user has an active paid Apple Developer Program membership, making Internal
-TestFlight the intended remote-Mac distribution path for the first
-physical-phone demo; no external TestFlight testing or public App Store release
-is authorized. The remaining work is native XCTest; fresh hosted QR/manual
-pairing and real quota display; pairing persistence; foreground 60-second and
-pull-to-refresh checks; offline/reconnect recovery; then signing, archive
-validation, and Internal TestFlight upload on the Mac.
-`docs/ios-testflight.md` records the handoff.
-Apple-side registration for the internal demo is complete: the explicit App ID
-`io.github.gmstd66.flightmargin` is registered, the FlightMargin iOS App Store
-Connect record exists, the internal TestFlight group `FlightMargin Internal`
-exists, and the owner's account is enrolled as an internal tester. No TestFlight
-build has been uploaded yet. The remaining pre-Xcode preparation item is to
-generate/configure the 1024x1024 iOS AppIcon. This state does not authorize a
-public App Store submission or external TestFlight testing.
+Release app signing remains the known-good manual configuration using
+`iPhone Distribution`, team `JL2WCD3FDQ`, bundle
+`io.github.gmstd66.flightmargin`, and `FlightMargin App Store`. Debug remains
+automatic and independent. Before build 2, Apple Developer work must create
+App Group `group.io.github.gmstd66.flightmargin`, enable it for the app ID,
+register and enable it for `io.github.gmstd66.flightmargin.widget`, regenerate
+`FlightMargin App Store`, and create a widget profile (suggested name
+`FlightMargin Widget App Store`). None of those Apple-side steps or physical
+widget validation is claimed complete. No external TestFlight testing or
+public App Store release is authorized; `docs/ios-testflight.md` records the
+Mac handoff.
 
 The hosted relay remains live and the host path remains opt-in/default-off.
 The protected `/opt/codex-quota` production installation is unchanged, and

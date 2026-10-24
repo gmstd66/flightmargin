@@ -19,6 +19,8 @@ final class AppState: ObservableObject {
     private let identityStore: DeviceIdentityStoring
     private let api: RelayAPIClientProtocol
     private let defaults: UserDefaults
+    private let widgetStore: WidgetSnapshotWriting
+    private let widgetReloader: WidgetTimelineReloading
     private var refreshTask: Task<Void, Never>?
     private var periodicTask: Task<Void, Never>?
     private var isRefreshing = false
@@ -31,10 +33,14 @@ final class AppState: ObservableObject {
 
     init(identityStore: DeviceIdentityStoring = KeychainDeviceIdentityStore(),
          api: RelayAPIClientProtocol? = nil,
-         defaults: UserDefaults = .standard) {
+         defaults: UserDefaults = .standard,
+         widgetStore: WidgetSnapshotWriting = AppGroupWidgetSnapshotWriter(),
+         widgetReloader: WidgetTimelineReloading = SystemWidgetTimelineReloader()) {
         self.identityStore = identityStore
         self.api = api ?? Self.defaultAPI()
         self.defaults = defaults
+        self.widgetStore = widgetStore
+        self.widgetReloader = widgetReloader
         restoreNonSecretState()
     }
 
@@ -64,6 +70,7 @@ final class AppState: ObservableObject {
     }
 
     func handle(_ url: URL) {
+        if url.scheme == "flightmargin", url.host == "open" { return }
         do {
             let token = try PairingLinkParser.parse(url)
             pair(using: .token(token))
@@ -123,10 +130,17 @@ final class AppState: ObservableObject {
             let response = try await api.fetchQuota(credential: identity.credential)
             guard response.apiVersion == 1 else { throw RelayClientError.unsupportedAPIVersion }
             quota = response
-            lastSuccessfulRefresh = Date()
+            let refreshedAt = Date()
+            lastSuccessfulRefresh = refreshedAt
             cache(response)
+            if widgetStore.recordSuccessfulRefresh(response, refreshedAt: refreshedAt) {
+                widgetReloader.reloadFlightMarginWidget()
+            }
             phase = .connected
         } catch {
+            if widgetStore.markOffline(generatedAt: Date()) {
+                widgetReloader.reloadFlightMarginWidget()
+            }
             phase = .offline(quota == nil
                 ? "Unable to refresh quota."
                 : "Unable to refresh. Showing the last available quota.")
@@ -166,6 +180,9 @@ final class AppState: ObservableObject {
         lastSuccessfulRefresh = nil
         pairingError = nil
         phase = .unpaired
+        if widgetStore.clearSnapshot() {
+            widgetReloader.reloadFlightMarginWidget()
+        }
     }
 
     private func restoreNonSecretState() {

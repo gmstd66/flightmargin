@@ -6,15 +6,25 @@ Notable changes to FlightMargin are documented here. This file summarizes produc
 
 ### Added
 
+- Added I-07A's iOS 17 medium Home Screen widget. It displays five-hour and
+  weekly utilization and remaining percentages, reset context, freshness, and
+  a compact SwiftUI-native graph backed by at most 72 local five-hour samples.
+  The app writes a sanitized snapshot atomically to App Group
+  `group.io.github.gmstd66.flightmargin` and asks WidgetKit to reload after
+  successful refreshes or meaningful cached/offline transitions. The widget
+  has no networking, pairing, or Keychain access and receives no credentials,
+  tokens, device identifiers, raw relay bodies, prompts, transcripts, source,
+  or agent output. WidgetKit scheduling remains system-budgeted; Apple-side
+  App Group, identifier, and regenerated provisioning profiles plus physical
+  validation remain pending.
 - Prepared the native iOS project for an Internal TestFlight demo: Debug keeps
   `com.gmstd.flightmargin.dev`, Release uses
-  `io.github.gmstd66.flightmargin`, automatic signing remains enabled with no
-  development team committed, and the stable `flightmargin` URL scheme is
-  retained. Added the app-target privacy manifest with the app-private
+  `io.github.gmstd66.flightmargin`, and the stable `flightmargin` URL scheme is
+  retained. Release uses the known-good manual distribution configuration
+  while Debug remains independent. Added the app-target privacy manifest with the app-private
   UserDefaults reason `CA92.1` and declared non-exempt encryption use false for
-  the current Apple URLSession/HTTPS-only implementation. Native signing,
-  archive, hosted pairing retest, App Store Connect setup, and upload remain
-  pending on Mac; only Internal TestFlight is intended for the first demo.
+  the current Apple URLSession/HTTPS-only implementation. Only Internal
+  TestFlight is intended for the first demo.
 - Added the I-06A native iPhone companion foundation: an iOS 17 SwiftUI/Xcode
   project with accountless QR/deep-link and manual-code pairing, a stable
   pre-claim device identity protected by ThisDeviceOnly Keychain storage,
@@ -99,6 +109,14 @@ Notable changes to FlightMargin are documented here. This file summarizes produc
 
 ### Fixed
 
+- Made iOS foreground-refresh startup idempotent. Physical iPhone Internal
+  TestFlight build 0.1.0 (1) installed, paired with the hosted relay, displayed
+  real quota, and retained pairing, but relaunch could appear offline until a
+  manual refresh. Repeated launch/active callbacks were canceling the first
+  immediate refresh and replacing it with a loop whose serialized refresh
+  returned early. An existing loop is now retained; stopping still cancels and
+  clears it so a later foreground transition starts a fresh immediate fetch.
+  Corrected physical TestFlight relaunch validation remains pending.
 - Cleared the iOS pairing sheet's manual-code field after a failed claim while
   keeping its sanitized error alert visible. I-06B hosted diagnostics captured
   a previously entered full-length value in the Simulator request: because the

@@ -133,3 +133,30 @@ func isolatedDefaults() -> UserDefaults {
     defaults.removePersistentDomain(forName: suite)
     return defaults
 }
+
+final class SpyWidgetStore: WidgetSnapshotWriting {
+    var successfulResponses: [(QuotaEnvelope, Date)] = []
+    var offlineDates: [Date] = []
+    var shouldWrite = true
+    var clearCount = 0
+
+    func recordSuccessfulRefresh(_ response: QuotaEnvelope, refreshedAt: Date) -> Bool {
+        successfulResponses.append((response, refreshedAt))
+        return shouldWrite
+    }
+
+    func markOffline(generatedAt: Date) -> Bool {
+        offlineDates.append(generatedAt)
+        return shouldWrite
+    }
+
+    func clearSnapshot() -> Bool {
+        clearCount += 1
+        return shouldWrite
+    }
+}
+
+final class SpyWidgetReloader: WidgetTimelineReloading {
+    var reloadCount = 0
+    func reloadFlightMarginWidget() { reloadCount += 1 }
+}

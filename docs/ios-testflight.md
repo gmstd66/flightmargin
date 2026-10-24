@@ -7,22 +7,41 @@
 - Minimum OS: iOS 17.0
 - Debug bundle: `com.gmstd.flightmargin.dev`
 - Release bundle: `io.github.gmstd66.flightmargin`
+- Widget Release bundle: `io.github.gmstd66.flightmargin.widget`
+- App Group: `group.io.github.gmstd66.flightmargin`
 - Marketing version: `0.1.0`
 - Initial build: `1`
 - Distribution target: Internal TestFlight only for the first physical-phone demo
 
-The user has an active paid Apple Developer Program membership. Automatic
-signing remains enabled, but `DEVELOPMENT_TEAM` is intentionally unset until
-the Mac/Xcode step. Apple credentials, certificates, provisioning profiles,
-and account details do not belong in Git.
+Release app signing remains manual: `iPhone Distribution`, team `JL2WCD3FDQ`,
+and profile `FlightMargin App Store`. Debug remains automatic and does not use
+that profile. The widget Release target is manual but intentionally has no
+fabricated profile specifier until its Apple-side profile exists.
 
 No public App Store release is authorized. No external TestFlight testing is
 authorized yet. This COXON task does not contact Apple or App Store Connect and
 does not upload a TestFlight or App Store build.
 
-## Explicitly pending before the next Xcode session
+## Current physical result and pending correction retest
 
-Apple-side registration for the internal demo is complete:
+Build 0.1.0 (1) installed through Internal TestFlight on a physical iPhone,
+paired successfully with the hosted relay, displayed real quota, and preserved
+pairing across relaunch. Relaunch could show offline until pull-to-refresh due
+to competing launch/active foreground-loop starts. I-06B makes loop startup
+idempotent; build 2 must retest relaunch before the correction is closed.
+
+## Widget Apple Developer work still required
+
+The following steps have not been performed by this source task:
+
+1. Create App Group `group.io.github.gmstd66.flightmargin`.
+2. Enable it for `io.github.gmstd66.flightmargin`.
+3. Register `io.github.gmstd66.flightmargin.widget`.
+4. Enable the same App Group for that widget identifier.
+5. Regenerate `FlightMargin App Store` with the new App Group entitlement.
+6. Create a widget profile, suggested name `FlightMargin Widget App Store`.
+
+Existing Apple-side registration for the first app build includes:
 
 - Apple Developer App ID `FlightMargin iOS` is registered as the explicit
   identifier `io.github.gmstd66.flightmargin`.
@@ -30,12 +49,8 @@ Apple-side registration for the internal demo is complete:
 - The internal TestFlight group `FlightMargin Internal` exists.
 - The owner's App Store Connect account has been added as an internal tester.
 
-The remaining pre-Xcode/demo-preparation item is to generate/configure the
-repository-owned 1024x1024 iOS AppIcon from the approved FlightMargin artwork.
-No TestFlight build has been uploaded yet.
-
-After those items, continue with the native Mac sequence below. No public App
-Store submission or external TestFlight testing is part of this pending work.
+The repository now contains the approved AppIcon. No public App Store
+submission or external TestFlight testing is authorized.
 
 ## Privacy and export compliance
 
@@ -68,23 +83,14 @@ that source, without transparent rounded outer corners; add it to an
 
 ## Native Mac sequence
 
-1. Pull `dev/ios-testflight-demo` on Mac.
-2. Run all native XCTest.
-3. Confirm real hosted pairing in Simulator with a fresh pairing session.
-4. Select the paid Apple Developer team in Xcode.
-5. Register/use Release bundle ID if Apple requires registration.
-6. Create the App Store Connect app record if needed.
-7. Archive Release.
-8. Validate archive.
-9. Upload Internal TestFlight build.
-10. Install via TestFlight on physical iPhone.
-11. Perform real QR pairing.
-12. Perform real manual-code pairing.
-13. Display real quota.
-14. Verify pairing across relaunch.
-15. Verify foreground 60-second refresh.
-16. Verify pull-to-refresh.
-17. Verify offline cached display and reconnect recovery.
-
-Hosted pairing must be retested after the UUID casing correction before I-06B
-or end-to-end success can be claimed.
+1. Pull `dev/ios-testflight-demo` on Mac and open with Xcode 27.1.
+2. Complete the App Group/widget identifier/profile steps above.
+3. Assign the new widget profile without changing the app's known-good Release
+   signing or applying App Store profiles to Debug.
+4. Run all native XCTest and Simulator build/test validation.
+5. Manually increment build 1 to build 2.
+6. Archive, validate, and upload Internal TestFlight build 2.
+7. On the physical iPhone, verify paired relaunch immediately reconnects,
+   foreground 60-second refresh, pull-to-refresh, and cached offline recovery.
+8. Add the medium widget and validate current, stale, offline/cached, empty,
+   history graph, reset context, and tap-to-open states.

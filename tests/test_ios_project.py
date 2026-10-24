@@ -10,6 +10,9 @@ IOS = ROOT / "ios"
 PROJECT = IOS / "FlightMargin.xcodeproj" / "project.pbxproj"
 INFO = IOS / "FlightMargin" / "Resources" / "Info.plist"
 PRIVACY = IOS / "FlightMargin" / "Resources" / "PrivacyInfo.xcprivacy"
+APP_ENTITLEMENTS = IOS / "FlightMargin" / "Resources" / "FlightMargin.entitlements"
+WIDGET_ENTITLEMENTS = IOS / "FlightMarginWidget" / "FlightMarginWidget.entitlements"
+APP_GROUP = "group.io.github.gmstd66.flightmargin"
 PRODUCTION_ENDPOINT = (
     "https://samcdyrwfwrlxzypzgmj.supabase.co/functions/v1/relay-v1"
 )
@@ -29,10 +32,13 @@ def test_every_swift_source_is_referenced_and_built():
     project = PROJECT.read_text(encoding="utf-8")
     swift_files = list((IOS / "FlightMargin").rglob("*.swift")) + list(
         (IOS / "FlightMarginTests").glob("*.swift")
+    ) + list((IOS / "FlightMarginWidget").glob("*.swift")) + list(
+        (IOS / "Shared").glob("*.swift")
     )
     assert swift_files
     for path in swift_files:
-        assert project.count(f"{path.name} in Sources") == 1, path
+        expected_builds = 2 if path.name == "WidgetSnapshot.swift" else 1
+        assert project.count(f"{path.name} in Sources") == expected_builds, path
         assert project.count(f"/* {path.name} */") >= 2, path
 
 
@@ -78,9 +84,68 @@ def test_ios_build_identity_and_deployment_target_are_fixed():
     assert tests_release["PRODUCT_BUNDLE_IDENTIFIER"] == "io.github.gmstd66.flightmargin.tests"
     assert app_debug["MARKETING_VERSION"] == app_release["MARKETING_VERSION"] == "0.1.0"
     assert app_debug["CURRENT_PROJECT_VERSION"] == app_release["CURRENT_PROJECT_VERSION"] == "1"
-    assert all(settings["CODE_SIGN_STYLE"] == "Automatic" for settings in configurations)
-    assert "DEVELOPMENT_TEAM" not in project
+    assert app_debug["CODE_SIGN_STYLE"] == "Automatic"
+    assert "PROVISIONING_PROFILE_SPECIFIER" not in app_debug
+    assert app_release["CODE_SIGN_STYLE"] == "Manual"
+    assert app_release["CODE_SIGN_IDENTITY"] == "iPhone Distribution"
+    assert app_release["DEVELOPMENT_TEAM"] == "JL2WCD3FDQ"
+    assert app_release["PROVISIONING_PROFILE_SPECIFIER"] == "FlightMargin App Store"
+    assert tests_debug["CODE_SIGN_STYLE"] == tests_release["CODE_SIGN_STYLE"] == "Automatic"
     assert "SUPPORTED_PLATFORMS = \"iphoneos iphonesimulator\"" in project
+
+
+def test_widget_target_app_group_embedding_and_signing_are_configured():
+    project = PROJECT.read_text(encoding="utf-8")
+    widget_debug = _build_settings(project, "E50000000000000000000007")
+    widget_release = _build_settings(project, "E50000000000000000000008")
+
+    assert re.search(
+        r"[A-F0-9]{24} /\* FlightMarginWidget \*/ = \{isa = PBXNativeTarget",
+        project,
+    )
+    assert widget_debug["PRODUCT_BUNDLE_IDENTIFIER"] == "com.gmstd.flightmargin.dev.widget"
+    assert widget_release["PRODUCT_BUNDLE_IDENTIFIER"] == "io.github.gmstd66.flightmargin.widget"
+    assert widget_debug["CODE_SIGN_STYLE"] == "Automatic"
+    assert "PROVISIONING_PROFILE_SPECIFIER" not in widget_debug
+    assert widget_release["CODE_SIGN_STYLE"] == "Manual"
+    assert widget_release["DEVELOPMENT_TEAM"] == "JL2WCD3FDQ"
+    assert "PROVISIONING_PROFILE_SPECIFIER" not in widget_release
+    assert "FlightMarginWidget.appex in Embed App Extensions" in project
+    assert "dstSubfolderSpec = 13" in project
+
+    for entitlements in (APP_ENTITLEMENTS, WIDGET_ENTITLEMENTS):
+        with entitlements.open("rb") as handle:
+            values = plistlib.load(handle)
+        assert values["com.apple.security.application-groups"] == [APP_GROUP]
+
+
+def test_widget_is_medium_only_and_has_no_network_or_keychain_access():
+    widget_source = (IOS / "FlightMarginWidget" / "FlightMarginWidget.swift").read_text(
+        encoding="utf-8"
+    )
+    project = PROJECT.read_text(encoding="utf-8")
+    widget_phase = re.search(
+        r"F30000000000000000000003 = \{isa = PBXSourcesBuildPhase;.*?files = \((.*?)\);",
+        project,
+    )
+    assert widget_phase is not None
+    assert ".supportedFamilies([.systemMedium])" in widget_source
+    assert "URLSession" not in widget_source
+    assert "RelayAPIClient.swift" not in widget_phase.group(1)
+    assert "KeychainStore.swift" not in widget_phase.group(1)
+    assert "DeviceIdentity.swift" not in widget_phase.group(1)
+
+
+def test_shared_widget_snapshot_declares_only_sanitized_display_fields():
+    source = (IOS / "Shared" / "WidgetSnapshot.swift").read_text(encoding="utf-8")
+    forbidden = (
+        "credential", "pairingToken", "manualCode", "deviceID", "deviceUUID",
+        "bearerToken", "requestBody", "responseBody", "prompt", "transcript",
+    )
+    for name in forbidden:
+        assert name not in source
+    assert "historyLimit = 72" in source
+    assert "options: .atomic" in source
 
 
 def test_flightmargin_url_scheme_is_registered():
