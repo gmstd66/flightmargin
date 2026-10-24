@@ -92,6 +92,65 @@ final class AppStateTests: XCTestCase {
         XCTAssertEqual(api.fetchCount, 1)
     }
 
+    func testRepeatedForegroundStartsKeepOneImmediateRefreshAndExistingLoop() async throws {
+        let defaults = isolatedDefaults()
+        defaults.set(UUID().uuidString, forKey: "paired_host_id")
+        let api = FakeRelayAPI(); api.fetchDelay = .milliseconds(150)
+        let state = AppState(
+            identityStore: InMemoryDeviceIdentityStore(identity: testIdentity),
+            api: api,
+            defaults: defaults
+        )
+
+        state.startForegroundRefresh()
+        try await Task.sleep(for: .milliseconds(25))
+        state.startForegroundRefresh()
+        try await Task.sleep(for: .milliseconds(200))
+
+        XCTAssertEqual(api.fetchCount, 1)
+        XCTAssertEqual(state.phase, .connected)
+        state.stopForegroundRefresh()
+    }
+
+    func testStoppingForegroundRefreshAllowsLaterNewStart() async throws {
+        let defaults = isolatedDefaults()
+        defaults.set(UUID().uuidString, forKey: "paired_host_id")
+        let api = FakeRelayAPI()
+        let state = AppState(
+            identityStore: InMemoryDeviceIdentityStore(identity: testIdentity),
+            api: api,
+            defaults: defaults
+        )
+
+        state.startForegroundRefresh()
+        try await Task.sleep(for: .milliseconds(50))
+        state.stopForegroundRefresh()
+        state.startForegroundRefresh()
+        try await Task.sleep(for: .milliseconds(50))
+
+        XCTAssertEqual(api.fetchCount, 2)
+        state.stopForegroundRefresh()
+    }
+
+    func testManualRefreshStillFetchesAfterForegroundLoopStops() async throws {
+        let defaults = isolatedDefaults()
+        defaults.set(UUID().uuidString, forKey: "paired_host_id")
+        let api = FakeRelayAPI()
+        let state = AppState(
+            identityStore: InMemoryDeviceIdentityStore(identity: testIdentity),
+            api: api,
+            defaults: defaults
+        )
+
+        state.startForegroundRefresh()
+        try await Task.sleep(for: .milliseconds(50))
+        state.stopForegroundRefresh()
+        await state.refresh()
+
+        XCTAssertEqual(api.fetchCount, 2)
+        XCTAssertEqual(state.phase, .connected)
+    }
+
     func testResetRemovesIdentityMetadataQuotaAndReturnsUnpaired() async throws {
         let defaults = isolatedDefaults()
         let store = InMemoryDeviceIdentityStore(identity: testIdentity)

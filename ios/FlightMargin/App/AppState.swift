@@ -134,8 +134,7 @@ final class AppState: ObservableObject {
     }
 
     func startForegroundRefresh() {
-        guard isPaired else { return }
-        periodicTask?.cancel()
+        guard isPaired, periodicTask == nil else { return }
         periodicTask = Task { [weak self] in
             await self?.refresh()
             while !Task.isCancelled {
