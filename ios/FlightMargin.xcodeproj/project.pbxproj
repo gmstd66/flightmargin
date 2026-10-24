@@ -29,6 +29,7 @@
 		A20000000000000000000004 /* EndpointPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000004 /* EndpointPolicyTests.swift */; };
 		A20000000000000000000005 /* RelayAPIClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000005 /* RelayAPIClientTests.swift */; };
 		A20000000000000000000006 /* AppStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000006 /* AppStateTests.swift */; };
+		CFB7E11C308B6CD600EC423E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CFB7E11B308B6CD600EC423E /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -62,6 +63,7 @@
 		B20000000000000000000006 /* AppStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStateTests.swift; sourceTree = "<group>"; };
 		C10000000000000000000001 /* FlightMargin.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FlightMargin.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C10000000000000000000002 /* FlightMarginTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FlightMarginTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		CFB7E11B308B6CD600EC423E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -78,7 +80,7 @@
 		E30000000000000000000006 /* Security */ = {isa = PBXGroup; path = Security; sourceTree = "<group>"; children = (B10000000000000000000007 /* DeviceIdentity.swift */, B10000000000000000000008 /* DeviceIdentityStore.swift */, B10000000000000000000009 /* KeychainStore.swift */); };
 		E30000000000000000000007 /* Pairing */ = {isa = PBXGroup; path = Pairing; sourceTree = "<group>"; children = (B1000000000000000000000A /* PairingLinkParser.swift */, B1000000000000000000000B /* ManualCode.swift */); };
 		E30000000000000000000008 /* Views */ = {isa = PBXGroup; path = Views; sourceTree = "<group>"; children = (B1000000000000000000000C /* RootView.swift */, B1000000000000000000000D /* UnpairedView.swift */, B1000000000000000000000E /* PairingView.swift */, B1000000000000000000000F /* DashboardView.swift */, B10000000000000000000010 /* SettingsView.swift */); };
-		E30000000000000000000009 /* Resources */ = {isa = PBXGroup; path = Resources; sourceTree = "<group>"; children = (B10000000000000000000011 /* Info.plist */, B10000000000000000000012 /* PrivacyInfo.xcprivacy */); };
+		E30000000000000000000009 /* Resources */ = {isa = PBXGroup; path = Resources; sourceTree = "<group>"; children = (B10000000000000000000011 /* Info.plist */, B10000000000000000000012 /* PrivacyInfo.xcprivacy */, CFB7E11B308B6CD600EC423E /* Assets.xcassets */); };
 		E3000000000000000000000A /* FlightMarginTests */ = {isa = PBXGroup; path = FlightMarginTests; sourceTree = "<group>"; children = (B20000000000000000000001 /* TestSupport.swift */, B20000000000000000000002 /* DeviceIdentityTests.swift */, B20000000000000000000003 /* PairingInputTests.swift */, B20000000000000000000004 /* EndpointPolicyTests.swift */, B20000000000000000000005 /* RelayAPIClientTests.swift */, B20000000000000000000006 /* AppStateTests.swift */); };
 		E3000000000000000000000B /* Products */ = {isa = PBXGroup; name = Products; sourceTree = "<group>"; children = (C10000000000000000000001 /* FlightMargin.app */, C10000000000000000000002 /* FlightMarginTests.xctest */); };
 /* End PBXGroup section */
@@ -93,7 +95,7 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		F20000000000000000000001 = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (A10000000000000000000012 /* PrivacyInfo.xcprivacy in Resources */); runOnlyForDeploymentPostprocessing = 0; };
+		F20000000000000000000001 = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (CFB7E11C308B6CD600EC423E /* Assets.xcassets in Resources */, A10000000000000000000012 /* PrivacyInfo.xcprivacy in Resources */); runOnlyForDeploymentPostprocessing = 0; };
 		F20000000000000000000002 = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXResourcesBuildPhase section */
 
@@ -107,8 +109,8 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		E50000000000000000000001 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 1; GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = FlightMargin/Resources/Info.plist; IPHONEOS_DEPLOYMENT_TARGET = 17.0; MARKETING_VERSION = 0.1.0; PRODUCT_BUNDLE_IDENTIFIER = com.gmstd.flightmargin.dev; PRODUCT_NAME = "$(TARGET_NAME)"; SDKROOT = iphoneos; SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"; SUPPORTS_MACCATALYST = NO; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = 1; }; name = Debug; };
-		E50000000000000000000002 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 1; GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = FlightMargin/Resources/Info.plist; IPHONEOS_DEPLOYMENT_TARGET = 17.0; MARKETING_VERSION = 0.1.0; PRODUCT_BUNDLE_IDENTIFIER = io.github.gmstd66.flightmargin; PRODUCT_NAME = "$(TARGET_NAME)"; SDKROOT = iphoneos; SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"; SUPPORTS_MACCATALYST = NO; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = 1; }; name = Release; };
+		E50000000000000000000001 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 1; GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = FlightMargin/Resources/Info.plist; IPHONEOS_DEPLOYMENT_TARGET = 17.0; MARKETING_VERSION = 0.1.0; PRODUCT_BUNDLE_IDENTIFIER = com.gmstd.flightmargin.dev; PRODUCT_NAME = "$(TARGET_NAME)"; SDKROOT = iphoneos; SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"; SUPPORTS_MACCATALYST = NO; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = 1; }; name = Debug; };
+		E50000000000000000000002 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 1; GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = FlightMargin/Resources/Info.plist; IPHONEOS_DEPLOYMENT_TARGET = 17.0; MARKETING_VERSION = 0.1.0; PRODUCT_BUNDLE_IDENTIFIER = io.github.gmstd66.flightmargin; PRODUCT_NAME = "$(TARGET_NAME)"; SDKROOT = iphoneos; SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"; SUPPORTS_MACCATALYST = NO; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = 1; }; name = Release; };
 		E50000000000000000000003 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {BUNDLE_LOADER = "$(TEST_HOST)"; CODE_SIGN_STYLE = Automatic; GENERATE_INFOPLIST_FILE = YES; IPHONEOS_DEPLOYMENT_TARGET = 17.0; PRODUCT_BUNDLE_IDENTIFIER = com.gmstd.flightmargin.dev.tests; PRODUCT_NAME = "$(TARGET_NAME)"; SDKROOT = iphoneos; SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = 1; TEST_HOST = "$(BUILT_PRODUCTS_DIR)/FlightMargin.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/FlightMargin"; }; name = Debug; };
 		E50000000000000000000004 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {BUNDLE_LOADER = "$(TEST_HOST)"; CODE_SIGN_STYLE = Automatic; GENERATE_INFOPLIST_FILE = YES; IPHONEOS_DEPLOYMENT_TARGET = 17.0; PRODUCT_BUNDLE_IDENTIFIER = io.github.gmstd66.flightmargin.tests; PRODUCT_NAME = "$(TARGET_NAME)"; SDKROOT = iphoneos; SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = 1; TEST_HOST = "$(BUILT_PRODUCTS_DIR)/FlightMargin.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/FlightMargin"; }; name = Release; };
 		E50000000000000000000005 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {ALWAYS_SEARCH_USER_PATHS = NO; CLANG_ENABLE_MODULES = YES; CLANG_ENABLE_OBJC_ARC = YES; CLANG_WARN_BOOL_CONVERSION = YES; CLANG_WARN_CONSTANT_CONVERSION = YES; CLANG_WARN_DOCUMENTATION_COMMENTS = YES; CLANG_WARN_EMPTY_BODY = YES; CLANG_WARN_ENUM_CONVERSION = YES; CLANG_WARN_INFINITE_RECURSION = YES; CLANG_WARN_INT_CONVERSION = YES; CLANG_WARN_OBJC_LITERAL_CONVERSION = YES; CLANG_WARN_RANGE_LOOP_ANALYSIS = YES; CLANG_WARN_STRICT_PROTOTYPES = YES; CLANG_WARN_SUSPICIOUS_MOVE = YES; DEBUG_INFORMATION_FORMAT = dwarf; ENABLE_TESTABILITY = YES; GCC_C_LANGUAGE_STANDARD = gnu17; GCC_OPTIMIZATION_LEVEL = 0; GCC_PREPROCESSOR_DEFINITIONS = ("DEBUG=1", "$(inherited)"); MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE; ONLY_ACTIVE_ARCH = YES; SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG; SWIFT_OPTIMIZATION_LEVEL = "-Onone"; }; name = Debug; };
