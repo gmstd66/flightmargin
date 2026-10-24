@@ -6,6 +6,26 @@ Notable changes to FlightMargin are documented here. This file summarizes produc
 
 ### Added
 
+- Added I-07A's iOS 17 medium Home Screen widget. It displays five-hour and
+  weekly utilization and remaining percentages, reset context, freshness, and
+  a compact SwiftUI-native graph backed by at most 72 local five-hour samples.
+  The app writes a sanitized snapshot atomically to App Group
+  `group.io.github.gmstd66.flightmargin` and asks WidgetKit to reload after
+  successful refreshes or meaningful cached/offline transitions. The widget
+  has no networking, pairing, or Keychain access and receives no credentials,
+  tokens, device identifiers, raw relay bodies, prompts, transcripts, source,
+  or agent output. WidgetKit scheduling remains system-budgeted. Apple-side
+  configuration is complete, and Internal TestFlight build 0.1.0 (2) passed
+  physical-iPhone validation of the current, stale, offline/cached, history
+  graph, app-refresh propagation, and tap-to-open states.
+- Prepared the native iOS project for an Internal TestFlight demo: Debug keeps
+  `com.gmstd.flightmargin.dev`, Release uses
+  `io.github.gmstd66.flightmargin`, and the stable `flightmargin` URL scheme is
+  retained. Release uses the known-good manual distribution configuration
+  while Debug remains independent. Added the app-target privacy manifest with the app-private
+  UserDefaults reason `CA92.1` and declared non-exempt encryption use false for
+  the current Apple URLSession/HTTPS-only implementation. Only Internal
+  TestFlight is intended for the first demo.
 - Added the I-06A native iPhone companion foundation: an iOS 17 SwiftUI/Xcode
   project with accountless QR/deep-link and manual-code pairing, a stable
   pre-claim device identity protected by ThisDeviceOnly Keychain storage,
@@ -17,9 +37,10 @@ Notable changes to FlightMargin are documented here. This file summarizes produc
   an iPhone 16 Pro Simulator, all 19 XCTest cases passed, and loopback-only
   validation passed for warm/cold deep links, Keychain persistence and reset
   rotation, successful mock pairing/quota/dashboard display, and offline
-  recovery. I-06B physical-device and real hosted pairing remain. No backend
+  recovery. Physical-device and real hosted pairing were deferred to I-06B. No backend
   contract, hosted operation, production, release, signing, TestFlight, or App
-  Store change was made.
+  Store change was made in I-06A; I-06B later completed the physical-device
+  and real hosted-pairing validation in Internal TestFlight build 0.1.0 (2).
 - Added the manual-only I-05B validation workflow for independent hosted
   public-rate-limit checks and native Windows DPAPI/package checks. Hosted
   cleanup snapshots complete rate-bucket primary keys and deletes only newly
@@ -90,6 +111,31 @@ Notable changes to FlightMargin are documented here. This file summarizes produc
 
 ### Fixed
 
+- Made iOS foreground-refresh startup idempotent. Physical iPhone Internal
+  TestFlight build 0.1.0 (1) installed, paired with the hosted relay, displayed
+  real quota, and retained pairing, but relaunch could appear offline until a
+  manual refresh. Repeated launch/active callbacks were canceling the first
+  immediate refresh and replacing it with a loop whose serialized refresh
+  returned early. An existing loop is now retained; stopping still cancels and
+  clears it so a later foreground transition starts a fresh immediate fetch.
+  Internal TestFlight build 0.1.0 (2) passed the corrected physical relaunch,
+  60-second foreground refresh, background/foreground resume, pull-to-refresh,
+  cached offline presentation, and reconnect-without-re-pairing checks.
+- Cleared the iOS pairing sheet's manual-code field after a failed claim while
+  keeping its sanitized error alert visible. I-06B hosted diagnostics captured
+  a previously entered full-length value in the Simulator request: because the
+  field retained ten valid characters, display formatting discarded newly
+  appended characters at its ten-character limit. A separate direct hosted
+  claim succeeded, isolating the defect to the iOS manual-input path. The
+  subsequent native validation and build-2 physical hosted pairing passed;
+  I-06B is complete.
+- Encoded iOS pairing-claim `device_id` values as canonical lowercase UUID
+  text while preserving the internal `UUID` model. This fixes the concrete
+  casing mismatch found after I-06B1 reached the hosted claim endpoint, without
+  changing relay v1, validation, credentials, pairing semantics, or logging.
+  Native fixtures now contain A-F and assert exact lowercase token/manual
+  payloads plus response UUID comparison. Subsequent native Xcode validation
+  and build-2 physical hosted pairing passed; I-06B is complete.
 - Reflowed visible desktop Pace, Full Resets, and Account cards to fill their
   row when one or more panels are hidden, while retaining the compact height.
 - Kept failed manual-code pairing errors visible in the iOS pairing sheet until

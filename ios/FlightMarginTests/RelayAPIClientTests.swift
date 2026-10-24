@@ -14,16 +14,17 @@ final class RelayAPIClientTests: XCTestCase {
             XCTAssertEqual(Set(json.keys), Set(["pairing_token", "device_id", "display_name", "platform", "credential"]))
             XCTAssertEqual(json["pairing_token"] as? String, token)
             XCTAssertNil(json["manual_code"])
-            XCTAssertEqual(json["device_id"] as? String, testIdentity.deviceID.uuidString)
+            XCTAssertEqual(json["device_id"] as? String, "aabbccdd-eeff-4a4b-8c8d-aabbccddeeff")
             XCTAssertEqual(json["display_name"] as? String, "iPhone")
             XCTAssertEqual(json["platform"] as? String, "ios")
             XCTAssertEqual(json["credential"] as? String, testIdentity.credential)
-            let body = #"{"api_version":1,"paired":true,"device_id":"44444444-4444-4444-8444-444444444444","host_id":"11111111-1111-4111-8111-111111111111"}"#
+            let body = #"{"api_version":1,"paired":true,"device_id":"aabbccdd-eeff-4a4b-8c8d-aabbccddeeff","host_id":"11111111-1111-4111-8111-111111111111"}"#
             return (response(request), Data(body.utf8))
         }
         let client = try RelayAPIClient(session: MockURLProtocol.session())
         let result = try await client.claim(method: .token(token), identity: testIdentity, displayName: "iPhone")
         XCTAssertTrue(result.paired)
+        XCTAssertEqual(result.deviceID, testIdentity.deviceID)
     }
 
     func testManualClaimContainsNoToken() async throws {
@@ -34,15 +35,16 @@ final class RelayAPIClientTests: XCTestCase {
             XCTAssertEqual(Set(json.keys), Set(["manual_code", "device_id", "display_name", "platform", "credential"]))
             XCTAssertEqual(json["manual_code"] as? String, "01234-56789")
             XCTAssertNil(json["pairing_token"])
-            XCTAssertEqual(json["device_id"] as? String, testIdentity.deviceID.uuidString)
+            XCTAssertEqual(json["device_id"] as? String, "aabbccdd-eeff-4a4b-8c8d-aabbccddeeff")
             XCTAssertEqual(json["display_name"] as? String, "iPhone")
             XCTAssertEqual(json["platform"] as? String, "ios")
             XCTAssertEqual(json["credential"] as? String, testIdentity.credential)
-            let body = #"{"api_version":1,"paired":true,"device_id":"44444444-4444-4444-8444-444444444444","host_id":"11111111-1111-4111-8111-111111111111"}"#
+            let body = #"{"api_version":1,"paired":true,"device_id":"aabbccdd-eeff-4a4b-8c8d-aabbccddeeff","host_id":"11111111-1111-4111-8111-111111111111"}"#
             return (response(request), Data(body.utf8))
         }
-        _ = try await RelayAPIClient(session: MockURLProtocol.session()).claim(
+        let result = try await RelayAPIClient(session: MockURLProtocol.session()).claim(
             method: .manualCode("01234-56789"), identity: testIdentity, displayName: "iPhone")
+        XCTAssertEqual(result.deviceID, testIdentity.deviceID)
     }
 
     func testQuotaBearerAndNullableFieldsDecode() async throws {

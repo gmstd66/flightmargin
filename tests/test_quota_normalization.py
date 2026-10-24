@@ -80,6 +80,30 @@ def test_normalize_handles_missing_five_hour_window():
     assert result["weekly_used"] == 25
 
 
+def test_normalize_ignores_malformed_primary_window():
+    raw = sample_response()
+    raw["limits"]["primary"] = "malformed"
+
+    result = normalize_rate_limits(raw)
+
+    assert result["five_hour_used"] is None
+    assert result["five_hour_reset_at"] is None
+    assert result["weekly_used"] == 25
+    assert result["weekly_reset_at"] == 1789494339
+
+
+def test_normalize_ignores_malformed_secondary_window():
+    raw = sample_response()
+    raw["limits"]["secondary"] = ["malformed"]
+
+    result = normalize_rate_limits(raw)
+
+    assert result["five_hour_used"] == 42
+    assert result["five_hour_reset_at"] == 1788999919
+    assert result["weekly_used"] is None
+    assert result["weekly_reset_at"] is None
+
+
 def test_normalize_handles_missing_reset_credits():
     raw = sample_response()
     raw["reset_credits"] = {}

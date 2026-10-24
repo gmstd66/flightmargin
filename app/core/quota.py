@@ -12,7 +12,7 @@ def _find_window(
     for key in ("primary", "secondary"):
         window = snapshot.get(key)
 
-        if not window:
+        if not isinstance(window, dict):
             continue
 
         if window.get("windowDurationMins") == duration_minutes:

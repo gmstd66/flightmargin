@@ -25,7 +25,8 @@ def window_metrics(
     if used is None or reset_at is None:
         return None
 
-    now = now or time.time()
+    if now is None:
+        now = time.time()
 
     duration_seconds = (
         duration_minutes * 60

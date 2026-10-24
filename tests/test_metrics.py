@@ -1,3 +1,4 @@
+import app.core.metrics as metrics_module
 from app.core.metrics import enrich_sample, quota_state, window_metrics
 
 
@@ -142,6 +143,20 @@ def test_seconds_until_reset():
     )
 
     assert result["seconds_until_reset"] == 4 * 60 * 60
+
+
+def test_explicit_zero_now_is_preserved(monkeypatch):
+    monkeypatch.setattr(metrics_module.time, "time", lambda: 30)
+
+    result = window_metrics(
+        used=20,
+        reset_at=60,
+        duration_minutes=1,
+        now=0,
+    )
+
+    assert result["elapsed_percent"] == 0
+    assert result["seconds_until_reset"] == 60
 
 
 def test_missing_window_returns_none():

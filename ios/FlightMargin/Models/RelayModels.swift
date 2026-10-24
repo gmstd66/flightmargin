@@ -16,6 +16,16 @@ struct PairingClaimRequest: Encodable, Equatable {
         case platform
         case credential
     }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encodeIfPresent(pairingToken, forKey: .pairingToken)
+        try container.encodeIfPresent(manualCode, forKey: .manualCode)
+        try container.encode(deviceID.uuidString.lowercased(), forKey: .deviceID)
+        try container.encode(displayName, forKey: .displayName)
+        try container.encode(platform, forKey: .platform)
+        try container.encode(credential, forKey: .credential)
+    }
 }
 
 struct PairingClaimResponse: Decodable, Equatable {

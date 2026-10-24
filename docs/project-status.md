@@ -1,8 +1,8 @@
 # FlightMargin — Project Status
 
-Updated: 2026-10-02
+Updated: 2026-10-24
 
-Branch: `develop`
+Canonical development branch: `develop`
 
 This is the primary continuity record. Read it with `AGENTS.md` and verify it
 against the working tree and Git history before making changes.
@@ -62,7 +62,7 @@ The Windows shell communicates with its sidecar on an OS-assigned loopback
 port. The Linux browser deployment has no application-level authentication and
 must stay on localhost or a trusted private network.
 
-## Mobile companion relay — I-01 through I-06A
+## Mobile companion relay and iPhone companion — I-01 through I-07A
 
 The approved mobile-companion architecture uses a central Supabase relay so the
 iPhone requires no VPN, port forwarding, third-party user account, router
@@ -353,16 +353,52 @@ with traced connection syscalls proving no attempt to its relay port.
 Application runtime, deployment, and the explicitly confirmed hosted I-05B
 validator retain their existing configuration behavior.
 
-I-05 and I-06A are therefore closed. The next work is I-06B: configure
-development signing on the Mac; install on a physical iPhone; enable Mobile
-Relay on a real host; verify a real hosted quota upload; create a real QR/manual
-pairing session; scan the QR in Camera; open `flightmargin://pair/v1`; claim and
-display real quota; repeat with manual pairing; verify pairing across relaunch;
-exercise offline/reconnect recovery, foreground 60-second refresh, and
-pull-to-refresh; and confirm that no OpenAI/Codex credential or prohibited data
-reaches the phone or relay. The client continues to consume the validated v1
-API without changing its backend contract. TestFlight and App Store work are
-not part of I-06B.
+I-05, I-06A, and I-06B are closed. Internal TestFlight build 0.1.0 (2) is the
+accepted physical-iPhone checkpoint. It installed and launched, completed real
+hosted manual pairing, displayed real quota, retained pairing, and performed
+the corrected automatic foreground reconnect on relaunch. Pull-to-refresh,
+60-second foreground refresh, background/foreground resume, cached
+offline/stale presentation, and reconnect recovery without re-pairing passed.
+This is foreground periodic refresh, not a claim of background 60-second
+execution.
+
+The concise diagnostic history is retained: pairing-claim UUIDs needed
+canonical lowercase wire encoding; the manual-code sheet could retain a stale
+full-length value while Simulator/remote typing appended characters that were
+discarded at the display limit; and competing launch/active callbacks exposed
+a foreground-refresh lifecycle race. The lowercase encoding, field clearing,
+and idempotent task startup corrections were covered by Xcode 27.1 validation,
+and the final build-2 physical result is PASS.
+
+I-07A is closed. It adds the first Home Screen widget as the embedded iOS 17
+`FlightMarginWidget` extension, bundle
+`io.github.gmstd66.flightmargin.widget`, limited to `.systemMedium`. It shows
+five-hour and weekly utilization/remaining values, reset context, explicit
+fresh/stale/offline status, and a compact SwiftUI-native history path. The app
+atomically writes a versioned sanitized snapshot to
+`group.io.github.gmstd66.flightmargin` after successful quota refreshes and
+meaningful cached/offline transitions, then requests a WidgetKit reload. Local
+history is limited to the newest 72 timestamped five-hour samples and exact
+duplicate final points are suppressed. The widget does no networking,
+pairing, or Keychain work; shared data excludes all credentials, tokens,
+device identifiers, raw relay bodies, prompts, transcripts, source code, and
+agent output. Its timeline request is 15 minutes, but actual refresh is
+explicitly system-budgeted. Physical-iPhone validation passed for availability,
+current five-hour and weekly utilization, accumulating bounded local history,
+freshness, stale/offline-cached presentation, propagation of app refreshes
+under WidgetKit scheduling, App Group sharing, and tap-to-open behavior.
+
+Release app signing remains the known-good manual configuration using
+`iPhone Distribution`, team `JL2WCD3FDQ`, bundle
+`io.github.gmstd66.flightmargin`, and `FlightMargin App Store`. Debug remains
+independent from App Store profiles. Widget Release signing is manual using
+the same identity and team, bundle `io.github.gmstd66.flightmargin.widget`, and
+profile `FlightMargin Widget App Store`. Apple-side configuration is complete:
+App Group `group.io.github.gmstd66.flightmargin` exists; both App IDs have the
+entitlement; the main profile was regenerated; and the widget profile exists.
+No external TestFlight testing or public App Store submission/release is
+authorized; `docs/ios-testflight.md` records the accepted checkpoint.
+
 The hosted relay remains live and the host path remains opt-in/default-off.
 The protected `/opt/codex-quota` production installation is unchanged, and
 the published `v0.3.0-beta.1` release remains immutable.

@@ -96,7 +96,7 @@ func assertProductionRelayPath(
 }
 
 let testIdentity = DeviceIdentity(
-    deviceID: UUID(uuidString: "44444444-4444-4444-8444-444444444444")!,
+    deviceID: UUID(uuidString: "AABBCCDD-EEFF-4A4B-8C8D-AABBCCDDEEFF")!,
     credential: "fmd1.22222222-2222-4222-8222-222222222222.Hx4dHBsaGRgXFhUUExIREA8ODQwLCgkIBwYFBAMCAQA"
 )
 
@@ -132,4 +132,31 @@ func isolatedDefaults() -> UserDefaults {
     let defaults = UserDefaults(suiteName: suite)!
     defaults.removePersistentDomain(forName: suite)
     return defaults
+}
+
+final class SpyWidgetStore: WidgetSnapshotWriting {
+    var successfulResponses: [(QuotaEnvelope, Date)] = []
+    var offlineDates: [Date] = []
+    var shouldWrite = true
+    var clearCount = 0
+
+    func recordSuccessfulRefresh(_ response: QuotaEnvelope, refreshedAt: Date) -> Bool {
+        successfulResponses.append((response, refreshedAt))
+        return shouldWrite
+    }
+
+    func markOffline(generatedAt: Date) -> Bool {
+        offlineDates.append(generatedAt)
+        return shouldWrite
+    }
+
+    func clearSnapshot() -> Bool {
+        clearCount += 1
+        return shouldWrite
+    }
+}
+
+final class SpyWidgetReloader: WidgetTimelineReloading {
+    var reloadCount = 0
+    func reloadFlightMarginWidget() { reloadCount += 1 }
 }
