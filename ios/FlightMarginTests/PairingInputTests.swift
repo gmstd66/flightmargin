@@ -11,6 +11,12 @@ final class PairingInputTests: XCTestCase {
         XCTAssertNil(ManualCode.normalize("SHORT"))
     }
 
+    func testManualCodeDisplayFormatting() {
+        XCTAssertEqual(ManualCode.displayValue("abcde fghjk"), "ABCDE-FGHJK")
+        XCTAssertEqual(ManualCode.displayValue("0123456789EXTRA"), "01234-56789")
+        XCTAssertEqual(ManualCode.displayValue("12-iou 34"), "1234")
+    }
+
     func testValidPairingLink() throws {
         let token = "fmp1.33333333-3333-4333-8333-333333333333.UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFA"
         let url = URL(string: "flightmargin://pair/v1?token=\(token)")!

@@ -209,6 +209,25 @@ def test_pairing_claim_device_uuid_is_encoded_as_lowercase_text():
     assert client_tests.count("XCTAssertEqual(result.deviceID, testIdentity.deviceID)") == 2
 
 
+def test_failed_manual_pairing_clears_input_before_presenting_local_error():
+    pairing_view = (
+        IOS / "FlightMargin" / "Views" / "PairingView.swift"
+    ).read_text(encoding="utf-8")
+    callback = re.search(
+        r"state\.pair\(manualInput:\s*code\)\s*\{\s*message\s+in"
+        r"(?P<body>.*?)\n\s*\}",
+        pairing_view,
+        re.DOTALL,
+    )
+    assert callback is not None
+    body = callback.group("body")
+    clear_position = body.find('code = ""')
+    error_position = body.find("pairingError = message")
+    assert 0 <= clear_position < error_position
+    assert "get: { pairingError != nil }" in pairing_view
+    assert 'Text(pairingError ?? "")' in pairing_view
+
+
 def test_relay_request_tests_assert_complete_production_paths():
     support = (IOS / "FlightMarginTests" / "TestSupport.swift").read_text(
         encoding="utf-8"

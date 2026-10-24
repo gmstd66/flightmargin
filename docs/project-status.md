@@ -1,8 +1,8 @@
 # FlightMargin — Project Status
 
-Updated: 2026-10-02
+Updated: 2026-10-23
 
-Branch: `develop`
+Branch: `dev/ios-testflight-demo`
 
 This is the primary continuity record. Read it with `AGENTS.md` and verify it
 against the working tree and Git history before making changes.
@@ -353,27 +353,34 @@ with traced connection syscalls proving no attempt to its relay port.
 Application runtime, deployment, and the explicitly confirmed hosted I-05B
 validator retain their existing configuration behavior.
 
-I-05 and I-06A remain closed. I-06B1 confirmed the COXON host relay was
-**Connected** to the production relay endpoint and confirmed Simulator
-internet/hosted-relay connectivity. A real manual pairing reached the hosted
-claim endpoint but was rejected. Source audit identified UUID casing
-interoperability as the concrete likely client defect: Foundation may encode a
-`UUID` with uppercase A-F, while relay v1 validates canonical lowercase UUID
-strings. The iOS claim request now preserves `DeviceIdentity.deviceID` as
-`UUID` internally and explicitly emits lowercase canonical `device_id` text.
-The relay v1 contract, hosted validation, credential storage/format, pairing
-semantics, and request logging remain unchanged.
+I-05 and I-06A remain closed. I-06B hosted diagnostics confirmed the COXON host
+relay was **Connected** to the production relay endpoint and confirmed
+Simulator internet/hosted-relay connectivity. A real manual pairing reached
+the hosted claim endpoint but was rejected. The earlier source audit found and
+fixed lowercase `device_id` wire encoding while preserving the internal
+`UUID`, credential storage, pairing semantics, relay v1 contract, and logging.
 
-Native Xcode validation of the correction remains pending, and hosted pairing
-must be retested before claiming end-to-end success. I-06B is not complete.
-Physical-iPhone/TestFlight validation also remains pending. The user has an
-active paid Apple Developer Program membership, making Internal TestFlight the
-intended remote-Mac distribution path for the first physical-phone demo; no
-external TestFlight testing or public App Store release is authorized. The
-remaining work is native XCTest; fresh hosted QR/manual pairing and real quota
-display; pairing persistence; foreground 60-second and pull-to-refresh checks;
-offline/reconnect recovery; then signing, archive validation, and Internal
-TestFlight upload on the Mac. `docs/ios-testflight.md` records the handoff.
+Subsequent captured Simulator traffic proved that a previously entered
+full-length manual code was actually transmitted after the user entered a new
+code. `PairingView` had retained ten valid characters after failure, and its
+display formatter's ten-character limit discarded newly appended characters,
+leaving the stale value unchanged. A controlled direct claim against the
+hosted relay independently succeeded, isolating this failure to the iOS manual
+input path. The client now clears the sheet-local manual input on failure
+before presenting the same sanitized sheet-local alert; QR/deep-link errors
+remain app-level, and successful pairing is unchanged.
+
+Native Xcode validation and a fresh hosted Simulator pairing retest remain
+pending before claiming end-to-end success. I-06B is not complete, and no
+physical-device or TestFlight validation has been completed.
+The user has an active paid Apple Developer Program membership, making Internal
+TestFlight the intended remote-Mac distribution path for the first
+physical-phone demo; no external TestFlight testing or public App Store release
+is authorized. The remaining work is native XCTest; fresh hosted QR/manual
+pairing and real quota display; pairing persistence; foreground 60-second and
+pull-to-refresh checks; offline/reconnect recovery; then signing, archive
+validation, and Internal TestFlight upload on the Mac.
+`docs/ios-testflight.md` records the handoff.
 Apple-side registration for the internal demo is complete: the explicit App ID
 `io.github.gmstd66.flightmargin` is registered, the FlightMargin iOS App Store
 Connect record exists, the internal TestFlight group `FlightMargin Internal`

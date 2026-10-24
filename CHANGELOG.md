@@ -99,6 +99,14 @@ Notable changes to FlightMargin are documented here. This file summarizes produc
 
 ### Fixed
 
+- Cleared the iOS pairing sheet's manual-code field after a failed claim while
+  keeping its sanitized error alert visible. I-06B hosted diagnostics captured
+  a previously entered full-length value in the Simulator request: because the
+  field retained ten valid characters, display formatting discarded newly
+  appended characters at its ten-character limit. A separate direct hosted
+  claim succeeded, isolating the defect to the iOS manual-input path. Native
+  XCTest and a fresh hosted Simulator pairing retest remain pending; I-06B and
+  physical-device/TestFlight validation are not complete.
 - Encoded iOS pairing-claim `device_id` values as canonical lowercase UUID
   text while preserving the internal `UUID` model. This fixes the concrete
   casing mismatch found after I-06B1 reached the hosted claim endpoint, without

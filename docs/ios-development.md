@@ -5,7 +5,7 @@
 I-06A is complete. It provides the native SwiftUI source, Xcode project, and
 XCTest suite for the first FlightMargin iPhone companion. On the user's Mac,
 Xcode 16.4 opened the project, an iPhone 16 Pro Simulator build succeeded, the
-app launched, and the final native XCTest rerun passed all 19 tests. The
+app launched, and the latest native XCTest baseline passed all 21 tests. The
 earlier Apple Foundation request-body portability issue and stale Supabase
 Edge Function path assertions are fixed without changing production
 networking or the relay v1 contract.
@@ -37,18 +37,25 @@ and `DEVELOPMENT_TEAM` remains unset for selection on the Mac. I-06A does not
 change the relay v1 contract and does not add a Supabase SDK, account, login,
 analytics, or third-party runtime dependency.
 
-I-06B1 confirmed that the COXON host relay was **Connected** to the production
-relay endpoint and that the Simulator had internet/hosted-relay connectivity.
-A real manual pairing reached the hosted claim endpoint but was rejected. The
-source audit then identified a concrete interoperability defect: Foundation's
-UUID encoding can emit uppercase A-F, while relay v1 accepts canonical
-lowercase UUID strings. The client now keeps `deviceID` as `UUID` internally
-but explicitly encodes lowercase canonical `device_id` text for both token and
-manual claims. Relay v1, hosted validation, credentials, and pairing semantics
-are unchanged. The credential's client-generated UUID component was already
-lowercased, and no other client-generated UUID field crosses this v1 request
-boundary. Native Xcode validation and a fresh hosted pairing retest remain
-pending, so I-06B is not complete.
+I-06B hosted diagnostics confirmed that the COXON host relay was **Connected**
+to the production relay endpoint and that the Simulator had
+internet/hosted-relay connectivity. An earlier source audit corrected
+pairing-claim `device_id` wire encoding to canonical lowercase while retaining
+`UUID` internally; credential storage, pairing semantics, and relay v1 were
+unchanged.
+
+Later captured Simulator traffic proved that a previously entered full-length
+manual code was actually transmitted after the user entered a fresh code. The
+SwiftUI sheet retained its ten valid characters after a failed attempt, so
+`ManualCode.displayValue()` discarded newly appended characters at its
+ten-character limit and left the stale value in place. A controlled direct
+hosted claim independently succeeded, isolating the defect to the iOS manual
+input path. `PairingView` now clears its sheet-local code on manual-claim
+failure before presenting the existing sanitized sheet-local error. Successful
+manual pairing and app-level QR/deep-link error ownership are unchanged.
+Native XCTest and a fresh hosted Simulator pairing retest remain pending, so
+I-06B is not complete. Physical-device and TestFlight validation also remain
+pending.
 
 The privacy-manifest audit found only direct `UserDefaults` required-reason
 API use and declares `CA92.1`; no tracking or collected-data entry is declared.
@@ -167,10 +174,11 @@ end-to-end validation belongs to I-06B.
 
 ## B. I-06B hosted relay and physical-iPhone plan (in progress)
 
-I-06B1 reached the live claim endpoint but did not complete pairing because of
-the client UUID casing defect described above. After native XCTest and hosted
-Simulator retesting, continue with a real FlightMargin desktop/Linux host and
-the already-live hosted relay:
+I-06B reached the live claim endpoint but did not complete pairing. The UUID
+casing correction and stale manual-input correction described above both
+require native XCTest and a fresh hosted Simulator retest. After those checks,
+continue with a real FlightMargin desktop/Linux host and the already-live
+hosted relay:
 
 1. Configure development signing on the Mac and install the app on a physical
    iPhone.

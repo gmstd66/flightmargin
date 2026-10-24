@@ -20,7 +20,10 @@ struct PairingView: View {
                 footer: { Text("Enter the code shown by FlightMargin on your computer.") }
 
                 Button {
-                    state.pair(manualInput: code) { pairingError = $0 }
+                    state.pair(manualInput: code) { message in
+                        code = ""
+                        pairingError = message
+                    }
                 } label: {
                     HStack {
                         Spacer()
