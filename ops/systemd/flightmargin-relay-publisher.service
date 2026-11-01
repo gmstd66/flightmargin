@@ -1,0 +1,28 @@
+[Unit]
+Description=FlightMargin Relay Publisher
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=gmstd
+Group=gmstd
+WorkingDirectory=/home/gmstd
+
+Environment=HOME=/home/gmstd
+Environment=CODEX_QUOTA_DATA_DIR=/home/gmstd/.local/share/flightmargin-relay-publisher
+Environment=CODEX_QUOTA_DB=/home/gmstd/.local/share/flightmargin-relay-publisher/quota.db
+Environment=CODEX_QUOTA_HOST=127.0.0.1
+Environment=CODEX_QUOTA_PORT=18099
+Environment=CODEX_QUOTA_SAMPLE_SECONDS=60
+Environment=CODEX_BIN=/usr/bin/codex
+
+ExecStart=/home/gmstd/.local/lib/flightmargin-relay-publisher/venv/bin/flightmargin serve
+
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

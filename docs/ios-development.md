@@ -49,6 +49,28 @@ pairing-claim `device_id` wire encoding to canonical lowercase while retaining
 `UUID` internally; credential storage, pairing semantics, and relay v1 were
 unchanged.
 
+The I-06B publisher used for that physical validation was temporary and
+stopped afterward on 2026-10-24. A later Supabase inactivity warning during the
+low-volume TestFlight beta identified that no persistent process was uploading
+fresh hosted quota; the iPhone could still read the last stored hosted state.
+As of 2026-11-01, COXON runs the dedicated persistent
+`flightmargin-relay-publisher.service` on loopback-only
+`127.0.0.1:18099`, with isolated runtime and data directories and genuine
+60-second quota collection/upload cycles. The recovered original I-06B host
+identity is reused, so existing paired iPhone/TestFlight devices remain on the
+same hosted host and no new identity was created.
+
+Routine quota-sample stdout is discarded by systemd while stderr and service
+failures remain journaled. No dummy rows, synthetic users, keepalive records,
+or other fake activity are used. Real continuous traffic is expected to avoid
+an inactivity classification, although Supabase publishes no guaranteed
+Free-tier activity threshold; paid Supabase service remains the appropriate
+long-term option if guaranteed hosted availability becomes a production
+requirement. The collector currently reports the five-hour field as
+unavailable while weekly usage and credits remain present; this is a beta
+observation, not a relay failure. Protected legacy production at
+`/opt/codex-quota`, `codex-quota.service`, and port `8093` remains unchanged.
+
 Later captured Simulator traffic proved that a previously entered full-length
 manual code was actually transmitted after the user entered a fresh code. The
 SwiftUI sheet retained its ten valid characters after a failed attempt, so
