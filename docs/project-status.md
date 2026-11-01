@@ -442,8 +442,9 @@ the appropriate long-term solution.
 The current collector observation is that the five-hour field is unavailable
 while weekly usage and credits remain present. This is beta feedback, not a
 relay failure. The protected legacy production checkout `/opt/codex-quota`,
-`codex-quota.service`, loopback port `8093`, and version `0.2.0` remain
-unchanged and separate from this publisher.
+`codex-quota.service`, port `8093` (currently bound for trusted-LAN access
+under the existing firewall policy), and version `0.2.0` remain unchanged
+and separate from this publisher.
 
 ## Public identity and compatibility
 
