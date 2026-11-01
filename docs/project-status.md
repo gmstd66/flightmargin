@@ -1,6 +1,6 @@
 # FlightMargin — Project Status
 
-Updated: 2026-10-24
+Updated: 2026-11-01
 
 Canonical development branch: `develop`
 
@@ -402,6 +402,48 @@ authorized; `docs/ios-testflight.md` records the accepted checkpoint.
 The hosted relay remains live and the host path remains opt-in/default-off.
 The protected `/opt/codex-quota` production installation is unchanged, and
 the published `v0.3.0-beta.1` release remains immutable.
+
+### Persistent COXON relay publisher
+
+During the low-volume TestFlight beta, Supabase issued an inactivity warning.
+The temporary I-06B relay publisher had stopped after physical iPhone
+validation on 2026-10-24, so fresh hosted quota publishing ceased even though
+an iPhone could continue reading the previously stored hosted state. The
+resolution is real continuous application traffic from a dedicated persistent
+publisher, not fake activity.
+
+As of 2026-11-01, `flightmargin-relay-publisher.service` runs on COXON with:
+
+- loopback-only bind `127.0.0.1:18099`;
+- isolated runtime
+  `/home/gmstd/.local/lib/flightmargin-relay-publisher/venv`;
+- isolated data directory
+  `/home/gmstd/.local/share/flightmargin-relay-publisher`;
+- genuine quota collection and upload on a 60-second cycle; and
+- hosted endpoint
+  `https://samcdyrwfwrlxzypzgmj.supabase.co/functions/v1/relay-v1`.
+
+The original registered I-06B host identity was recovered from its temporary
+location and copied into the persistent data directory. No replacement host
+identity was created, so existing paired iPhone and TestFlight devices remain
+attached to the same hosted host. The repository-owned unit template is
+`ops/systemd/flightmargin-relay-publisher.service`; its logging drop-in
+discards routine quota-sample stdout with `StandardOutput=null` while retaining
+stderr and service failures in journald with `StandardError=journal`. Neither
+file contains relay credentials.
+
+The persistent publisher uses no dummy database rows, synthetic users,
+keepalive records, or other fake activity. Its real collection/upload traffic
+is expected to keep this low-volume beta from appearing inactive, but Supabase
+does not publish a guaranteed Free-tier activity threshold. If guaranteed
+hosted availability becomes a production requirement, a paid Supabase tier is
+the appropriate long-term solution.
+
+The current collector observation is that the five-hour field is unavailable
+while weekly usage and credits remain present. This is beta feedback, not a
+relay failure. The protected legacy production checkout `/opt/codex-quota`,
+`codex-quota.service`, loopback port `8093`, and version `0.2.0` remain
+unchanged and separate from this publisher.
 
 ## Public identity and compatibility
 

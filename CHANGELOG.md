@@ -6,6 +6,15 @@ Notable changes to FlightMargin are documented here. This file summarizes produc
 
 ### Added
 
+- Added reproducible systemd operations files for the dedicated persistent
+  COXON relay publisher introduced after a Supabase inactivity warning during
+  the low-volume TestFlight beta. The loopback-only publisher uses an isolated
+  runtime and data directory, performs genuine 60-second quota
+  collection/upload cycles, and reuses the original I-06B host identity so
+  existing paired devices remain attached. Routine sample stdout is discarded
+  while service failures remain journaled. No synthetic activity, relay
+  credential, hosted Supabase change, or protected legacy-production change is
+  included.
 - Added I-07A's iOS 17 medium Home Screen widget. It displays five-hour and
   weekly utilization and remaining percentages, reset context, freshness, and
   a compact SwiftUI-native graph backed by at most 72 local five-hour samples.
